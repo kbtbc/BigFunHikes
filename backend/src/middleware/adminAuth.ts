@@ -1,14 +1,31 @@
 import type { Context } from "hono";
 import { getCookie } from "hono/cookie";
+import { isValidToken } from "../tokenStore";
 
 /**
  * Middleware to check if the request has a valid admin session
  * Returns error response if not authenticated, null if authenticated
+ * 
+ * Supports both cookie-based auth and Authorization header token (for cross-origin HTTP)
  */
 export const requireAdminAuth = (c: Context) => {
   const adminSession = getCookie(c, "admin_session");
+  
+  // Check for Authorization header token (fallback for cross-origin HTTP)
+  const authHeader = c.req.header("Authorization");
+  let hasValidToken = false;
+  
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7);
+    hasValidToken = isValidToken(token);
+  }
+  
+  // Debug logging
+  const url = new URL(c.req.url);
+  console.log(`[Auth Check] Hostname: ${url.hostname}, Cookie: ${adminSession || "missing"}, Token: ${hasValidToken ? "valid" : "missing"}`);
 
-  if (adminSession !== "authenticated") {
+  // Accept either cookie-based auth or token-based auth
+  if (adminSession !== "authenticated" && !hasValidToken) {
     return c.json(
       {
         error: {
