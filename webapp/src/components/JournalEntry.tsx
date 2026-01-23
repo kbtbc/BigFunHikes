@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
@@ -182,7 +183,9 @@ export function JournalEntry({
             </ReactMarkdown>
             {!showFullContent ? (
               <p className="text-muted-foreground italic mt-4">
-                Read more to see the full entry...
+                <Link to={`/entry/${entry.id}`} className="text-primary hover:underline font-bold">
+                  Read the full entry...
+                </Link>
               </p>
             ) : null}
           </div>

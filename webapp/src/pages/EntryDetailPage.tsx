@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { JournalEntry } from "@/components/JournalEntry";
 import { TrailMap } from "@/components/TrailMap";
@@ -89,8 +90,8 @@ export function EntryDetailPage() {
             </AlertDescription>
           </Alert>
           <Link to="/timeline">
-            <Button>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button size="lg">
+              <ArrowLeft className="mr-2 h-5 w-5" />
               Back to Timeline
             </Button>
           </Link>
@@ -109,8 +110,8 @@ export function EntryDetailPage() {
             The journal entry you're looking for doesn't exist.
           </p>
           <Link to="/timeline">
-            <Button>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button size="lg">
+              <ArrowLeft className="mr-2 h-5 w-5" />
               Back to Timeline
             </Button>
           </Link>
@@ -119,17 +120,14 @@ export function EntryDetailPage() {
     );
   }
 
+  const formattedDate = entry ? format(new Date(entry.date), "MMMM d, yyyy") : "";
+
   return (
     <div className="min-h-screen py-8 md:py-12">
       <div className="container mx-auto px-4">
-        {/* Back button */}
+        {/* Date heading */}
         <div className="mb-6">
-          <Link to="/timeline">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Timeline
-            </Button>
-          </Link>
+          <h2 className="text-sm italic text-muted-foreground">{formattedDate}</h2>
         </div>
 
         {/* Main content */}
@@ -165,9 +163,9 @@ export function EntryDetailPage() {
           {/* Navigation */}
           <div className="mt-12 pt-8 border-t flex justify-between items-center">
             <Link to="/timeline">
-              <Button variant="outline">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                All Entries
+              <Button size="lg">
+                <ArrowLeft className="mr-2 h-5 w-5" />
+                Back to Timeline
               </Button>
             </Link>
           </div>

@@ -93,19 +93,11 @@ export function HomePage() {
       {/* Latest Entry Section - moved above The Journey */}
       <section className="py-12 md:py-16 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-2">Latest Entry</h2>
-              <p className="text-muted-foreground">
-                The most recent update from the trail
-              </p>
-            </div>
-            <Link to="/timeline">
-              <Button variant="outline">
-                View All Entries
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+          <div className="mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold mb-2">Latest Entry</h2>
+            <p className="text-muted-foreground">
+              The most recent update from the trail
+            </p>
           </div>
           {entriesLoading ? (
             <div className="space-y-4">
@@ -125,9 +117,9 @@ export function HomePage() {
                 <JournalEntry entry={latestEntry} />
               </div>
               <div className="mt-6 text-center">
-                <Link to={`/entry/${latestEntry.id}`}>
+                <Link to="/timeline">
                   <Button size="lg">
-                    Read Full Entry
+                    View All Entries
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
