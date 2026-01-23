@@ -15,9 +15,6 @@ const uploadsDir = path.join(process.cwd(), "public", "uploads");
 fs.mkdir(uploadsDir, { recursive: true }).catch(console.error);
 
 // Log startup info
-console.log("[photos] Upload directory:", uploadsDir);
-console.log("[photos] BACKEND_URL:", process.env.BACKEND_URL);
-console.log("[photos] VITE_BACKEND_URL:", process.env.VITE_BACKEND_URL);
 
 /**
  * GET /api/debug/uploads
@@ -125,15 +122,10 @@ photosRouter.post(
  * Upload a photo file to a journal entry
  */
 photosRouter.post("/:id/photos/upload", async (c) => {
-  console.log("[photos] Upload request received");
-  console.log("[photos] Entry ID:", c.req.param("id"));
-
   const authError = requireAdminAuth(c);
   if (authError) {
-    console.log("[photos] Auth failed");
     return authError;
   }
-  console.log("[photos] Auth passed");
 
   const entryId = c.req.param("id");
 
@@ -144,7 +136,6 @@ photosRouter.post("/:id/photos/upload", async (c) => {
     });
 
     if (!entry) {
-      console.log("[photos] Entry not found:", entryId);
       return c.json(
         {
           error: {
@@ -155,7 +146,6 @@ photosRouter.post("/:id/photos/upload", async (c) => {
         404
       );
     }
-    console.log("[photos] Entry found:", entry.title);
 
     // Parse multipart form data
     const formData = await c.req.formData();
@@ -163,11 +153,8 @@ photosRouter.post("/:id/photos/upload", async (c) => {
     const caption = formData.get("caption") as string | null;
     const order = formData.get("order") as string | null;
 
-    console.log("[photos] Form data - file:", file ? "present" : "missing", "caption:", caption, "order:", order);
-
     // Validation
     if (!file || !(file instanceof File)) {
-      console.log("[photos] No file provided");
       return c.json(
         {
           error: {
@@ -179,10 +166,7 @@ photosRouter.post("/:id/photos/upload", async (c) => {
       );
     }
 
-    console.log("[photos] File info - name:", file.name, "type:", file.type, "size:", file.size);
-
     if (!order) {
-      console.log("[photos] Missing order field");
       return c.json(
         {
           error: {
@@ -197,7 +181,6 @@ photosRouter.post("/:id/photos/upload", async (c) => {
     // Validate file type
     const validImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     if (!validImageTypes.includes(file.type)) {
-      console.log("[photos] Invalid file type:", file.type);
       return c.json(
         {
           error: {
@@ -212,7 +195,6 @@ photosRouter.post("/:id/photos/upload", async (c) => {
     // Validate file size (max 10MB)
     const maxFileSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxFileSize) {
-      console.log("[photos] File too large:", file.size);
       return c.json(
         {
           error: {
@@ -229,21 +211,13 @@ photosRouter.post("/:id/photos/upload", async (c) => {
     const filename = `${randomUUID()}.${fileExt}`;
     const filepath = path.join(uploadsDir, filename);
 
-    console.log("[photos] Saving file to:", filepath);
-
     // Convert file to buffer and write to disk
     const buffer = await file.arrayBuffer();
     await fs.writeFile(filepath, new Uint8Array(buffer));
 
-    // Verify file was written
-    const fileStats = await fs.stat(filepath);
-    console.log("[photos] File saved, size on disk:", fileStats.size);
-
-    // Construct full URL for the photo using backend URL from environment
-    const backendUrl = process.env.BACKEND_URL || process.env.VITE_BACKEND_URL || "http://localhost:3000";
-    const fileUrl = `${backendUrl}/public/uploads/${filename}`;
-
-    console.log("[photos] File URL:", fileUrl);
+    // Construct relative URL for the photo (will be served by backend)
+    // Using relative URL so it works with proxy
+    const fileUrl = `/public/uploads/${filename}`;
 
     // Parse order as number
     let orderNum: number;
@@ -253,7 +227,6 @@ photosRouter.post("/:id/photos/upload", async (c) => {
         throw new Error();
       }
     } catch {
-      console.log("[photos] Invalid order value:", order);
       return c.json(
         {
           error: {
@@ -275,14 +248,11 @@ photosRouter.post("/:id/photos/upload", async (c) => {
       },
     });
 
-    console.log("[photos] Photo record created:", photo.id);
-
     const formattedPhoto = {
       ...photo,
       createdAt: photo.createdAt.toISOString(),
     };
 
-    console.log("[photos] Upload complete, returning:", formattedPhoto);
     return c.json({ data: formattedPhoto }, 201);
   } catch (error) {
     console.error("[photos] Error uploading photo:", error);

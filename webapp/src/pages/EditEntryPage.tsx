@@ -166,7 +166,6 @@ export default function EditEntryPage() {
       // Upload new photos if any
       if (newPhotos.length > 0) {
         setUploadingPhotos(true);
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
         // Get current max order
         const existingPhotos = entry.photos || [];
@@ -182,8 +181,9 @@ export default function EditEntryPage() {
           formDataPhoto.append("order", (maxOrder + 1 + i).toString());
 
           try {
+            // Use relative URL so it goes through Vite proxy (same-origin for cookies)
             const response = await fetch(
-              `${backendUrl}/api/entries/${id}/photos/upload`,
+              `/api/entries/${id}/photos/upload`,
               {
                 method: "POST",
                 body: formDataPhoto,

@@ -64,11 +64,11 @@ export function JournalEntry({
                     key={index}
                     className={showFullContent && hasMultiplePhotos ? "flex-[0_0_100%] min-w-0" : ""}
                   >
-                    <div className="relative w-full overflow-hidden">
+                    <div className={`relative w-full overflow-hidden flex items-center justify-center ${showFullContent && hasMultiplePhotos ? "h-[400px] md:h-[500px] bg-black/5" : ""}`}>
                       <img
                         src={photo.url}
                         alt={photo.caption}
-                        className={`w-full ${showFullContent && hasMultiplePhotos ? "h-[400px] md:h-[500px] object-contain bg-black/5" : "h-auto object-contain"}`}
+                        className={`${showFullContent && hasMultiplePhotos ? "h-full w-auto max-w-full object-contain" : "w-full h-auto object-contain"}`}
                       />
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                         <p className="text-white text-sm text-shadow text-center">

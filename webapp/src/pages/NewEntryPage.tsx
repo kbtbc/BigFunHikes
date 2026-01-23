@@ -102,7 +102,6 @@ export default function NewEntryPage() {
       // Then upload photos if any
       if (photos.length > 0) {
         setUploadingPhotos(true);
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
         for (let i = 0; i < photos.length; i++) {
           const photo = photos[i];
@@ -112,8 +111,9 @@ export default function NewEntryPage() {
           formDataPhoto.append("order", i.toString());
 
           try {
+            // Use relative URL so it goes through Vite proxy (same-origin for cookies)
             const response = await fetch(
-              `${backendUrl}/api/entries/${newEntry.id}/photos/upload`,
+              `/api/entries/${newEntry.id}/photos/upload`,
               {
                 method: "POST",
                 body: formDataPhoto,
@@ -124,9 +124,6 @@ export default function NewEntryPage() {
             if (!response.ok) {
               const errorText = await response.text();
               console.error(`Failed to upload photo ${i + 1}:`, errorText);
-            } else {
-              const result = await response.json();
-              console.log(`Photo ${i + 1} uploaded successfully:`, result);
             }
           } catch (error) {
             console.error(`Error uploading photo ${i + 1}:`, error);

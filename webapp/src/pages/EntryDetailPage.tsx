@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { JournalEntry } from "@/components/JournalEntry";
@@ -33,6 +33,13 @@ export function EntryDetailPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const entry = apiEntry ? transformApiEntryToComponent(apiEntry) : null;
+
+  // Scroll to top when entry loads (after create/edit navigation)
+  useEffect(() => {
+    if (entry) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [id, entry]);
 
   const handleDelete = async () => {
     if (!id) return;

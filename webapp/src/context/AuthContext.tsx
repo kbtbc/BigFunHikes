@@ -104,14 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Parse response once
     const result = await response.json();
-    console.log("[Login] Response:", result);
     
     // Check if response includes a token (for cross-origin HTTP)
     if (result.data?.token) {
-      console.log("[Login] Storing token in localStorage");
       setAuthToken(result.data.token);
-    } else {
-      console.log("[Login] No token in response");
     }
 
     // Update auth state

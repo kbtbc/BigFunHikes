@@ -46,9 +46,6 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
-    console.log(`[API Request] Sending token for ${endpoint}`);
-  } else {
-    console.log(`[API Request] No token available for ${endpoint}`);
   }
 
   const config: RequestInit = {
