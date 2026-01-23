@@ -24,7 +24,6 @@ adminRouter.post("/login", async (c) => {
     try {
       // Try to get the request body
       const rawBody = await c.req.text();
-      console.log("Raw body received:", rawBody);
 
       if (!rawBody) {
         return c.json(
@@ -85,9 +84,6 @@ adminRouter.post("/login", async (c) => {
     // We'll try sameSite=None with secure=false for domain names on HTTP
     const sameSiteValue = isSecure ? "None" : (isDomainName ? "None" : "Lax");
     
-    // Debug logging
-    console.log(`[Login] Setting cookie - hostname: ${hostname}, isDomainName: ${isDomainName}, isSecure: ${isSecure}, sameSite: ${sameSiteValue}`);
-    
     // Set admin session cookie
     setCookie(c, "admin_session", "authenticated", {
       httpOnly: true,
@@ -107,7 +103,6 @@ adminRouter.post("/login", async (c) => {
       authToken = Buffer.from(`admin_${Date.now()}_${Math.random()}`).toString("base64");
       // Store token with expiration
       authTokens.set(authToken, Date.now() + SESSION_DURATION * 1000);
-      console.log(`[Login] Generated token for domain ${hostname}, token length: ${authToken.length}`);
     }
 
     return c.json({

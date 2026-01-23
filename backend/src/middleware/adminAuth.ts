@@ -19,10 +19,6 @@ export const requireAdminAuth = (c: Context) => {
     const token = authHeader.substring(7);
     hasValidToken = isValidToken(token);
   }
-  
-  // Debug logging
-  const url = new URL(c.req.url);
-  console.log(`[Auth Check] Hostname: ${url.hostname}, Cookie: ${adminSession || "missing"}, Token: ${hasValidToken ? "valid" : "missing"}`);
 
   // Accept either cookie-based auth or token-based auth
   if (adminSession !== "authenticated" && !hasValidToken) {
