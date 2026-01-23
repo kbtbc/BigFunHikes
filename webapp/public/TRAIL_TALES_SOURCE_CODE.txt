@@ -1,0 +1,4195 @@
+# Trail Tales - Complete Source Code Bundle
+# Generated: Mon Jan 19 12:17:53 UTC 2026
+# ==========================================
+
+## PROJECT STRUCTURE
+```
+```
+
+## ROOT FILES
+================================================
+FILE: CLAUDE.md
+================================================
+# Vibecode Workspace
+
+This workspace contains a mobile app and backend server.
+
+<projects>
+  webapp/    — React app (port 8000, environment variable VITE_BASE_URL)
+  backend/   — Hono API server (port 3000, environment variable VITE_BACKEND_URL)
+</projects>
+
+<agents>
+  Use subagents for project-specific work:
+  - backend-developer: Changes to the backend API
+  - webapp-developer: Changes to the webapp frontend
+
+  Each agent reads its project's CLAUDE.md for detailed instructions.
+</agents>
+
+<coordination>
+  When a feature needs both frontend and backend:
+  1. Define Zod schemas for request/response in backend/src/types.ts (shared contracts)
+  2. Implement backend route using the schemas
+  3. Test backend with cURL (use $BACKEND_URL, never localhost)
+  4. Implement frontend, importing schemas from backend/src/types.ts to parse responses
+  5. Test the integration
+
+  <shared_types>
+    All API contracts live in backend/src/types.ts as Zod schemas.
+    Both backend and frontend can import from this file — single source of truth.
+  </shared_types>
+</coordination>
+
+<skills>
+  Shared skills in .claude/skills/:
+  - database-auth: Set up Prisma + Better Auth for user accounts and data persistence
+  - ai-apis-like-chatgpt: Use this skill when the user asks you to make an app that requires an AI API.
+
+  Frontend only skills:
+  - frontend-app-design: Create distinctive, production-grade web interfaces using React, Tailwind, and shadcn/ui. Use when building pages, components, or styling any web UI.
+</skills>
+
+<environment>
+  System manages git and dev servers. DO NOT manage these.
+  The user views the app through Vibecode Mobile App with a webview preview or Vibecode Web App with an iframe preview.
+  The user cannot see code or terminal. Do everything for them.
+  Write one-off scripts to achieve tasks the user asks for.
+  Communicate in an easy to understand manner for non-technical users.
+  Be concise and don't talk too much.
+</environment>
+
+
+================================================
+FILE: README.md
+================================================
+# Trail Tales - Appalachian Trail Journal
+
+A beautiful web application for documenting your Appalachian Trail journey with interactive maps, journal entries, and progress tracking.
+
+## Overview
+
+Trail Tales is a mobile-first web app designed specifically for hikers tackling the Appalachian Trail. Record your daily adventures with markdown journals, photos, GPS tracks, and automatically visualize your progress on an interactive map of the entire 2,190-mile trail.
+
+## Features
+
+### Current Features (v1.0)
+- **Interactive Trail Map**: Full Appalachian Trail route visualization using Leaflet.js with OpenTopoMap terrain tiles
+- **Journal Entries**: Rich markdown support for daily journal entries with photos and statistics
+- **Progress Tracking**: Visual progress indicator showing miles completed vs. remaining
+- **Timeline View**: Beautiful chronological timeline of all your hiking days
+- **Statistics Dashboard**: Track total miles, elevation gain, daily averages, and overall progress
+- **Mobile Responsive**: Optimized for on-trail updates from your phone
+- **GPX Support**: Display daily GPS tracks on the map
+
+### Coming Soon
+- **Google Drive Sync**: Auto-publish entries by dropping files into a cloud folder
+- **Voice-to-Text**: Dictate journal entries on the trail
+- **Photo Management**: Bulk upload and organize trail photos
+- **Offline Mode**: Cache entries for areas without cell service
+- **User Authentication**: Secure login to manage your journal
+- **Public/Private Entries**: Choose which entries to share publicly
+
+## Tech Stack
+
+### Frontend (Port 8000)
+- **Framework**: React 18 + Vite
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Maps**: Leaflet.js + react-leaflet
+- **Markdown**: react-markdown with remark-gfm
+- **Routing**: React Router v6
+- **Type Safety**: TypeScript with Zod schemas
+
+### Backend (Port 3000)
+- **Runtime**: Bun
+- **Framework**: Hono (lightweight, fast API)
+- **Database**: SQLite + Prisma ORM
+- **Authentication**: Better Auth (email + OTP)
+- **Type Safety**: TypeScript + Zod validation
+
+## Project Structure
+
+```
+/
+├── webapp/                  # Frontend React application
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   │   ├── Navbar.tsx
+│   │   │   ├── TrailMap.tsx        # Interactive Leaflet map
+│   │   │   ├── Stats.tsx           # Progress statistics
+│   │   │   ├── JournalEntry.tsx    # Entry display component
+│   │   │   └── Timeline.tsx        # Timeline view
+│   │   ├── pages/          # Page components
+│   │   │   ├── HomePage.tsx        # Map + stats overview
+│   │   │   ├── TimelinePage.tsx    # All entries timeline
+│   │   │   └── EntryDetailPage.tsx # Individual entry view
+│   │   ├── data/           # Mock data (will be replaced with API)
+│   │   │   └── journalEntries.ts
+│   │   ├── index.css       # Design system & Tailwind config
+│   │   └── App.tsx         # Main app with routing
+│   └── public/
+│       └── data/
+│           └── appalachian_trail.gpx  # Full AT route (312k points)
+│
+└── backend/                # Backend API server
+    ├── src/
+    │   ├── routes/         # API route handlers
+    │   │   ├── entries.ts  # Journal CRUD endpoints
+    │   │   ├── photos.ts   # Photo upload endpoints
+    │   │   └── stats.ts    # Statistics endpoints
+    │   ├── types.ts        # Zod schemas for API contracts
+    │   ├── auth.ts         # Better Auth configuration
+    │   ├── prisma.ts       # Prisma client setup
+    │   └── index.ts        # Hono app + middleware
+    └── prisma/
+        ├── schema.prisma   # Database schema
+        └── dev.db          # SQLite database
+```
+
+## Design Philosophy
+
+**Inspired by**: Strava (tracking), Notion (journaling), AllTrails (maps), National Park Service (aesthetics)
+
+**Color Palette**:
+- Forest greens (#4a7c59, #2d5016) - Primary
+- Warm amber/orange (#f4a261, #e07a5f) - Accents
+- Earthy cream (#faf9f6, #f5f5dc) - Backgrounds
+- Deep charcoal (#2b2d42) - Text
+
+**Typography**:
+- Headings: "Outfit" (adventurous, modern)
+- Body: "Inter" (clean, readable)
+
+**Feel**: Rugged meets modern - like a digital trail journal with hand-drawn map aesthetics. Emphasis on beautiful photography, clean typography, and celebrating the journey.
+
+## Data Model
+
+### JournalEntry
+- Date, day number, title
+- Markdown content
+- Location coordinates (lat/lon)
+- Daily statistics (miles hiked, elevation gain)
+- Cumulative progress (total miles completed)
+- GPX track data
+- Associated photos with captions
+
+### Photo
+- URL and caption
+- Linked to journal entry
+- Ordering for galleries
+
+### User (Better Auth)
+- Email authentication
+- Secure session management
+
+## API Endpoints
+
+All endpoints follow the `{ data: ... }` envelope pattern.
+
+**Journal Entries**:
+- `GET /api/entries` - List all entries (paginated)
+- `GET /api/entries/:id` - Get specific entry
+- `POST /api/entries` - Create new entry
+- `PUT /api/entries/:id` - Update entry
+- `DELETE /api/entries/:id` - Delete entry
+
+**Photos**:
+- `POST /api/entries/:id/photos` - Upload photo to entry
+
+**Statistics**:
+- `GET /api/stats` - Overall trail statistics
+
+**Authentication**:
+- `POST /api/auth/sign-in` - Email OTP sign-in
+- `POST /api/auth/sign-out` - Sign out
+- `GET /api/auth/session` - Get current session
+
+## Development
+
+Both servers run automatically:
+- **Frontend**: http://localhost:8000 (Vite dev server)
+- **Backend**: http://localhost:3000 (Hono API server)
+
+Changes to code hot-reload automatically.
+
+## Adding Journal Entries
+
+Currently using mock data in `webapp/src/data/journalEntries.ts`.
+
+To add a new entry, add to the `mockJournalEntries` array:
+
+```typescript
+{
+  id: "entry-2",
+  dayNumber: 2,
+  date: "2025-03-16",
+  title: "Day 2: Hawk Mountain to Gooch Mountain",
+  content: "# Your markdown content here...",
+  milesHiked: 12.5,
+  elevationGain: 2100,
+  totalMilesCompleted: 20.3,
+  location: "Gooch Mountain, GA",
+  latitude: 34.6856,
+  longitude: -84.2245,
+  startPoint: { lat: 34.6723, lon: -84.2134 },
+  endPoint: { lat: 34.6856, lon: -84.2245 },
+  photos: [
+    {
+      url: "https://images.unsplash.com/photo-...",
+      caption: "Beautiful sunrise"
+    }
+  ],
+  gpxData: "<gpx>...</gpx>" // Optional
+}
+```
+
+Later, these will be created through the API with authentication.
+
+## Future Enhancements
+
+### Phase 2 - Publishing Workflow
+- Google Drive integration for easy mobile publishing
+- Email-to-publish functionality
+- Automated photo resizing and optimization
+
+### Phase 3 - Advanced Features
+- Social sharing (share individual entries or entire journey)
+- Custom themes and branding
+- Export entire journal as PDF or book
+- Integration with fitness trackers (Suunto, Garmin)
+- Weather data integration
+- Elevation profiles and 3D terrain visualization
+
+## Data Sources
+
+- **Appalachian Trail GPX**: Sourced from [TopoFusion](https://topofusion.com/at-gps.php) (312,000 point full resolution track)
+- **Map Tiles**: OpenTopoMap (free, no API limits)
+- **Photos**: Unsplash (for demo content)
+
+## Notes for Trail Use
+
+- **Connectivity**: The app is designed to work with limited trail connectivity. Future versions will support offline mode.
+- **Battery**: Map rendering can be battery-intensive. Consider downloading offline map tiles for your section.
+- **Data Entry**: Voice-to-text feature coming soon to make journaling easier on the trail.
+- **Backup**: Always backup your journal entries and photos to cloud storage.
+
+---
+
+Built with ❤️ for thru-hikers. Happy trails!
+
+
+================================================
+FILE: DEVELOPMENT_SPEC.md
+================================================
+# Trail Tales - Development Specification
+
+**Version**: 1.0
+**Last Updated**: January 2026
+**Status**: MVP Complete (Frontend UI + Backend API Ready)
+
+---
+
+## Table of Contents
+
+1. [Project Overview](#1-project-overview)
+2. [Architecture](#2-architecture)
+3. [Frontend Specification](#3-frontend-specification)
+4. [Backend Specification](#4-backend-specification)
+5. [Database Schema](#5-database-schema)
+6. [API Contracts](#6-api-contracts)
+7. [Design System](#7-design-system)
+8. [Dependencies & Compatibility](#8-dependencies--compatibility)
+9. [Known Issues & Solutions](#9-known-issues--solutions)
+10. [Current Status](#10-current-status)
+11. [Next Steps](#11-next-steps)
+
+---
+
+## 1. Project Overview
+
+### Purpose
+Trail Tales is a mobile-first web application for documenting Appalachian Trail (AT) thru-hikes. Users can record daily journal entries with markdown content, photos, GPS tracks, and statistics while visualizing their progress on an interactive map.
+
+### Target Users
+- Thru-hikers on the Appalachian Trail
+- Section hikers documenting multi-day trips
+- Trail enthusiasts wanting to share their journey
+
+### Core Features (Implemented)
+- Interactive Leaflet map with OpenTopoMap tiles
+- Journal entries with rich markdown support
+- Progress tracking (miles, elevation, days)
+- Timeline view of all entries
+- Statistics dashboard
+- Mobile-responsive design
+- GPX track visualization on map
+
+---
+
+## 2. Architecture
+
+### System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Frontend                              │
+│                   React + Vite (Port 8000)                  │
+│                                                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │   Pages     │  │ Components  │  │   Data (Mock)       │  │
+│  │  - Home     │  │ - TrailMap  │  │  journalEntries.ts  │  │
+│  │  - Timeline │  │ - Stats     │  │                     │  │
+│  │  - Entry    │  │ - Timeline  │  │                     │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              │ HTTP/JSON
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                        Backend                               │
+│                   Hono + Bun (Port 3000)                    │
+│                                                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │   Routes    │  │    Auth     │  │      Prisma         │  │
+│  │  /entries   │  │ Better Auth │  │   SQLite Client     │  │
+│  │  /photos    │  │  Email OTP  │  │                     │  │
+│  │  /stats     │  │             │  │                     │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Database                               │
+│                   SQLite (dev.db)                           │
+│                                                              │
+│   Users │ Sessions │ Accounts │ JournalEntries │ Photos    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Directory Structure
+
+```
+/home/user/workspace/
+├── CLAUDE.md                    # Project instructions
+├── DEVELOPMENT_SPEC.md          # This document
+├── README.md                    # User-facing documentation
+│
+├── webapp/                      # Frontend application
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.ts
+│   ├── tsconfig.json
+│   ├── index.html
+│   └── src/
+│       ├── main.tsx             # Entry point
+│       ├── App.tsx              # Router + providers
+│       ├── index.css            # Design system (CSS variables)
+│       ├── components/
+│       │   ├── TrailMap.tsx     # Leaflet map (native, not react-leaflet)
+│       │   ├── Stats.tsx        # Progress statistics
+│       │   ├── Timeline.tsx     # Entry timeline
+│       │   ├── JournalEntry.tsx # Entry display
+│       │   ├── Navbar.tsx       # Navigation
+│       │   └── ui/              # shadcn/ui components
+│       ├── pages/
+│       │   ├── HomePage.tsx
+│       │   ├── TimelinePage.tsx
+│       │   ├── EntryDetailPage.tsx
+│       │   └── NotFound.tsx
+│       ├── data/
+│       │   └── journalEntries.ts # Mock data
+│       ├── hooks/
+│       │   └── use-toast.ts
+│       └── lib/
+│           └── utils.ts
+│
+└── backend/                     # Backend API
+    ├── package.json
+    ├── tsconfig.json
+    └── src/
+        ├── index.ts             # Hono app entry
+        ├── auth.ts              # Better Auth config
+        ├── prisma.ts            # Prisma client
+        ├── env.ts               # Environment validation
+        ├── types.ts             # Zod schemas (shared contracts)
+        └── routes/
+            ├── entries.ts       # Journal CRUD
+            ├── photos.ts        # Photo management
+            ├── stats.ts         # Statistics endpoint
+            └── sample.ts        # Sample/health routes
+    └── prisma/
+        ├── schema.prisma        # Database schema
+        └── dev.db               # SQLite database file
+```
+
+---
+
+## 3. Frontend Specification
+
+### Tech Stack
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 18.3.1 | UI framework |
+| Vite | 5.4.21 | Build tool & dev server |
+| TypeScript | 5.9.3 | Type safety |
+| Tailwind CSS | 3.4.18 | Styling |
+| shadcn/ui | Latest | Component library |
+| Leaflet | 1.9.4 | Map rendering |
+| React Router | 6.30.2 | Client-side routing |
+| TanStack Query | 5.90.10 | Server state management |
+| react-markdown | 10.1.0 | Markdown rendering |
+| Framer Motion | 12.23.28 | Animations |
+| Lucide React | 0.462.0 | Icons |
+
+### Key Configuration Files
+
+**vite.config.ts**
+```typescript
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import { vibecodePlugin } from "@vibecodeapp/webapp/plugin";
+import path from "path";
+
+export default defineConfig(({ mode }) => ({
+  server: {
+    host: "::",
+    port: 8000,
+    allowedHosts: true,
+  },
+  plugins: [
+    react(),
+    mode === "development" && vibecodePlugin(),
+  ].filter(Boolean),
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+}));
+```
+
+**tailwind.config.ts**
+- Uses CSS variables for theming (light/dark mode)
+- Custom font families: Outfit (headings), Inter (body)
+- Custom animations: accordion, shimmer-sweep, glow-pulse
+- Extended color palette with semantic naming
+
+### Component Specifications
+
+#### TrailMap.tsx (Critical Component)
+**Purpose**: Interactive map showing trail progress and journal entry locations.
+
+**Implementation**: Uses **native Leaflet** (NOT react-leaflet due to compatibility issues).
+
+```typescript
+// Key imports
+import { useEffect, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Pattern: useRef for map container + useEffect for initialization
+const mapRef = useRef<HTMLDivElement>(null);
+const mapInstanceRef = useRef<L.Map | null>(null);
+
+useEffect(() => {
+  if (!mapRef.current || mapInstanceRef.current) return;
+  const map = L.map(mapRef.current).setView(defaultCenter, defaultZoom);
+  mapInstanceRef.current = map;
+  // ... add layers, markers, etc.
+  return () => { map.remove(); mapInstanceRef.current = null; };
+}, []);
+```
+
+**Props**:
+- `entries?: JournalEntry[]` - Entries to display on map
+- `selectedEntry?: JournalEntry` - Highlighted entry
+- `height?: string` - Container height (default: "500px")
+- `className?: string` - Additional CSS classes
+
+**Features**:
+- OpenTopoMap tiles (free, no API limits)
+- Green markers for start points
+- Red markers for end points
+- Polyline for GPX tracks
+- Auto-fit bounds to show all entries
+- Click popups with entry details
+
+#### Stats.tsx
+**Purpose**: Display hiking progress and statistics.
+
+**Props**:
+```typescript
+interface StatsProps {
+  totalMiles: number;      // Total AT miles (2190)
+  milesCompleted: number;  // Miles hiked so far
+  daysOnTrail: number;     // Number of hiking days
+  averageDailyMiles: number;
+  totalElevationGain: number;
+}
+```
+
+#### JournalEntry.tsx
+**Purpose**: Render a single journal entry with markdown content.
+
+**Features**:
+- Markdown rendering with react-markdown + remark-gfm
+- Photo gallery display
+- Entry metadata (date, miles, elevation)
+
+### Page Structure
+
+| Page | Route | Description |
+|------|-------|-------------|
+| HomePage | `/` | Hero, stats, map, latest entry |
+| TimelinePage | `/timeline` | All entries in timeline format |
+| EntryDetailPage | `/entry/:id` | Full entry with map |
+| NotFound | `*` | 404 page |
+
+### Data Flow (Current - Mock Data)
+
+```typescript
+// webapp/src/data/journalEntries.ts
+export interface JournalEntry {
+  id: string;
+  day: number;
+  date: string;
+  title: string;
+  content: string;          // Markdown
+  miles: number;
+  elevationGain: number;
+  totalMiles: number;
+  location: {
+    start: string;
+    end: string;
+  };
+  coordinates: {
+    start: [number, number]; // [lat, lng]
+    end: [number, number];
+  };
+  photos: Array<{
+    url: string;
+    caption: string;
+  }>;
+  gpxTrack?: Array<[number, number]>;
+}
+
+export const TOTAL_AT_MILES = 2190;
+export const mockJournalEntries: JournalEntry[] = [...];
+export const trailStats = {...};
+```
+
+---
+
+## 4. Backend Specification
+
+### Tech Stack
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Bun | Latest | JavaScript runtime |
+| Hono | 4.6.0 | Web framework |
+| Prisma | 6.x | ORM |
+| SQLite | - | Database |
+| Better Auth | 1.4.15 | Authentication |
+| Zod | 4.1.11 | Schema validation |
+
+### Entry Point (src/index.ts)
+
+```typescript
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { logger } from "hono/logger";
+import { auth } from "./auth";
+
+const app = new Hono<{
+  Variables: {
+    user: typeof auth.$Infer.Session.user | null;
+    session: typeof auth.$Infer.Session.session | null;
+  };
+}>();
+
+// CORS - validates against allowlist
+const allowed = [
+  /^http:\/\/localhost(:\d+)?$/,
+  /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+  /^https:\/\/[a-z0-9-]+\.dev\.vibecode\.run$/,
+  /^https:\/\/[a-z0-9-]+\.vibecode\.run$/,
+];
+
+app.use("*", cors({
+  origin: (origin) => (origin && allowed.some((re) => re.test(origin)) ? origin : null),
+  credentials: true,
+}));
+
+// Auth middleware - populates user/session for all routes
+app.use("*", async (c, next) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  c.set("user", session?.user ?? null);
+  c.set("session", session?.session ?? null);
+  await next();
+});
+
+// Routes
+app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+app.route("/api/entries", entriesRouter);
+app.route("/api/entries", photosRouter);
+app.route("/api/stats", statsRouter);
+
+export default { port: 3000, fetch: app.fetch };
+```
+
+### Authentication (src/auth.ts)
+
+```typescript
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { emailOTP } from "better-auth/plugins";
+
+export const auth = betterAuth({
+  database: prismaAdapter(prisma, { provider: "sqlite" }),
+  secret: env.BETTER_AUTH_SECRET,
+  baseURL: env.BACKEND_URL,
+  trustedOrigins: [
+    "http://localhost:*",
+    "http://127.0.0.1:*",
+    "https://*.dev.vibecode.run",
+    "https://*.vibecode.run",
+    "https://*.vibecodeapp.com",
+  ],
+  plugins: [
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        if (type !== "sign-in") return;
+        await vibecode.email.sendOTP({
+          to: email,
+          code: String(otp),
+          fromName: "Appalachian Trail Journal",
+        });
+      },
+    }),
+  ],
+  advanced: {
+    crossSubDomainCookies: { enabled: true },
+    disableCSRFCheck: true,
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+      partitioned: true,
+    },
+  },
+});
+```
+
+### Route Implementations
+
+All routes follow the `{ data: ... }` envelope pattern for responses.
+
+**Entries Router** (`/api/entries`):
+- `GET /` - List entries (paginated, requires auth)
+- `GET /:id` - Get single entry (requires auth)
+- `POST /` - Create entry (requires auth)
+- `PUT /:id` - Update entry (requires auth)
+- `DELETE /:id` - Delete entry (requires auth)
+
+**Photos Router** (`/api/entries/:id/photos`):
+- `POST /` - Add photo to entry
+- `DELETE /:photoId` - Remove photo
+
+**Stats Router** (`/api/stats`):
+- `GET /` - Get overall statistics
+
+---
+
+## 5. Database Schema
+
+### Prisma Schema (prisma/schema.prisma)
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id
+  name          String
+  email         String         @unique
+  emailVerified Boolean        @default(false)
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  journalEntries JournalEntry[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model JournalEntry {
+  id                   String   @id @default(uuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                 DateTime
+  dayNumber            Int
+  title                String
+  content              String
+  latitude             Float?
+  longitude            Float?
+  milesHiked           Float
+  elevationGain        Int?
+  totalMilesCompleted  Float
+  gpxData              String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  photos               Photo[]
+
+  @@index([userId, date])
+  @@index([userId, dayNumber])
+}
+
+model Photo {
+  id             String       @id @default(uuid())
+  journalEntryId String
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  url            String
+  caption        String?
+  order          Int
+  createdAt      DateTime     @default(now())
+
+  @@index([journalEntryId])
+}
+```
+
+### Database Commands
+
+```bash
+# Push schema changes (dev/preview)
+bunx prisma db push
+
+# Generate Prisma client
+bunx prisma generate
+
+# Create migration (production)
+bunx prisma migrate dev --create-only --name <migration-name>
+bunx prisma migrate deploy
+
+# View database
+bunx prisma studio
+```
+
+---
+
+## 6. API Contracts
+
+### Shared Types (backend/src/types.ts)
+
+All API contracts are defined as Zod schemas in `backend/src/types.ts`. Both frontend and backend can import from this file.
+
+```typescript
+// Create Journal Entry
+export const createJournalEntrySchema = z.object({
+  date: z.string().datetime(),
+  dayNumber: z.number().int().positive(),
+  title: z.string().min(1).max(500),
+  content: z.string(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  milesHiked: z.number().nonnegative(),
+  elevationGain: z.number().int().nullable().optional(),
+  totalMilesCompleted: z.number().nonnegative(),
+  gpxData: z.string().nullable().optional(),
+});
+
+// Journal Entry Response
+export const journalEntrySchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string(),
+  date: z.string().datetime(),
+  dayNumber: z.number().int().positive(),
+  title: z.string(),
+  content: z.string(),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+  milesHiked: z.number(),
+  elevationGain: z.number().int().nullable(),
+  totalMilesCompleted: z.number(),
+  gpxData: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  photos: z.array(photoSchema).optional(),
+});
+
+// Error Response
+export const errorSchema = z.object({
+  error: z.object({
+    message: z.string(),
+    code: z.string().optional(),
+  }),
+});
+```
+
+### Response Envelope Pattern
+
+All successful responses use the `{ data: ... }` envelope:
+
+```json
+// Success
+{ "data": { ... } }
+
+// Error
+{ "error": { "message": "...", "code": "..." } }
+```
+
+### API Endpoints Summary
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/health` | No | Health check |
+| POST | `/api/auth/sign-in/email` | No | Request OTP |
+| POST | `/api/auth/sign-in/email/verify` | No | Verify OTP |
+| GET | `/api/auth/session` | No | Get session |
+| POST | `/api/auth/sign-out` | Yes | Sign out |
+| GET | `/api/entries` | Yes | List entries |
+| GET | `/api/entries/:id` | Yes | Get entry |
+| POST | `/api/entries` | Yes | Create entry |
+| PUT | `/api/entries/:id` | Yes | Update entry |
+| DELETE | `/api/entries/:id` | Yes | Delete entry |
+| POST | `/api/entries/:id/photos` | Yes | Add photo |
+| DELETE | `/api/entries/:id/photos/:photoId` | Yes | Remove photo |
+| GET | `/api/stats` | Yes | Get statistics |
+
+---
+
+## 7. Design System
+
+### Color Palette (HSL Format)
+
+#### Light Mode
+```css
+--background: 60 29% 96%;        /* Earthy cream */
+--foreground: 230 25% 18%;       /* Deep charcoal */
+--primary: 146 26% 39%;          /* Forest green #4a7c59 */
+--secondary: 106 45% 27%;        /* Deep forest #2d5016 */
+--accent: 22 92% 67%;            /* Warm amber #f4a261 */
+--destructive: 11 80% 62%;       /* Coral #e07a5f */
+--muted: 60 15% 90%;
+--muted-foreground: 230 15% 45%;
+--border: 60 15% 85%;
+```
+
+#### Dark Mode
+```css
+--background: 230 25% 12%;
+--foreground: 60 29% 96%;
+--primary: 146 26% 45%;
+--secondary: 106 45% 35%;
+--accent: 22 92% 67%;
+/* ... etc */
+```
+
+### Typography
+
+```css
+/* Headings */
+font-family: 'Outfit', sans-serif;
+/* Weights: 400, 500, 600, 700, 800 */
+
+/* Body */
+font-family: 'Inter', sans-serif;
+/* Weights: 300, 400, 500, 600 */
+```
+
+**Google Fonts Import**:
+```css
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+```
+
+### Custom Utilities
+
+```css
+/* Gradient utilities */
+.sunset-gradient {
+  background: linear-gradient(135deg,
+    hsl(var(--sunset-orange)) 0%,
+    hsl(var(--sunset-coral)) 40%,
+    hsl(var(--sunset-purple)) 70%,
+    hsl(var(--sunset-blue)) 100%);
+}
+
+.forest-gradient {
+  background: linear-gradient(135deg,
+    hsl(var(--trail-forest)) 0%,
+    hsl(var(--trail-forest-deep)) 100%);
+}
+
+/* Text shadows */
+.text-shadow-sm { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+.text-shadow { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
+```
+
+### Design Inspiration
+- **Strava**: Progress tracking, statistics presentation
+- **Notion**: Clean journaling interface
+- **AllTrails**: Map aesthetics
+- **National Park Service**: Earthy, outdoor color palette
+
+---
+
+## 8. Dependencies & Compatibility
+
+### Frontend Dependencies (webapp/package.json)
+
+```json
+{
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.2",
+    "@tanstack/react-query": "^5.90.10",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^5.0.0",  // INSTALLED BUT NOT USED - see compatibility issues
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "framer-motion": "^12.23.28",
+    "lucide-react": "^0.462.0",
+    "tailwind-merge": "^2.6.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "zod": "^3.25.76",
+    // ... shadcn/ui dependencies (many @radix-ui packages)
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "@vitejs/plugin-react-swc": "^3.11.0",
+    "tailwindcss": "^3.4.18",
+    "@types/leaflet": "^1.9.21",
+    // ... other dev deps
+  }
+}
+```
+
+### Backend Dependencies (backend/package.json)
+
+```json
+{
+  "dependencies": {
+    "hono": "4.6.0",
+    "@hono/node-server": "1.12.0",
+    "@hono/zod-validator": "^0.7.6",
+    "@prisma/client": "6",
+    "better-auth": "^1.4.15",
+    "zod": "4.1.11",
+    "@vibecodeapp/backend-sdk": "^1.0.1",
+    "@vibecodeapp/proxy": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prisma": "6",
+    "typescript": "5.8.3"
+  }
+}
+```
+
+---
+
+## 9. Known Issues & Solutions
+
+### CRITICAL: react-leaflet Incompatibility with React 18
+
+**Problem**: `react-leaflet@5.0.0` has a critical incompatibility with React 18 that causes a white screen crash.
+
+**Error Messages**:
+```
+Warning: Rendering <Context> directly is not supported and will be removed in a future major release.
+Warning: A context consumer was rendered with multiple children...
+Uncaught TypeError: render2 is not a function at updateContextConsumer
+```
+
+**Root Cause**: react-leaflet internally renders `<Context>` (the context object itself) instead of `<Context.Consumer>` or using the `useContext` hook. This is incompatible with React 18's stricter context handling.
+
+**Failed Solutions**:
+1. Using `<Fragment>` instead of `<div>` to wrap map children - did not fix the issue
+2. Updating react-leaflet - no compatible version available
+
+**Working Solution**: Use native Leaflet directly instead of react-leaflet.
+
+```typescript
+// TrailMap.tsx - CORRECT IMPLEMENTATION
+import { useEffect, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+export function TrailMap({ entries, height }: TrailMapProps) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+
+  // Initialize map once
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current) return;
+
+    const map = L.map(mapRef.current).setView([34.6266, -84.1934], 10);
+    mapInstanceRef.current = map;
+
+    L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+      attribution: '...',
+      maxZoom: 17,
+    }).addTo(map);
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []);
+
+  // Update markers when entries change
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Clear old markers, add new ones
+    // ... implementation
+  }, [entries]);
+
+  return (
+    <div style={{ height }}>
+      <div ref={mapRef} style={{ height: "100%", width: "100%" }} />
+    </div>
+  );
+}
+```
+
+**Key Pattern**:
+- Use `useRef` for both the container div AND the map instance
+- Initialize map in first `useEffect` with empty deps `[]`
+- Update markers/layers in second `useEffect` with `[entries]` dep
+- Clean up with `map.remove()` in return function
+
+### Leaflet Marker Icons Not Loading
+
+**Problem**: Default marker icons don't load in Vite builds.
+
+**Solution**: Use CDN URLs for marker icons:
+
+```typescript
+const iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
+const iconRetinaUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png";
+const shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
+
+const DefaultIcon = L.icon({
+  iconUrl,
+  iconRetinaUrl,
+  shadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+```
+
+### Leaflet CSS Not Loading
+
+**Problem**: Map tiles load but controls/popups look broken.
+
+**Solution**: Import CSS in component OR in index.css:
+
+```typescript
+// Option 1: In component
+import "leaflet/dist/leaflet.css";
+
+// Option 2: In index.css
+@import 'leaflet/dist/leaflet.css';
+```
+
+---
+
+## 10. Current Status
+
+### Completed Features
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Project setup | Done | Vite + React + Tailwind |
+| Design system | Done | Custom trail-themed colors |
+| Navbar | Done | Responsive with mobile menu |
+| Homepage | Done | Hero, stats, map, latest entry |
+| Timeline page | Done | Chronological entry list |
+| Entry detail page | Done | Full entry with photos |
+| Stats component | Done | Progress bar + stat cards |
+| TrailMap component | Done | Native Leaflet (not react-leaflet) |
+| Mock data | Done | One sample entry |
+| Backend API | Done | Full CRUD for entries |
+| Database schema | Done | Users, entries, photos |
+| Authentication | Done | Better Auth with email OTP |
+
+### Not Yet Implemented
+
+| Feature | Priority | Notes |
+|---------|----------|-------|
+| Frontend auth integration | High | Login/signup UI |
+| API connection | High | Replace mock data with API calls |
+| Entry creation UI | High | Form to add new entries |
+| Photo upload | Medium | Connect to backend photo routes |
+| Public/private entries | Medium | Visibility toggle |
+| Full AT GPX route | Low | Display entire trail on map |
+| Offline mode | Low | Service worker caching |
+| Google Drive sync | Low | Third-party integration |
+
+---
+
+## 11. Next Steps
+
+### Phase 1: Connect Frontend to Backend (Priority: HIGH)
+
+#### Step 1.1: Create API Client
+Create a typed API client for the frontend:
+
+```typescript
+// webapp/src/lib/api.ts
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+class ApiClient {
+  private async request<T>(path: string, options?: RequestInit): Promise<T> {
+    const res = await fetch(`${BACKEND_URL}${path}`, {
+      ...options,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error?.message || 'Request failed');
+    return json.data;
+  }
+
+  entries = {
+    list: (page = 1) => this.request<JournalEntriesList>(`/api/entries?page=${page}`),
+    get: (id: string) => this.request<JournalEntry>(`/api/entries/${id}`),
+    create: (data: CreateJournalEntryInput) =>
+      this.request<JournalEntry>('/api/entries', { method: 'POST', body: JSON.stringify(data) }),
+    // ... etc
+  };
+}
+
+export const api = new ApiClient();
+```
+
+#### Step 1.2: Add Auth Context
+Create authentication context and hooks:
+
+```typescript
+// webapp/src/context/AuthContext.tsx
+// - useAuth() hook
+// - AuthProvider component
+// - Login/logout methods
+// - Session state
+```
+
+#### Step 1.3: Create Login Page
+Build login UI with email OTP flow:
+- Email input
+- OTP input (after email submitted)
+- Error handling
+- Redirect after login
+
+#### Step 1.4: Protect Routes
+Add route protection for authenticated pages:
+
+```typescript
+// webapp/src/components/ProtectedRoute.tsx
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingSpinner />;
+  if (!user) return <Navigate to="/login" />;
+  return children;
+}
+```
+
+#### Step 1.5: Replace Mock Data
+Update pages to fetch from API:
+
+```typescript
+// Before (mock data)
+import { mockJournalEntries } from "@/data/journalEntries";
+
+// After (API)
+const { data: entries, isLoading } = useQuery({
+  queryKey: ['entries'],
+  queryFn: () => api.entries.list(),
+});
+```
+
+### Phase 2: Entry Management (Priority: HIGH)
+
+#### Step 2.1: Entry Creation Form
+Build form with:
+- Date picker
+- Title input
+- Markdown editor (or textarea)
+- Miles/elevation inputs
+- GPS coordinate inputs (optional)
+- Photo upload
+
+#### Step 2.2: Entry Editing
+- Edit button on entry detail page
+- Pre-populated form
+- Update mutation
+
+#### Step 2.3: Entry Deletion
+- Delete confirmation dialog
+- Delete mutation
+- Redirect after delete
+
+### Phase 3: Photo Management (Priority: MEDIUM)
+
+#### Step 3.1: Photo Upload Component
+- Drag-and-drop upload
+- Progress indicator
+- Preview before upload
+- Caption input
+
+#### Step 3.2: Photo Gallery
+- Grid display
+- Lightbox view
+- Reorder capability
+- Delete functionality
+
+### Phase 4: Enhanced Features (Priority: LOW)
+
+#### Step 4.1: Full AT Route Display
+- Load full GPX file (312k points)
+- Optimize for performance (simplify line)
+- Show progress along full trail
+
+#### Step 4.2: Public/Private Entries
+- Add `isPublic` field to schema
+- Toggle on entry form
+- Public viewing without auth
+
+#### Step 4.3: Offline Support
+- Service worker for caching
+- IndexedDB for offline entries
+- Sync when online
+
+---
+
+## Appendix: Environment Variables
+
+### Backend (.env)
+```env
+DATABASE_URL="file:./prisma/dev.db"
+BETTER_AUTH_SECRET="your-secret-here"
+BACKEND_URL="https://your-backend-url.vibecode.run"
+```
+
+### Frontend (.env)
+```env
+VITE_BACKEND_URL="https://your-backend-url.vibecode.run"
+```
+
+---
+
+## Appendix: Useful Commands
+
+```bash
+# Frontend
+cd webapp
+bun install
+bun run dev          # Start dev server (port 8000)
+bun run build        # Production build
+bun run typecheck    # Type checking
+
+# Backend
+cd backend
+bun install
+bun run dev          # Start with hot reload (port 3000)
+bunx prisma studio   # Database viewer
+bunx prisma db push  # Push schema changes
+bunx prisma generate # Regenerate client
+
+# Testing API
+curl $BACKEND_URL/health
+curl $BACKEND_URL/api/entries -H "Cookie: ..."
+```
+
+---
+
+*End of Development Specification*
+
+
+## FRONTEND CONFIG
+================================================
+FILE: webapp/package.json
+================================================
+{
+  "name": "webapp",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.10.0",
+    "@radix-ui/react-accordion": "^1.2.12",
+    "@radix-ui/react-alert-dialog": "^1.1.15",
+    "@radix-ui/react-aspect-ratio": "^1.1.8",
+    "@radix-ui/react-avatar": "^1.1.11",
+    "@radix-ui/react-checkbox": "^1.3.3",
+    "@radix-ui/react-collapsible": "^1.1.12",
+    "@radix-ui/react-context-menu": "^2.2.16",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-hover-card": "^1.1.15",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-menubar": "^1.1.16",
+    "@radix-ui/react-navigation-menu": "^1.2.14",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-progress": "^1.1.8",
+    "@radix-ui/react-radio-group": "^1.3.8",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slider": "^1.3.6",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-switch": "^1.2.6",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-toast": "^1.2.15",
+    "@radix-ui/react-toggle": "^1.1.10",
+    "@radix-ui/react-toggle-group": "^1.1.11",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "@tanstack/react-query": "^5.90.10",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "date-fns": "^4.1.0",
+    "embla-carousel-react": "^8.6.0",
+    "framer-motion": "^12.23.28",
+    "input-otp": "^1.4.2",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.462.0",
+    "next-themes": "^0.3.0",
+    "react": "^18.3.1",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.66.1",
+    "react-leaflet": "^5.0.0",
+    "react-markdown": "^10.1.0",
+    "react-resizable-panels": "^2.1.9",
+    "react-router-dom": "^6.30.2",
+    "recharts": "^2.15.4",
+    "remark-gfm": "^4.0.1",
+    "sonner": "^1.7.4",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7",
+    "vaul": "^0.9.9",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^22.19.1",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7",
+    "@vibecodeapp/webapp": "^1.0.7",
+    "@vitejs/plugin-react-swc": "^3.11.0",
+    "autoprefixer": "^10.4.22",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^15.15.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.47.0",
+    "vite": "^5.4.21"
+  },
+  "trustedDependencies": [
+    "@swc/core"
+  ]
+}
+
+================================================
+FILE: webapp/vite.config.ts
+================================================
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import { vibecodePlugin } from "@vibecodeapp/webapp/plugin";
+import path from "path";
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  server: {
+    host: "::",
+    port: 8000,
+    allowedHosts: true, // Allow all hosts
+  },
+  plugins: [
+    react(),
+    mode === "development" && vibecodePlugin(),
+  ].filter(Boolean),
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+}));
+
+
+================================================
+FILE: webapp/tailwind.config.ts
+================================================
+import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
+
+export default {
+  darkMode: ["class"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
+  prefix: "",
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
+    extend: {
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        outfit: ["Outfit", "sans-serif"],
+        inter: ["Inter", "sans-serif"],
+      },
+      keyframes: {
+        "accordion-down": {
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
+        },
+        "accordion-up": {
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
+        },
+        "shimmer-sweep": {
+          "0%": {
+            backgroundPosition: "-200% center",
+          },
+          "50%": {
+            backgroundPosition: "200% center",
+          },
+          "100%": {
+            backgroundPosition: "-200% center",
+          },
+        },
+        "glow-pulse": {
+          "0%, 100%": {
+            opacity: "0.4",
+          },
+          "50%": {
+            opacity: "0.8",
+          },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        "shimmer-sweep": "shimmer-sweep 6s ease-in-out infinite",
+        "glow-pulse": "glow-pulse 3s ease-in-out infinite",
+      },
+    },
+  },
+  plugins: [tailwindcssAnimate],
+} satisfies Config;
+
+
+================================================
+FILE: webapp/tsconfig.json
+================================================
+{
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "noImplicitAny": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "noUnusedLocals": false,
+    "strictNullChecks": false
+  }
+}
+
+
+================================================
+FILE: webapp/index.html
+================================================
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trail Tales - Appalachian Trail Journal</title>
+    <meta name="description" content="Follow my journey hiking the Appalachian Trail - beautiful photography, daily journal entries, and trail statistics from Georgia to Maine." />
+    <meta name="author" content="Trail Tales" />
+
+    <meta property="og:title" content="Trail Tales - Appalachian Trail Journal" />
+    <meta property="og:description" content="Follow my journey hiking the Appalachian Trail - beautiful photography, daily journal entries, and trail statistics from Georgia to Maine." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-base.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@trailtales" />
+    <meta name="twitter:image" content="/og-base.png" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+
+## FRONTEND SOURCE
+================================================
+FILE: webapp/src/main.tsx
+================================================
+import { createRoot } from "react-dom/client";
+import App from "./App.js";
+import "./index.css";
+
+createRoot(document.getElementById("root")!).render(<App />);
+
+
+================================================
+FILE: webapp/src/App.tsx
+================================================
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Navbar } from "@/components/Navbar";
+import { HomePage } from "./pages/HomePage";
+import { TimelinePage } from "./pages/TimelinePage";
+import { EntryDetailPage } from "./pages/EntryDetailPage";
+import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <div className="min-h-screen bg-background">
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/timeline" element={<TimelinePage />} />
+              <Route path="/entry/:id" element={<EntryDetailPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
+
+export default App;
+
+
+================================================
+FILE: webapp/src/index.css
+================================================
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Appalachian Trail Journal - Design System
+Forest greens, warm amber/orange accents, earthy cream backgrounds
+All colors are HSL format
+*/
+
+@layer base {
+  :root {
+    /* Earthy cream background */
+    --background: 60 29% 96%;
+    --foreground: 230 25% 18%;
+
+    /* Card styling - slightly lighter cream */
+    --card: 60 29% 98%;
+    --card-foreground: 230 25% 18%;
+
+    --popover: 60 29% 98%;
+    --popover-foreground: 230 25% 18%;
+
+    /* Forest green primary */
+    --primary: 146 26% 39%;
+    --primary-foreground: 60 29% 98%;
+
+    /* Deeper forest green secondary */
+    --secondary: 106 45% 27%;
+    --secondary-foreground: 60 29% 98%;
+
+    /* Muted earthy tones */
+    --muted: 60 15% 90%;
+    --muted-foreground: 230 15% 45%;
+
+    /* Warm amber/orange accent */
+    --accent: 22 92% 67%;
+    --accent-foreground: 230 25% 18%;
+
+    /* Warm coral accent for errors */
+    --destructive: 11 80% 62%;
+    --destructive-foreground: 60 29% 98%;
+
+    --border: 60 15% 85%;
+    --input: 60 15% 85%;
+    --ring: 146 26% 39%;
+
+    --radius: 0.5rem;
+
+    /* Sunset gradient colors */
+    --sunset-orange: 22 92% 67%;
+    --sunset-coral: 11 80% 62%;
+    --sunset-purple: 275 70% 45%;
+    --sunset-blue: 230 50% 30%;
+
+    /* Trail-specific colors */
+    --trail-forest: 146 26% 39%;
+    --trail-forest-deep: 106 45% 27%;
+    --trail-amber: 22 92% 67%;
+    --trail-cream: 60 29% 96%;
+
+    --sidebar-background: 60 29% 98%;
+    --sidebar-foreground: 230 25% 18%;
+    --sidebar-primary: 146 26% 39%;
+    --sidebar-primary-foreground: 60 29% 98%;
+    --sidebar-accent: 60 15% 90%;
+    --sidebar-accent-foreground: 230 25% 18%;
+    --sidebar-border: 60 15% 85%;
+    --sidebar-ring: 146 26% 39%;
+  }
+
+  .dark {
+    --background: 230 25% 12%;
+    --foreground: 60 29% 96%;
+
+    --card: 230 25% 15%;
+    --card-foreground: 60 29% 96%;
+
+    --popover: 230 25% 15%;
+    --popover-foreground: 60 29% 96%;
+
+    --primary: 146 26% 45%;
+    --primary-foreground: 230 25% 12%;
+
+    --secondary: 106 45% 35%;
+    --secondary-foreground: 60 29% 96%;
+
+    --muted: 230 15% 20%;
+    --muted-foreground: 60 15% 65%;
+
+    --accent: 22 92% 67%;
+    --accent-foreground: 230 25% 12%;
+
+    --destructive: 11 80% 62%;
+    --destructive-foreground: 60 29% 96%;
+
+    --border: 230 15% 22%;
+    --input: 230 15% 22%;
+    --ring: 146 26% 45%;
+
+    --sidebar-background: 230 25% 15%;
+    --sidebar-foreground: 60 29% 96%;
+    --sidebar-primary: 146 26% 45%;
+    --sidebar-primary-foreground: 230 25% 12%;
+    --sidebar-accent: 230 15% 20%;
+    --sidebar-accent-foreground: 60 29% 96%;
+    --sidebar-border: 230 15% 22%;
+    --sidebar-ring: 146 26% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+  }
+}
+
+/* Custom trail-themed utilities */
+@layer utilities {
+  .sunset-gradient {
+    background: linear-gradient(135deg,
+      hsl(var(--sunset-orange)) 0%,
+      hsl(var(--sunset-coral)) 40%,
+      hsl(var(--sunset-purple)) 70%,
+      hsl(var(--sunset-blue)) 100%);
+  }
+
+  .forest-gradient {
+    background: linear-gradient(135deg,
+      hsl(var(--trail-forest)) 0%,
+      hsl(var(--trail-forest-deep)) 100%);
+  }
+
+  .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+}
+
+
+## FRONTEND PAGES
+================================================
+FILE: webapp/src/pages/EntryDetailPage.tsx
+================================================
+import { useParams, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { JournalEntry } from "@/components/JournalEntry";
+import { TrailMap } from "@/components/TrailMap";
+import { mockJournalEntries } from "@/data/journalEntries";
+import { ArrowLeft } from "lucide-react";
+
+export function EntryDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const entry = mockJournalEntries.find((e) => e.id === id);
+
+  if (!entry) {
+    return (
+      <div className="min-h-screen py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl font-bold mb-4">Entry Not Found</h1>
+          <p className="text-muted-foreground mb-8">
+            The journal entry you're looking for doesn't exist.
+          </p>
+          <Link to="/timeline">
+            <Button>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Timeline
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen py-8 md:py-12">
+      <div className="container mx-auto px-4">
+        {/* Back button */}
+        <div className="mb-6">
+          <Link to="/timeline">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Timeline
+            </Button>
+          </Link>
+        </div>
+
+        {/* Main content */}
+        <div className="max-w-4xl mx-auto">
+          <JournalEntry entry={entry} showFullContent={true} />
+
+          {/* Map section */}
+          <div className="mt-12">
+            <h3 className="text-2xl font-bold mb-4">Today's Route</h3>
+            <TrailMap entries={[entry]} selectedEntry={entry} height="400px" />
+          </div>
+
+          {/* Navigation */}
+          <div className="mt-12 pt-8 border-t flex justify-between items-center">
+            <Link to="/timeline">
+              <Button variant="outline">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                All Entries
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+FILE: webapp/src/pages/HomePage.tsx
+================================================
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { TrailMap } from "@/components/TrailMap";
+import { Stats } from "@/components/Stats";
+import { JournalEntry } from "@/components/JournalEntry";
+import { mockJournalEntries, trailStats } from "@/data/journalEntries";
+import { ArrowRight, Download } from "lucide-react";
+
+export function HomePage() {
+  const latestEntry = mockJournalEntries[0];
+
+  return (
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative h-[60vh] md:h-[70vh] overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1464207687429-7505649dae38?w=1920&auto=format&fit=crop')",
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-background"></div>
+        </div>
+
+        <div className="relative h-full flex items-center justify-center text-center px-4">
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 text-shadow">
+              Trail Tales
+            </h1>
+            <p className="text-xl md:text-2xl text-white/90 mb-8 text-shadow-sm">
+              Following the white blazes from Georgia to Maine
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/timeline">
+                <Button size="lg" className="font-semibold">
+                  Read the Journal
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <Stats
+            totalMiles={trailStats.totalMiles}
+            milesCompleted={trailStats.milesCompleted}
+            daysOnTrail={trailStats.daysOnTrail}
+            averageDailyMiles={trailStats.averageDailyMiles}
+            totalElevationGain={trailStats.totalElevationGain}
+          />
+        </div>
+      </section>
+
+      {/* Map Section */}
+      <section className="py-12 md:py-16 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2">The Journey</h2>
+          <p className="text-muted-foreground mb-8">
+            Tracking my progress along the 2,190-mile Appalachian Trail
+          </p>
+          <TrailMap entries={mockJournalEntries} height="500px" />
+        </div>
+      </section>
+
+      {/* Latest Entry Section */}
+      <section className="py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-2">Latest Entry</h2>
+              <p className="text-muted-foreground">
+                The most recent update from the trail
+              </p>
+            </div>
+            <Link to="/timeline">
+              <Button variant="outline">
+                View All Entries
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+          <JournalEntry entry={latestEntry} />
+          <div className="mt-6 text-center">
+            <Link to={`/entry/${latestEntry.id}`}>
+              <Button size="lg">
+                Read Full Entry
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="py-16 md:py-20 bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Follow the Adventure
+          </h2>
+          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-90">
+            Join me on this incredible journey as I hike the entire Appalachian Trail,
+            one step at a time.
+          </p>
+          <Link to="/timeline">
+            <Button
+              size="lg"
+              variant="secondary"
+              className="font-semibold"
+            >
+              Explore the Timeline
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 border-t border-border bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              Trail Tales - Documenting the Appalachian Trail journey
+            </p>
+            <a
+              href="/DEVELOPMENT_SPEC.md"
+              download="Trail_Tales_Development_Spec.md"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Download Development Spec
+            </a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+
+================================================
+FILE: webapp/src/pages/Index.tsx
+================================================
+const Index = () => {
+  return (
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background">
+      {/* Ambient background glow effects */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/4 top-1/3 h-72 w-72 rounded-full bg-primary/10 blur-3xl animate-glow-pulse" />
+        <div className="absolute bottom-1/3 right-1/4 h-72 w-72 rounded-full bg-accent/10 blur-3xl animate-glow-pulse" style={{ animationDelay: "1.5s" }} />
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 text-center px-6 max-w-3xl">
+        <h1
+          className="font-syne text-2xl sm:text-3xl md:text-4xl font-bold leading-normal whitespace-nowrap animate-shimmer-sweep"
+          style={{
+            background: "linear-gradient(90deg, hsl(var(--foreground)) 0%, hsl(var(--foreground)) 35%, hsl(var(--primary)) 45%, hsl(var(--accent)) 55%, hsl(var(--foreground)) 65%, hsl(var(--foreground)) 100%)",
+            backgroundSize: "200% 100%",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent",
+          }}
+        >
+          Welcome to vibecode.dev
+        </h1>
+
+        {/* Placeholder message */}
+        <p className="mt-8 text-base sm:text-lg text-muted-foreground font-syne leading-relaxed">
+          Claude Code is building your app. It will appear here shortly.
+        </p>
+      </div>
+
+      {/* Subtle grid pattern overlay */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.02]"
+        style={{
+          backgroundImage: "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
+    </div>
+  );
+};
+
+export default Index;
+
+
+================================================
+FILE: webapp/src/pages/NotFound.tsx
+================================================
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+
+const NotFound = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+  }, [location.pathname]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-muted">
+      <div className="text-center">
+        <h1 className="mb-4 text-4xl font-bold">404</h1>
+        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
+        <a href="/" className="text-primary underline hover:text-primary/90">
+          Return to Home
+        </a>
+      </div>
+    </div>
+  );
+};
+
+export default NotFound;
+
+
+================================================
+FILE: webapp/src/pages/TimelinePage.tsx
+================================================
+import { Timeline } from "@/components/Timeline";
+import { mockJournalEntries } from "@/data/journalEntries";
+
+export function TimelinePage() {
+  return (
+    <div className="min-h-screen py-12 md:py-16">
+      <div className="container mx-auto px-4">
+        {/* Header */}
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Trail Journal
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Daily updates, stories, and reflections from the Appalachian Trail.
+            Each entry captures the beauty, challenges, and magic of the journey.
+          </p>
+        </div>
+
+        {/* Timeline */}
+        <div className="max-w-4xl mx-auto">
+          <Timeline entries={mockJournalEntries} />
+        </div>
+
+        {/* Empty state (for when there are no entries) */}
+        {mockJournalEntries.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground text-lg">
+              No journal entries yet. Check back soon!
+            </p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+
+## FRONTEND COMPONENTS
+================================================
+FILE: webapp/src/components/JournalEntry.tsx
+================================================
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { format } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, TrendingUp, Calendar } from "lucide-react";
+import { type JournalEntry as JournalEntryType } from "@/data/journalEntries";
+
+interface JournalEntryProps {
+  entry: JournalEntryType;
+  showFullContent?: boolean;
+  className?: string;
+}
+
+export function JournalEntry({
+  entry,
+  showFullContent = false,
+  className = "",
+}: JournalEntryProps) {
+  const formattedDate = format(new Date(entry.date), "MMMM d, yyyy");
+  const previewContent = entry.content.split("\n").slice(0, 3).join("\n");
+
+  return (
+    <Card className={`border-2 shadow-lg hover:shadow-xl transition-shadow ${className}`}>
+      <CardContent className="p-0">
+        {/* Photos gallery */}
+        {entry.photos.length > 0 ? (
+          <div className="relative h-64 md:h-80 w-full overflow-hidden rounded-t-lg">
+            <img
+              src={entry.photos[0].url}
+              alt={entry.photos[0].caption}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+              <p className="text-white text-sm text-shadow">
+                {entry.photos[0].caption}
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="p-6">
+          {/* Header */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="secondary" className="font-outfit">
+                Day {entry.day}
+              </Badge>
+              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {formattedDate}
+              </span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">{entry.title}</h2>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span>
+                {entry.location.start} → {entry.location.end}
+              </span>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex flex-wrap gap-4 mb-6 pb-6 border-b">
+            <Stat icon={<MapPin />} label="Distance" value={`${entry.miles} mi`} />
+            <Stat icon={<TrendingUp />} label="Elevation" value={`${entry.elevationGain} ft`} />
+            <Stat
+              icon={<MapPin />}
+              label="Total Miles"
+              value={`${entry.totalMiles} mi`}
+            />
+          </div>
+
+          {/* Content */}
+          <div className="prose prose-sm md:prose-base max-w-none prose-headings:font-outfit prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-a:text-primary prose-blockquote:text-muted-foreground prose-code:text-foreground">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {showFullContent ? entry.content : previewContent}
+            </ReactMarkdown>
+            {!showFullContent ? (
+              <p className="text-muted-foreground italic mt-4">
+                Read more to see the full entry...
+              </p>
+            ) : null}
+          </div>
+
+          {/* Additional photos */}
+          {showFullContent && entry.photos.length > 1 ? (
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {entry.photos.slice(1).map((photo, index) => (
+                <div key={index} className="relative rounded-lg overflow-hidden border-2 border-border">
+                  <img
+                    src={photo.url}
+                    alt={photo.caption}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-2 bg-card/95 backdrop-blur-sm">
+                    <p className="text-xs text-muted-foreground">{photo.caption}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface StatProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}
+
+function Stat({ icon, label, value }: StatProps) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="text-primary">{icon}</div>
+      <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-semibold">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+FILE: webapp/src/components/NavLink.tsx
+================================================
+import { NavLink as RouterNavLink, NavLinkProps } from "react-router-dom";
+import { forwardRef } from "react";
+import { cn } from "@/lib/utils";
+
+interface NavLinkCompatProps extends Omit<NavLinkProps, "className"> {
+  className?: string;
+  activeClassName?: string;
+  pendingClassName?: string;
+}
+
+const NavLink = forwardRef<HTMLAnchorElement, NavLinkCompatProps>(
+  ({ className, activeClassName, pendingClassName, to, ...props }, ref) => {
+    return (
+      <RouterNavLink
+        ref={ref}
+        to={to}
+        className={({ isActive, isPending }) =>
+          cn(className, isActive && activeClassName, isPending && pendingClassName)
+        }
+        {...props}
+      />
+    );
+  },
+);
+
+NavLink.displayName = "NavLink";
+
+export { NavLink };
+
+
+================================================
+FILE: webapp/src/components/Navbar.tsx
+================================================
+import { Link, useLocation } from "react-router-dom";
+import { Mountain, Map, BookOpen, BarChart3 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export function Navbar() {
+  const location = useLocation();
+
+  const navItems = [
+    { path: "/", label: "Home", icon: Mountain },
+    { path: "/timeline", label: "Journal", icon: BookOpen },
+  ];
+
+  return (
+    <nav className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur-sm shadow-sm">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-foreground group-hover:scale-110 transition-transform">
+              <Mountain className="h-6 w-6" />
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold font-outfit">Trail Tales</h1>
+              <p className="text-xs text-muted-foreground">Appalachian Trail 2025</p>
+            </div>
+          </Link>
+
+          {/* Navigation */}
+          <div className="flex items-center gap-1 md:gap-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg font-medium transition-colors",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+
+================================================
+FILE: webapp/src/components/Stats.tsx
+================================================
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
+import { Mountain, TrendingUp, Calendar, MapPin } from "lucide-react";
+
+interface StatsProps {
+  totalMiles: number;
+  milesCompleted: number;
+  daysOnTrail: number;
+  averageDailyMiles: number;
+  totalElevationGain: number;
+  className?: string;
+}
+
+export function Stats({
+  totalMiles,
+  milesCompleted,
+  daysOnTrail,
+  averageDailyMiles,
+  totalElevationGain,
+  className = "",
+}: StatsProps) {
+  const percentComplete = (milesCompleted / totalMiles) * 100;
+  const milesRemaining = totalMiles - milesCompleted;
+
+  return (
+    <div className={className}>
+      {/* Main progress card */}
+      <Card className="mb-6 border-2 shadow-lg">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div className="flex items-baseline justify-between">
+              <h3 className="text-2xl font-bold">Trail Progress</h3>
+              <span className="text-3xl font-bold text-primary">
+                {percentComplete.toFixed(1)}%
+              </span>
+            </div>
+
+            <Progress value={percentComplete} className="h-3" />
+
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{milesCompleted.toFixed(1)} miles completed</span>
+              <span>{milesRemaining.toFixed(0)} miles to go</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard
+          icon={<MapPin className="h-5 w-5" />}
+          label="Miles Hiked"
+          value={milesCompleted.toFixed(1)}
+          unit="mi"
+        />
+        <StatCard
+          icon={<Calendar className="h-5 w-5" />}
+          label="Days on Trail"
+          value={daysOnTrail.toString()}
+          unit="days"
+        />
+        <StatCard
+          icon={<TrendingUp className="h-5 w-5" />}
+          label="Avg Daily Miles"
+          value={averageDailyMiles.toFixed(1)}
+          unit="mi/day"
+        />
+        <StatCard
+          icon={<Mountain className="h-5 w-5" />}
+          label="Elevation Gain"
+          value={totalElevationGain.toLocaleString()}
+          unit="ft"
+        />
+      </div>
+    </div>
+  );
+}
+
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  unit: string;
+}
+
+function StatCard({ icon, label, value, unit }: StatCardProps) {
+  return (
+    <Card className="border-2 shadow-md hover:shadow-lg transition-shadow">
+      <CardContent className="pt-6">
+        <div className="flex flex-col items-center text-center space-y-2">
+          <div className="text-primary">{icon}</div>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+            {label}
+          </p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl md:text-3xl font-bold text-foreground">
+              {value}
+            </span>
+            <span className="text-xs text-muted-foreground">{unit}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+
+================================================
+FILE: webapp/src/components/Timeline.tsx
+================================================
+import { Link } from "react-router-dom";
+import { format } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, TrendingUp } from "lucide-react";
+import { type JournalEntry } from "@/data/journalEntries";
+
+interface TimelineProps {
+  entries: JournalEntry[];
+  className?: string;
+}
+
+export function Timeline({ entries, className = "" }: TimelineProps) {
+  return (
+    <div className={`relative ${className}`}>
+      {/* Timeline line */}
+      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-border hidden md:block"></div>
+
+      {/* Timeline entries */}
+      <div className="space-y-8">
+        {entries.map((entry, index) => (
+          <TimelineEntry key={entry.id} entry={entry} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface TimelineEntryProps {
+  entry: JournalEntry;
+  index: number;
+}
+
+function TimelineEntry({ entry, index }: TimelineEntryProps) {
+  const formattedDate = format(new Date(entry.date), "MMM d, yyyy");
+
+  return (
+    <div className="relative animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${index * 100}ms` }}>
+      {/* Timeline dot */}
+      <div className="absolute left-6 top-8 w-5 h-5 rounded-full bg-primary border-4 border-background z-10 hidden md:block"></div>
+
+      {/* Content */}
+      <Link to={`/entry/${entry.id}`} className="block md:ml-20">
+        <Card className="border-2 shadow-md hover:shadow-xl transition-all hover:border-primary cursor-pointer group">
+          <CardContent className="p-0">
+            <div className="flex flex-col md:flex-row">
+              {/* Thumbnail */}
+              {entry.photos.length > 0 ? (
+                <div className="w-full md:w-48 h-48 relative overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
+                  <img
+                    src={entry.photos[0].url}
+                    alt={entry.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-2 left-2">
+                    <Badge variant="secondary" className="font-outfit bg-black/50 text-white border-0">
+                      Day {entry.day}
+                    </Badge>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Content */}
+              <div className="flex-1 p-4 md:p-6">
+                <div className="mb-2">
+                  <h3 className="text-xl font-bold mb-1 group-hover:text-primary transition-colors">
+                    {entry.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{formattedDate}</p>
+                </div>
+
+                <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
+                  <MapPin className="h-4 w-4" />
+                  <span className="line-clamp-1">
+                    {entry.location.start} → {entry.location.end}
+                  </span>
+                </div>
+
+                {/* Quick stats */}
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">{entry.miles} mi</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">{entry.elevationGain} ft</span>
+                  </div>
+                </div>
+
+                {/* Preview text */}
+                <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
+                  {entry.content.split("\n\n")[1] || entry.content.split("\n\n")[0]}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    </div>
+  );
+}
+
+
+================================================
+FILE: webapp/src/components/TrailMap.tsx
+================================================
+import { useEffect, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import type { JournalEntry } from "@/data/journalEntries";
+
+// Fix for default marker icons - use CDN URLs
+const iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
+const iconRetinaUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png";
+const shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
+
+const DefaultIcon = L.icon({
+  iconUrl,
+  iconRetinaUrl,
+  shadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+interface TrailMapProps {
+  entries?: JournalEntry[];
+  selectedEntry?: JournalEntry;
+  height?: string;
+  showFullTrail?: boolean;
+  className?: string;
+}
+
+export function TrailMap({
+  entries = [],
+  selectedEntry,
+  height = "500px",
+  className = "",
+}: TrailMapProps) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current) return;
+
+    // Default center on Springer Mountain (AT southern terminus)
+    const defaultCenter: [number, number] = [34.6266, -84.1934];
+    const defaultZoom = 10;
+
+    // Initialize map
+    const map = L.map(mapRef.current).setView(defaultCenter, defaultZoom);
+    mapInstanceRef.current = map;
+
+    // Add tile layer
+    L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+      maxZoom: 17,
+    }).addTo(map);
+
+    // Cleanup on unmount
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []);
+
+  // Update markers and polylines when entries change
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Clear existing layers (except tile layer)
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+        map.removeLayer(layer);
+      }
+    });
+
+    if (entries.length === 0) return;
+
+    const bounds: L.LatLngExpression[] = [];
+
+    // Create custom icons
+    const startIcon = L.icon({
+      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+      shadowUrl,
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    });
+
+    const endIcon = L.icon({
+      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+      shadowUrl,
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41],
+    });
+
+    entries.forEach((entry) => {
+      const isSelected = selectedEntry?.id === entry.id;
+
+      // Add GPX track line
+      if (entry.gpxTrack && entry.gpxTrack.length > 0) {
+        L.polyline(entry.gpxTrack, {
+          color: isSelected ? "#f4a261" : "#4a7c59",
+          weight: isSelected ? 4 : 3,
+          opacity: isSelected ? 1 : 0.7,
+        }).addTo(map);
+
+        bounds.push(...entry.gpxTrack);
+      }
+
+      // Add start marker
+      L.marker(entry.coordinates.start, { icon: startIcon })
+        .bindPopup(`
+          <div class="text-sm">
+            <div class="font-semibold">Day ${entry.day} - Start</div>
+            <div>${entry.location.start}</div>
+            <div class="text-xs">${entry.date}</div>
+          </div>
+        `)
+        .addTo(map);
+      bounds.push(entry.coordinates.start);
+
+      // Add end marker
+      L.marker(entry.coordinates.end, { icon: endIcon })
+        .bindPopup(`
+          <div class="text-sm">
+            <div class="font-semibold">Day ${entry.day} - End</div>
+            <div>${entry.location.end}</div>
+            <div class="text-xs">${entry.miles} miles • ${entry.elevationGain}ft gain</div>
+          </div>
+        `)
+        .addTo(map);
+      bounds.push(entry.coordinates.end);
+    });
+
+    // Fit bounds to show all markers
+    if (bounds.length > 0) {
+      map.fitBounds(bounds as L.LatLngBoundsExpression, { padding: [50, 50] });
+    }
+  }, [entries, selectedEntry]);
+
+  return (
+    <div
+      className={`relative rounded-lg overflow-hidden border-2 border-border shadow-lg ${className}`}
+      style={{ height }}
+    >
+      <div ref={mapRef} style={{ height: "100%", width: "100%" }} />
+    </div>
+  );
+}
+
+
+## FRONTEND DATA
+================================================
+FILE: webapp/src/data/journalEntries.ts
+================================================
+export interface JournalEntry {
+  id: string;
+  day: number;
+  date: string;
+  title: string;
+  content: string;
+  miles: number;
+  elevationGain: number;
+  totalMiles: number;
+  location: {
+    start: string;
+    end: string;
+  };
+  coordinates: {
+    start: [number, number]; // [lat, lng]
+    end: [number, number];
+  };
+  photos: Array<{
+    url: string;
+    caption: string;
+  }>;
+  gpxTrack?: Array<[number, number]>; // Array of [lat, lng] coordinates
+}
+
+export const TOTAL_AT_MILES = 2190;
+
+export const mockJournalEntries: JournalEntry[] = [
+  {
+    id: "day-1",
+    day: 1,
+    date: "2025-03-15",
+    title: "Springer Mountain to Hawk Mountain Shelter",
+    content: `# The Journey Begins
+
+Today I took my first steps on the Appalachian Trail. Standing at the summit of Springer Mountain with my hand on the bronze plaque, I felt a mix of excitement and nervous energy that's hard to describe.
+
+The morning started early - 6 AM at Amicalola Falls. The approach trail was no joke, but it served as a perfect warm-up for what's to come. By the time I reached the actual AT terminus, my legs were already feeling the weight of my pack.
+
+## The Trail
+
+The first day is everything I hoped it would be. The forest is alive with early spring - rhododendrons beginning to bud, and the occasional wildflower pushing through the leaf litter. The trail is well-marked, and I'm grateful for the white blazes guiding me north.
+
+The climb to Hawk Mountain Shelter was steady but manageable. I'm glad I spent months training for this. Meeting other thru-hikers at the shelter tonight has been incredible - everyone sharing stories, trail names starting to emerge, and the camaraderie is already strong.
+
+## Lessons Learned
+
+- My pack is still too heavy. Already planning to send home a few "just in case" items at the next mail drop.
+- Trail runners feel great, glad I ditched the heavy boots during training.
+- Water sources are plentiful so far, but I'm staying vigilant about treatment.
+
+Tomorrow: pushing on to Gooch Gap. One day down, many more to go. The adventure has truly begun.
+
+*"The journey of a thousand miles begins with a single step." - And today, I took 7.8 miles worth of them.*`,
+    miles: 7.8,
+    elevationGain: 1200,
+    totalMiles: 7.8,
+    location: {
+      start: "Springer Mountain",
+      end: "Hawk Mountain Shelter",
+    },
+    coordinates: {
+      start: [34.6266, -84.1934], // Springer Mountain
+      end: [34.6344, -84.1564], // Hawk Mountain Shelter (approximate)
+    },
+    photos: [
+      {
+        url: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=1200&auto=format&fit=crop",
+        caption: "Springer Mountain Summit - Mile 0 of the Appalachian Trail",
+      },
+      {
+        url: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=1200&auto=format&fit=crop",
+        caption: "The trail stretches north through Georgia's mountains",
+      },
+    ],
+    gpxTrack: [
+      [34.6266, -84.1934],
+      [34.6280, -84.1920],
+      [34.6295, -84.1900],
+      [34.6310, -84.1875],
+      [34.6320, -84.1850],
+      [34.6330, -84.1800],
+      [34.6340, -84.1750],
+      [34.6344, -84.1564],
+    ],
+  },
+];
+
+export const trailStats = {
+  totalMiles: TOTAL_AT_MILES,
+  milesCompleted: 7.8,
+  percentComplete: (7.8 / TOTAL_AT_MILES) * 100,
+  daysOnTrail: 1,
+  averageDailyMiles: 7.8,
+  totalElevationGain: 1200,
+  estimatedDaysRemaining: Math.ceil((TOTAL_AT_MILES - 7.8) / 7.8),
+};
+
+
+## FRONTEND LIB/HOOKS
+================================================
+FILE: webapp/src/lib/utils.ts
+================================================
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+
+================================================
+FILE: webapp/src/hooks/use-toast.ts
+================================================
+import * as React from "react";
+
+import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
+
+const TOAST_LIMIT = 1;
+const TOAST_REMOVE_DELAY = 1000000;
+
+type ToasterToast = ToastProps & {
+  id: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: ToastActionElement;
+};
+
+const actionTypes = {
+  ADD_TOAST: "ADD_TOAST",
+  UPDATE_TOAST: "UPDATE_TOAST",
+  DISMISS_TOAST: "DISMISS_TOAST",
+  REMOVE_TOAST: "REMOVE_TOAST",
+} as const;
+
+let count = 0;
+
+function genId() {
+  count = (count + 1) % Number.MAX_SAFE_INTEGER;
+  return count.toString();
+}
+
+type ActionType = typeof actionTypes;
+
+type Action =
+  | {
+      type: ActionType["ADD_TOAST"];
+      toast: ToasterToast;
+    }
+  | {
+      type: ActionType["UPDATE_TOAST"];
+      toast: Partial<ToasterToast>;
+    }
+  | {
+      type: ActionType["DISMISS_TOAST"];
+      toastId?: ToasterToast["id"];
+    }
+  | {
+      type: ActionType["REMOVE_TOAST"];
+      toastId?: ToasterToast["id"];
+    };
+
+interface State {
+  toasts: ToasterToast[];
+}
+
+const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
+const addToRemoveQueue = (toastId: string) => {
+  if (toastTimeouts.has(toastId)) {
+    return;
+  }
+
+  const timeout = setTimeout(() => {
+    toastTimeouts.delete(toastId);
+    dispatch({
+      type: "REMOVE_TOAST",
+      toastId: toastId,
+    });
+  }, TOAST_REMOVE_DELAY);
+
+  toastTimeouts.set(toastId, timeout);
+};
+
+export const reducer = (state: State, action: Action): State => {
+  switch (action.type) {
+    case "ADD_TOAST":
+      return {
+        ...state,
+        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+      };
+
+    case "UPDATE_TOAST":
+      return {
+        ...state,
+        toasts: state.toasts.map((t) => (t.id === action.toast.id ? { ...t, ...action.toast } : t)),
+      };
+
+    case "DISMISS_TOAST": {
+      const { toastId } = action;
+
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
+      if (toastId) {
+        addToRemoveQueue(toastId);
+      } else {
+        state.toasts.forEach((toast) => {
+          addToRemoveQueue(toast.id);
+        });
+      }
+
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === toastId || toastId === undefined
+            ? {
+                ...t,
+                open: false,
+              }
+            : t,
+        ),
+      };
+    }
+    case "REMOVE_TOAST":
+      if (action.toastId === undefined) {
+        return {
+          ...state,
+          toasts: [],
+        };
+      }
+      return {
+        ...state,
+        toasts: state.toasts.filter((t) => t.id !== action.toastId),
+      };
+  }
+};
+
+const listeners: Array<(state: State) => void> = [];
+
+let memoryState: State = { toasts: [] };
+
+function dispatch(action: Action) {
+  memoryState = reducer(memoryState, action);
+  listeners.forEach((listener) => {
+    listener(memoryState);
+  });
+}
+
+type Toast = Omit<ToasterToast, "id">;
+
+function toast({ ...props }: Toast) {
+  const id = genId();
+
+  const update = (props: ToasterToast) =>
+    dispatch({
+      type: "UPDATE_TOAST",
+      toast: { ...props, id },
+    });
+  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
+
+  dispatch({
+    type: "ADD_TOAST",
+    toast: {
+      ...props,
+      id,
+      open: true,
+      onOpenChange: (open) => {
+        if (!open) dismiss();
+      },
+    },
+  });
+
+  return {
+    id: id,
+    dismiss,
+    update,
+  };
+}
+
+function useToast() {
+  const [state, setState] = React.useState<State>(memoryState);
+
+  React.useEffect(() => {
+    listeners.push(setState);
+    return () => {
+      const index = listeners.indexOf(setState);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    };
+  }, [state]);
+
+  return {
+    ...state,
+    toast,
+    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+  };
+}
+
+export { useToast, toast };
+
+
+## BACKEND CONFIG
+================================================
+FILE: backend/package.json
+================================================
+{
+  "name": "backend",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "test -f prisma/schema.prisma && bunx prisma generate || true && bun run src/index.ts",
+    "studio": "cloud-studio --port 3001 --hostname 0.0.0.0",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prisma": "6",
+    "typescript": "5.8.3"
+  },
+  "dependencies": {
+    "@hono/node-server": "1.12.0",
+    "@hono/zod-validator": "^0.7.6",
+    "@prisma/client": "6",
+    "@vibecodeapp/backend-sdk": "^1.0.1",
+    "@vibecodeapp/cloud-studio": "^0.2.3",
+    "@vibecodeapp/proxy": "^2.0.1",
+    "better-auth": "^1.4.15",
+    "hono": "4.6.0",
+    "zod": "4.1.11"
+  }
+}
+
+
+================================================
+FILE: backend/tsconfig.json
+================================================
+{
+  "compilerOptions": {
+    // Environment setup & latest features
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "allowJs": true,
+
+    // Bundler mode
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+
+    // Best practices
+    "strict": true,
+    "skipLibCheck": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+
+    // Some stricter flags (disabled by default)
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noPropertyAccessFromIndexSignature": false
+  }
+}
+
+
+## BACKEND SOURCE
+================================================
+FILE: backend/src/index.ts
+================================================
+import "@vibecodeapp/proxy"; // DO NOT REMOVE OTHERWISE VIBECODE PROXY WILL NOT WORK
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import "./env";
+import { sampleRouter } from "./routes/sample";
+import { entriesRouter } from "./routes/entries";
+import { photosRouter } from "./routes/photos";
+import { statsRouter } from "./routes/stats";
+import { logger } from "hono/logger";
+import { auth } from "./auth";
+
+// Type the Hono app with user/session variables
+const app = new Hono<{
+  Variables: {
+    user: typeof auth.$Infer.Session.user | null;
+    session: typeof auth.$Infer.Session.session | null;
+  };
+}>();
+
+// CORS middleware - validates origin against allowlist
+const allowed = [
+  /^http:\/\/localhost(:\d+)?$/,
+  /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+  /^https:\/\/[a-z0-9-]+\.dev\.vibecode\.run$/,
+  /^https:\/\/[a-z0-9-]+\.vibecode\.run$/,
+];
+
+app.use(
+  "*",
+  cors({
+    origin: (origin) => (origin && allowed.some((re) => re.test(origin)) ? origin : null),
+    credentials: true,
+  })
+);
+
+// Logging
+app.use("*", logger());
+
+// Auth middleware - populates user/session for all routes
+app.use("*", async (c, next) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  if (!session) {
+    c.set("user", null);
+    c.set("session", null);
+    await next();
+    return;
+  }
+  c.set("user", session.user);
+  c.set("session", session.session);
+  await next();
+});
+
+// Health check endpoint
+app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Mount auth handler
+app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
+// Routes
+app.route("/api/sample", sampleRouter);
+app.route("/api/entries", entriesRouter);
+app.route("/api/entries", photosRouter);
+app.route("/api/stats", statsRouter);
+
+const port = Number(process.env.PORT) || 3000;
+
+export default {
+  port,
+  fetch: app.fetch,
+};
+
+
+================================================
+FILE: backend/src/auth.ts
+================================================
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { emailOTP } from "better-auth/plugins";
+import { createVibecodeSDK } from "@vibecodeapp/backend-sdk";
+import { prisma } from "./prisma";
+import { env } from "./env";
+
+// Initialize Vibecode SDK for email sending
+const vibecode = createVibecodeSDK();
+
+export const auth = betterAuth({
+  database: prismaAdapter(prisma, { provider: "sqlite" }),
+  secret: env.BETTER_AUTH_SECRET,
+  baseURL: env.BACKEND_URL,
+  trustedOrigins: [
+    "http://localhost:*",
+    "http://127.0.0.1:*",
+    "https://*.dev.vibecode.run",
+    "https://*.vibecode.run",
+    "https://*.vibecodeapp.com",
+    env.BACKEND_URL,
+  ],
+  plugins: [
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        // Only send OTPs for sign-in right now.
+        if (type !== "sign-in") return;
+
+        await vibecode.email.sendOTP({
+          to: email,
+          code: String(otp),
+          fromName: "Appalachian Trail Journal",
+          lang: "en",
+        });
+      },
+    }),
+  ],
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+    },
+    disableCSRFCheck: true,
+    // Cross-origin cookie settings for iframe web preview
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+      partitioned: true,
+    },
+  },
+});
+
+
+================================================
+FILE: backend/src/prisma.ts
+================================================
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+// IMPORTANT: SQLite optimizations for better performance
+async function initSqlitePragmas(prisma: PrismaClient) {
+  await prisma.$queryRawUnsafe("PRAGMA journal_mode = WAL;");
+  await prisma.$queryRawUnsafe("PRAGMA foreign_keys = ON;");
+  await prisma.$queryRawUnsafe("PRAGMA busy_timeout = 10000;");
+  await prisma.$queryRawUnsafe("PRAGMA synchronous = NORMAL;");
+}
+
+initSqlitePragmas(prisma);
+
+export { prisma };
+
+
+================================================
+FILE: backend/src/env.ts
+================================================
+import { z } from "zod";
+
+/**
+ * Environment variable schema using Zod
+ * This ensures all required environment variables are present and valid
+ */
+const envSchema = z.object({
+  // Server Configuration
+  PORT: z.string().optional().default("3000"),
+  NODE_ENV: z.string().optional(),
+  BACKEND_URL: z.url("BACKEND_URL must be a valid URL").default("http://localhost:3000"), // Set via the Vibecode enviroment at run-time
+
+  // Database
+  DATABASE_URL: z.string().default("file:./dev.db"),
+
+  // Authentication
+  BETTER_AUTH_SECRET: z.string().min(1, "BETTER_AUTH_SECRET is required"),
+});
+
+/**
+ * Validate and parse environment variables
+ */
+function validateEnv() {
+  try {
+    const parsed = envSchema.parse(process.env);
+    console.log("✅ Environment variables validated successfully");
+    return parsed;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error("❌ Environment variable validation failed:");
+      error.issues.forEach((err: any) => {
+        console.error(`  - ${err.path.join(".")}: ${err.message}`);
+      });
+      console.error("\nPlease check your .env file and ensure all required variables are set.");
+      process.exit(1);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Validated and typed environment variables
+ */
+export const env = validateEnv();
+
+/**
+ * Type of the validated environment variables
+ */
+export type Env = z.infer<typeof envSchema>;
+
+/**
+ * Extend process.env with our environment variables
+ */
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace NodeJS {
+    // eslint-disable-next-line import/namespace
+    interface ProcessEnv extends z.infer<typeof envSchema> {}
+  }
+}
+
+
+================================================
+FILE: backend/src/types.ts
+================================================
+import { z } from "zod";
+
+// ============================================================
+// JOURNAL ENTRY SCHEMAS
+// ============================================================
+
+/**
+ * Schema for creating a new journal entry
+ */
+export const createJournalEntrySchema = z.object({
+  date: z.string().datetime(),
+  dayNumber: z.number().int().positive(),
+  title: z.string().min(1).max(500),
+  content: z.string(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  milesHiked: z.number().nonnegative(),
+  elevationGain: z.number().int().nullable().optional(),
+  totalMilesCompleted: z.number().nonnegative(),
+  gpxData: z.string().nullable().optional(),
+});
+
+export type CreateJournalEntryInput = z.infer<typeof createJournalEntrySchema>;
+
+/**
+ * Schema for updating an existing journal entry
+ */
+export const updateJournalEntrySchema = z.object({
+  date: z.string().datetime().optional(),
+  dayNumber: z.number().int().positive().optional(),
+  title: z.string().min(1).max(500).optional(),
+  content: z.string().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  milesHiked: z.number().nonnegative().optional(),
+  elevationGain: z.number().int().nullable().optional(),
+  totalMilesCompleted: z.number().nonnegative().optional(),
+  gpxData: z.string().nullable().optional(),
+});
+
+export type UpdateJournalEntryInput = z.infer<typeof updateJournalEntrySchema>;
+
+/**
+ * Schema for a photo within a journal entry
+ */
+export const photoSchema = z.object({
+  id: z.string().uuid(),
+  journalEntryId: z.string().uuid(),
+  url: z.string(),
+  caption: z.string().nullable(),
+  order: z.number().int().nonnegative(),
+  createdAt: z.string().datetime(),
+});
+
+export type Photo = z.infer<typeof photoSchema>;
+
+/**
+ * Schema for a journal entry (response)
+ */
+export const journalEntrySchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string(),
+  date: z.string().datetime(),
+  dayNumber: z.number().int().positive(),
+  title: z.string(),
+  content: z.string(),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+  milesHiked: z.number(),
+  elevationGain: z.number().int().nullable(),
+  totalMilesCompleted: z.number(),
+  gpxData: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  photos: z.array(photoSchema).optional(),
+});
+
+export type JournalEntry = z.infer<typeof journalEntrySchema>;
+
+/**
+ * Schema for paginated journal entries list
+ */
+export const journalEntriesListSchema = z.object({
+  entries: z.array(journalEntrySchema),
+  pagination: z.object({
+    page: z.number().int().positive(),
+    pageSize: z.number().int().positive(),
+    total: z.number().int().nonnegative(),
+    totalPages: z.number().int().nonnegative(),
+  }),
+});
+
+export type JournalEntriesList = z.infer<typeof journalEntriesListSchema>;
+
+// ============================================================
+// PHOTO SCHEMAS
+// ============================================================
+
+/**
+ * Schema for adding a photo to a journal entry
+ */
+export const createPhotoSchema = z.object({
+  url: z.string().url(),
+  caption: z.string().max(500).nullable().optional(),
+  order: z.number().int().nonnegative(),
+});
+
+export type CreatePhotoInput = z.infer<typeof createPhotoSchema>;
+
+// ============================================================
+// STATS SCHEMAS
+// ============================================================
+
+/**
+ * Schema for overall hiking statistics
+ */
+export const statsSchema = z.object({
+  totalMiles: z.number().nonnegative(),
+  totalDays: z.number().int().nonnegative(),
+  totalElevationGain: z.number().int().nonnegative(),
+  averageMilesPerDay: z.number().nonnegative(),
+  lastEntryDate: z.string().datetime().nullable(),
+});
+
+export type Stats = z.infer<typeof statsSchema>;
+
+// ============================================================
+// ERROR SCHEMAS
+// ============================================================
+
+/**
+ * Standard error response schema
+ */
+export const errorSchema = z.object({
+  error: z.object({
+    message: z.string(),
+    code: z.string().optional(),
+  }),
+});
+
+export type ErrorResponse = z.infer<typeof errorSchema>;
+
+
+## BACKEND ROUTES
+================================================
+FILE: backend/src/routes/entries.ts
+================================================
+import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
+import { prisma } from "../prisma";
+import {
+  createJournalEntrySchema,
+  updateJournalEntrySchema,
+  journalEntrySchema,
+} from "../types";
+import type { Context } from "hono";
+
+const entriesRouter = new Hono<{
+  Variables: {
+    user: any;
+    session: any;
+  };
+}>();
+
+// Helper to check authentication
+const requireAuth = (c: Context) => {
+  const user = c.get("user");
+  if (!user) {
+    return c.json(
+      { error: { message: "Unauthorized", code: "UNAUTHORIZED" } },
+      401
+    );
+  }
+  return null;
+};
+
+/**
+ * GET /api/entries
+ * List all journal entries with pagination
+ */
+entriesRouter.get(
+  "/",
+  zValidator(
+    "query",
+    z.object({
+      page: z.string().optional().default("1"),
+      pageSize: z.string().optional().default("10"),
+    })
+  ),
+  async (c) => {
+    const authError = requireAuth(c);
+    if (authError) return authError;
+
+    const user = c.get("user");
+    const { page, pageSize } = c.req.valid("query");
+
+    const pageNum = parseInt(page);
+    const pageSizeNum = parseInt(pageSize);
+    const skip = (pageNum - 1) * pageSizeNum;
+
+    try {
+      const [entries, total] = await Promise.all([
+        prisma.journalEntry.findMany({
+          where: { userId: user.id },
+          include: { photos: true },
+          orderBy: { date: "desc" },
+          skip,
+          take: pageSizeNum,
+        }),
+        prisma.journalEntry.count({ where: { userId: user.id } }),
+      ]);
+
+      const formattedEntries = entries.map((entry) => ({
+        ...entry,
+        date: entry.date.toISOString(),
+        createdAt: entry.createdAt.toISOString(),
+        updatedAt: entry.updatedAt.toISOString(),
+        photos: entry.photos.map((photo) => ({
+          ...photo,
+          createdAt: photo.createdAt.toISOString(),
+        })),
+      }));
+
+      return c.json({
+        data: {
+          entries: formattedEntries,
+          pagination: {
+            page: pageNum,
+            pageSize: pageSizeNum,
+            total,
+            totalPages: Math.ceil(total / pageSizeNum),
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching journal entries:", error);
+      return c.json(
+        {
+          error: {
+            message: "Failed to fetch journal entries",
+            code: "FETCH_ERROR",
+          },
+        },
+        500
+      );
+    }
+  }
+);
+
+/**
+ * GET /api/entries/:id
+ * Get a specific journal entry with photos
+ */
+entriesRouter.get("/:id", async (c) => {
+  const authError = requireAuth(c);
+  if (authError) return authError;
+
+  const user = c.get("user");
+  const entryId = c.req.param("id");
+
+  try {
+    const entry = await prisma.journalEntry.findFirst({
+      where: {
+        id: entryId,
+        userId: user.id,
+      },
+      include: { photos: { orderBy: { order: "asc" } } },
+    });
+
+    if (!entry) {
+      return c.json(
+        {
+          error: {
+            message: "Journal entry not found",
+            code: "NOT_FOUND",
+          },
+        },
+        404
+      );
+    }
+
+    const formattedEntry = {
+      ...entry,
+      date: entry.date.toISOString(),
+      createdAt: entry.createdAt.toISOString(),
+      updatedAt: entry.updatedAt.toISOString(),
+      photos: entry.photos.map((photo) => ({
+        ...photo,
+        createdAt: photo.createdAt.toISOString(),
+      })),
+    };
+
+    return c.json({ data: formattedEntry });
+  } catch (error) {
+    console.error("Error fetching journal entry:", error);
+    return c.json(
+      {
+        error: {
+          message: "Failed to fetch journal entry",
+          code: "FETCH_ERROR",
+        },
+      },
+      500
+    );
+  }
+});
+
+/**
+ * POST /api/entries
+ * Create a new journal entry
+ */
+entriesRouter.post(
+  "/",
+  zValidator("json", createJournalEntrySchema),
+  async (c) => {
+    const authError = requireAuth(c);
+    if (authError) return authError;
+
+    const user = c.get("user");
+    const data = c.req.valid("json");
+
+    try {
+      const entry = await prisma.journalEntry.create({
+        data: {
+          ...data,
+          date: new Date(data.date),
+          userId: user.id,
+        },
+        include: { photos: true },
+      });
+
+      const formattedEntry = {
+        ...entry,
+        date: entry.date.toISOString(),
+        createdAt: entry.createdAt.toISOString(),
+        updatedAt: entry.updatedAt.toISOString(),
+        photos: entry.photos.map((photo) => ({
+          ...photo,
+          createdAt: photo.createdAt.toISOString(),
+        })),
+      };
+
+      return c.json({ data: formattedEntry }, 201);
+    } catch (error) {
+      console.error("Error creating journal entry:", error);
+      return c.json(
+        {
+          error: {
+            message: "Failed to create journal entry",
+            code: "CREATE_ERROR",
+          },
+        },
+        500
+      );
+    }
+  }
+);
+
+/**
+ * PUT /api/entries/:id
+ * Update an existing journal entry
+ */
+entriesRouter.put(
+  "/:id",
+  zValidator("json", updateJournalEntrySchema),
+  async (c) => {
+    const authError = requireAuth(c);
+    if (authError) return authError;
+
+    const user = c.get("user");
+    const entryId = c.req.param("id");
+    const data = c.req.valid("json");
+
+    try {
+      // Check if entry exists and belongs to user
+      const existingEntry = await prisma.journalEntry.findFirst({
+        where: {
+          id: entryId,
+          userId: user.id,
+        },
+      });
+
+      if (!existingEntry) {
+        return c.json(
+          {
+            error: {
+              message: "Journal entry not found",
+              code: "NOT_FOUND",
+            },
+          },
+          404
+        );
+      }
+
+      const updateData: any = { ...data };
+      if (data.date) {
+        updateData.date = new Date(data.date);
+      }
+
+      const entry = await prisma.journalEntry.update({
+        where: { id: entryId },
+        data: updateData,
+        include: { photos: { orderBy: { order: "asc" } } },
+      });
+
+      const formattedEntry = {
+        ...entry,
+        date: entry.date.toISOString(),
+        createdAt: entry.createdAt.toISOString(),
+        updatedAt: entry.updatedAt.toISOString(),
+        photos: entry.photos.map((photo) => ({
+          ...photo,
+          createdAt: photo.createdAt.toISOString(),
+        })),
+      };
+
+      return c.json({ data: formattedEntry });
+    } catch (error) {
+      console.error("Error updating journal entry:", error);
+      return c.json(
+        {
+          error: {
+            message: "Failed to update journal entry",
+            code: "UPDATE_ERROR",
+          },
+        },
+        500
+      );
+    }
+  }
+);
+
+/**
+ * DELETE /api/entries/:id
+ * Delete a journal entry (and its photos via cascade)
+ */
+entriesRouter.delete("/:id", async (c) => {
+  const authError = requireAuth(c);
+  if (authError) return authError;
+
+  const user = c.get("user");
+  const entryId = c.req.param("id");
+
+  try {
+    // Check if entry exists and belongs to user
+    const existingEntry = await prisma.journalEntry.findFirst({
+      where: {
+        id: entryId,
+        userId: user.id,
+      },
+    });
+
+    if (!existingEntry) {
+      return c.json(
+        {
+          error: {
+            message: "Journal entry not found",
+            code: "NOT_FOUND",
+          },
+        },
+        404
+      );
+    }
+
+    await prisma.journalEntry.delete({
+      where: { id: entryId },
+    });
+
+    return c.body(null, 204);
+  } catch (error) {
+    console.error("Error deleting journal entry:", error);
+    return c.json(
+      {
+        error: {
+          message: "Failed to delete journal entry",
+          code: "DELETE_ERROR",
+        },
+      },
+      500
+    );
+  }
+});
+
+export { entriesRouter };
+
+
+================================================
+FILE: backend/src/routes/photos.ts
+================================================
+import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { prisma } from "../prisma";
+import { createPhotoSchema } from "../types";
+import type { Context } from "hono";
+
+const photosRouter = new Hono<{
+  Variables: {
+    user: any;
+    session: any;
+  };
+}>();
+
+// Helper to check authentication
+const requireAuth = (c: Context) => {
+  const user = c.get("user");
+  if (!user) {
+    return c.json(
+      { error: { message: "Unauthorized", code: "UNAUTHORIZED" } },
+      401
+    );
+  }
+  return null;
+};
+
+/**
+ * POST /api/entries/:id/photos
+ * Add a photo to a journal entry
+ */
+photosRouter.post(
+  "/:id/photos",
+  zValidator("json", createPhotoSchema),
+  async (c) => {
+    const authError = requireAuth(c);
+    if (authError) return authError;
+
+    const user = c.get("user");
+    const entryId = c.req.param("id");
+    const data = c.req.valid("json");
+
+    try {
+      // Verify that the journal entry exists and belongs to the user
+      const entry = await prisma.journalEntry.findFirst({
+        where: {
+          id: entryId,
+          userId: user.id,
+        },
+      });
+
+      if (!entry) {
+        return c.json(
+          {
+            error: {
+              message: "Journal entry not found",
+              code: "NOT_FOUND",
+            },
+          },
+          404
+        );
+      }
+
+      // Create the photo
+      const photo = await prisma.photo.create({
+        data: {
+          ...data,
+          journalEntryId: entryId,
+        },
+      });
+
+      const formattedPhoto = {
+        ...photo,
+        createdAt: photo.createdAt.toISOString(),
+      };
+
+      return c.json({ data: formattedPhoto }, 201);
+    } catch (error) {
+      console.error("Error creating photo:", error);
+      return c.json(
+        {
+          error: {
+            message: "Failed to create photo",
+            code: "CREATE_ERROR",
+          },
+        },
+        500
+      );
+    }
+  }
+);
+
+export { photosRouter };
+
+
+================================================
+FILE: backend/src/routes/sample.ts
+================================================
+import { Hono } from "hono";
+
+const sampleRouter = new Hono();
+
+sampleRouter.get("/", (c) => {
+  return c.json({
+    data: {
+      message: `${
+        ["Hello", "Hola", "Namaste", "Bonjour"][Math.floor(Math.random() * 4)]
+      } from the backend!`,
+      timestamp: new Date().toLocaleTimeString(),
+    },
+  });
+});
+
+export { sampleRouter };
+
+
+================================================
+FILE: backend/src/routes/stats.ts
+================================================
+import { Hono } from "hono";
+import { prisma } from "../prisma";
+import type { Context } from "hono";
+
+const statsRouter = new Hono<{
+  Variables: {
+    user: any;
+    session: any;
+  };
+}>();
+
+// Helper to check authentication
+const requireAuth = (c: Context) => {
+  const user = c.get("user");
+  if (!user) {
+    return c.json(
+      { error: { message: "Unauthorized", code: "UNAUTHORIZED" } },
+      401
+    );
+  }
+  return null;
+};
+
+/**
+ * GET /api/stats
+ * Get overall hiking statistics for the authenticated user
+ */
+statsRouter.get("/", async (c) => {
+  const authError = requireAuth(c);
+  if (authError) return authError;
+
+  const user = c.get("user");
+
+  try {
+    // Get all journal entries for the user
+    const entries = await prisma.journalEntry.findMany({
+      where: { userId: user.id },
+      orderBy: { date: "desc" },
+    });
+
+    if (entries.length === 0) {
+      return c.json({
+        data: {
+          totalMiles: 0,
+          totalDays: 0,
+          totalElevationGain: 0,
+          averageMilesPerDay: 0,
+          lastEntryDate: null,
+        },
+      });
+    }
+
+    // Calculate statistics
+    const totalMiles = entries.reduce((sum, entry) => sum + entry.milesHiked, 0);
+    const totalDays = entries.length;
+    const totalElevationGain = entries.reduce(
+      (sum, entry) => sum + (entry.elevationGain || 0),
+      0
+    );
+    const averageMilesPerDay = totalMiles / totalDays;
+    const lastEntryDate = entries[0]?.date.toISOString() || null;
+
+    return c.json({
+      data: {
+        totalMiles,
+        totalDays,
+        totalElevationGain,
+        averageMilesPerDay,
+        lastEntryDate,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    return c.json(
+      {
+        error: {
+          message: "Failed to fetch statistics",
+          code: "FETCH_ERROR",
+        },
+      },
+      500
+    );
+  }
+});
+
+export { statsRouter };
+
+
+## DATABASE SCHEMA
+================================================
+FILE: backend/prisma/schema.prisma
+================================================
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id
+  name          String
+  email         String         @unique
+  emailVerified Boolean        @default(false)
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  journalEntries JournalEntry[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model JournalEntry {
+  id                   String   @id @default(uuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                 DateTime
+  dayNumber            Int
+  title                String
+  content              String
+  latitude             Float?
+  longitude            Float?
+  milesHiked           Float
+  elevationGain        Int?
+  totalMilesCompleted  Float
+  gpxData              String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  photos               Photo[]
+
+  @@index([userId, date])
+  @@index([userId, dayNumber])
+}
+
+model Photo {
+  id             String       @id @default(uuid())
+  journalEntryId String
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  url            String
+  caption        String?
+  order          Int
+  createdAt      DateTime     @default(now())
+
+  @@index([journalEntryId])
+}
+
+

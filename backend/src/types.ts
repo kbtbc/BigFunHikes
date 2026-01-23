@@ -1,0 +1,145 @@
+import { z } from "zod";
+
+// ============================================================
+// JOURNAL ENTRY SCHEMAS
+// ============================================================
+
+/**
+ * Schema for creating a new journal entry
+ */
+export const createJournalEntrySchema = z.object({
+  date: z.string().datetime(),
+  dayNumber: z.number().int().positive(),
+  title: z.string().min(1).max(500),
+  content: z.string(),
+  milesHiked: z.number().nonnegative(),
+  elevationGain: z.number().int().nullable().optional(),
+  totalMilesCompleted: z.number().nonnegative(),
+  gpxData: z.string().nullable().optional(),
+});
+
+export type CreateJournalEntryInput = z.infer<typeof createJournalEntrySchema>;
+
+/**
+ * Schema for updating an existing journal entry
+ */
+export const updateJournalEntrySchema = z.object({
+  date: z.string().datetime().optional(),
+  dayNumber: z.number().int().positive().optional(),
+  title: z.string().min(1).max(500).optional(),
+  content: z.string().optional(),
+  milesHiked: z.number().nonnegative().optional(),
+  elevationGain: z.number().int().nullable().optional(),
+  totalMilesCompleted: z.number().nonnegative().optional(),
+  gpxData: z.string().nullable().optional(),
+});
+
+export type UpdateJournalEntryInput = z.infer<typeof updateJournalEntrySchema>;
+
+/**
+ * Schema for a photo within a journal entry
+ */
+export const photoSchema = z.object({
+  id: z.string().uuid(),
+  journalEntryId: z.string().uuid(),
+  url: z.string(),
+  caption: z.string().nullable(),
+  order: z.number().int().nonnegative(),
+  createdAt: z.string().datetime(),
+});
+
+export type Photo = z.infer<typeof photoSchema>;
+
+/**
+ * Schema for a journal entry (response)
+ */
+export const journalEntrySchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string(),
+  date: z.string().datetime(),
+  dayNumber: z.number().int().positive(),
+  title: z.string(),
+  content: z.string(),
+  milesHiked: z.number(),
+  elevationGain: z.number().int().nullable(),
+  totalMilesCompleted: z.number(),
+  gpxData: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  photos: z.array(photoSchema).optional(),
+});
+
+export type JournalEntry = z.infer<typeof journalEntrySchema>;
+
+/**
+ * Schema for paginated journal entries list
+ */
+export const journalEntriesListSchema = z.object({
+  entries: z.array(journalEntrySchema),
+  pagination: z.object({
+    page: z.number().int().positive(),
+    pageSize: z.number().int().positive(),
+    total: z.number().int().nonnegative(),
+    totalPages: z.number().int().nonnegative(),
+  }),
+});
+
+export type JournalEntriesList = z.infer<typeof journalEntriesListSchema>;
+
+// ============================================================
+// PHOTO SCHEMAS
+// ============================================================
+
+/**
+ * Schema for adding a photo to a journal entry
+ */
+export const createPhotoSchema = z.object({
+  url: z.string().url(),
+  caption: z.string().max(500).nullable().optional(),
+  order: z.number().int().nonnegative(),
+});
+
+export type CreatePhotoInput = z.infer<typeof createPhotoSchema>;
+
+/**
+ * Schema for uploading a photo file to a journal entry
+ */
+export const uploadPhotoSchema = z.object({
+  caption: z.string().max(500).nullable().optional(),
+  order: z.coerce.number().int().nonnegative(),
+});
+
+export type UploadPhotoInput = z.infer<typeof uploadPhotoSchema>;
+
+// ============================================================
+// STATS SCHEMAS
+// ============================================================
+
+/**
+ * Schema for overall hiking statistics
+ */
+export const statsSchema = z.object({
+  totalMiles: z.number().nonnegative(),
+  totalDays: z.number().int().nonnegative(),
+  totalElevationGain: z.number().int().nonnegative(),
+  averageMilesPerDay: z.number().nonnegative(),
+  lastEntryDate: z.string().datetime().nullable(),
+});
+
+export type Stats = z.infer<typeof statsSchema>;
+
+// ============================================================
+// ERROR SCHEMAS
+// ============================================================
+
+/**
+ * Standard error response schema
+ */
+export const errorSchema = z.object({
+  error: z.object({
+    message: z.string(),
+    code: z.string().optional(),
+  }),
+});
+
+export type ErrorResponse = z.infer<typeof errorSchema>;

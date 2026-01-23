@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+*/dist/
+*/build/
+
+# Database
+*.db
+*.db-journal
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+backend/data/
+
+# Logs
+*.log
+logs/
+*.log.*
+server.log
+*/server.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+.temp/
+.tmp/
+*.pid
+*.seed
+*.pid.lock
+
+# Bun
+.bun/
+bun.lockb
+
+# OS
+Thumbs.db
+Desktop.ini

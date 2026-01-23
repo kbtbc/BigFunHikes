@@ -1,0 +1,215 @@
+// Determine API base URL based on DISABLE_VIBECODE setting
+const isVibecodeModeDisabled = import.meta.env.VITE_DISABLE_VIBECODE === "true";
+const API_BASE_URL = isVibecodeModeDisabled
+  ? "http://localhost:3000"
+  : (import.meta.env.VITE_BACKEND_URL || "http://localhost:3000");
+
+class ApiError extends Error {
+  constructor(message: string, public status: number, public data?: unknown) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+// Response envelope type - all app routes return { data: T }
+interface ApiResponse<T> {
+  data: T;
+}
+
+async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+
+  const config: RequestInit = {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+    credentials: "include",
+  };
+
+  const response = await fetch(url, config);
+
+  if (!response.ok) {
+    const json = await response.json().catch(() => null);
+    throw new ApiError(
+      // Try app-route format first, fallback to generic message (Better Auth uses this)
+      json?.error?.message || json?.message || `Request failed with status ${response.status}`,
+      response.status,
+      json?.error || json
+    );
+  }
+
+  // 1. Handle 204 No Content
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  // 2. JSON responses: parse and unwrap { data }
+  const contentType = response.headers.get("content-type");
+  if (contentType?.includes("application/json")) {
+    const json: ApiResponse<T> = await response.json();
+    return json.data;
+  }
+
+  // 3. Non-JSON: return undefined (caller should use api.raw() for these)
+  return undefined as T;
+}
+
+// Raw request for non-JSON endpoints (uploads, downloads, streams)
+async function rawRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const config: RequestInit = {
+    ...options,
+    headers: {
+      ...options.headers,
+    },
+    credentials: "include",
+  };
+  return fetch(url, config);
+}
+
+export const api = {
+  get: <T>(endpoint: string, options?: RequestInit) =>
+    request<T>(endpoint, { ...options, method: "GET" }),
+
+  post: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
+    request<T>(endpoint, {
+      ...options,
+      method: "POST",
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  put: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
+    request<T>(endpoint, {
+      ...options,
+      method: "PUT",
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  patch: <T>(endpoint: string, data?: unknown, options?: RequestInit) =>
+    request<T>(endpoint, {
+      ...options,
+      method: "PATCH",
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  delete: <T>(endpoint: string, options?: RequestInit) =>
+    request<T>(endpoint, { ...options, method: "DELETE" }),
+
+  // Escape hatch for non-JSON endpoints
+  raw: rawRequest,
+};
+
+// Sample endpoint types (extend as needed)
+export interface SampleResponse {
+  message: string;
+  timestamp: string;
+}
+
+// Sample API functions
+export const sampleApi = {
+  getSample: () => api.get<SampleResponse>("/api/sample"),
+};
+
+// ============================================================
+// JOURNAL ENTRY TYPES
+// ============================================================
+
+export interface Photo {
+  id: string;
+  journalEntryId: string;
+  url: string;
+  caption: string | null;
+  order: number;
+  createdAt: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  userId: string;
+  date: string;
+  dayNumber: number;
+  title: string;
+  content: string;
+  milesHiked: number;
+  elevationGain: number | null;
+  totalMilesCompleted: number;
+  gpxData: string | null;
+  createdAt: string;
+  updatedAt: string;
+  photos?: Photo[];
+}
+
+export interface CreateJournalEntryInput {
+  date: string;
+  dayNumber: number;
+  title: string;
+  content: string;
+  milesHiked: number;
+  elevationGain?: number | null;
+  totalMilesCompleted: number;
+  gpxData?: string | null;
+}
+
+export interface UpdateJournalEntryInput {
+  date?: string;
+  dayNumber?: number;
+  title?: string;
+  content?: string;
+  milesHiked?: number;
+  elevationGain?: number | null;
+  totalMilesCompleted?: number;
+  gpxData?: string | null;
+}
+
+export interface JournalEntriesList {
+  entries: JournalEntry[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface Stats {
+  totalMiles: number;
+  totalDays: number;
+  totalElevationGain: number;
+  averageMilesPerDay: number;
+  lastEntryDate: string | null;
+}
+
+// ============================================================
+// API FUNCTIONS
+// ============================================================
+
+export const entriesApi = {
+  list: (page = 1, pageSize = 10) =>
+    api.get<JournalEntriesList>(`/api/entries?page=${page}&pageSize=${pageSize}`),
+
+  get: (id: string) => api.get<JournalEntry>(`/api/entries/${id}`),
+
+  create: (data: CreateJournalEntryInput) =>
+    api.post<JournalEntry>("/api/entries", data),
+
+  update: (id: string, data: UpdateJournalEntryInput) =>
+    api.put<JournalEntry>(`/api/entries/${id}`, data),
+
+  delete: (id: string) => api.delete<void>(`/api/entries/${id}`),
+};
+
+export const statsApi = {
+  get: () => api.get<Stats>("/api/stats"),
+};
+
+export const photosApi = {
+  add: (entryId: string, data: { url: string; caption?: string; order: number }) =>
+    api.post<Photo>(`/api/entries/${entryId}/photos`, data),
+
+  delete: (entryId: string, photoId: string) =>
+    api.delete<void>(`/api/entries/${entryId}/photos/${photoId}`),
+};
+
+export { ApiError };

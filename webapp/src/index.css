@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Appalachian Trail Journal - Design System
+Forest greens, warm amber/orange accents, earthy cream backgrounds
+All colors are HSL format
+*/
+
+@layer base {
+  :root {
+    /* Earthy cream background */
+    --background: 60 29% 96%;
+    --foreground: 230 25% 18%;
+
+    /* Card styling - slightly lighter cream */
+    --card: 60 29% 98%;
+    --card-foreground: 230 25% 18%;
+
+    --popover: 60 29% 98%;
+    --popover-foreground: 230 25% 18%;
+
+    /* Forest green primary */
+    --primary: 146 26% 39%;
+    --primary-foreground: 60 29% 98%;
+
+    /* Deeper forest green secondary */
+    --secondary: 106 45% 27%;
+    --secondary-foreground: 60 29% 98%;
+
+    /* Muted earthy tones */
+    --muted: 60 15% 90%;
+    --muted-foreground: 230 15% 45%;
+
+    /* Warm amber/orange accent */
+    --accent: 22 92% 67%;
+    --accent-foreground: 230 25% 18%;
+
+    /* Warm coral accent for errors */
+    --destructive: 11 80% 62%;
+    --destructive-foreground: 60 29% 98%;
+
+    --border: 60 15% 85%;
+    --input: 60 15% 85%;
+    --ring: 146 26% 39%;
+
+    --radius: 0.5rem;
+
+    /* Sunset gradient colors */
+    --sunset-orange: 22 92% 67%;
+    --sunset-coral: 11 80% 62%;
+    --sunset-purple: 275 70% 45%;
+    --sunset-blue: 230 50% 30%;
+
+    /* Trail-specific colors */
+    --trail-forest: 146 26% 39%;
+    --trail-forest-deep: 106 45% 27%;
+    --trail-amber: 22 92% 67%;
+    --trail-cream: 60 29% 96%;
+
+    --sidebar-background: 60 29% 98%;
+    --sidebar-foreground: 230 25% 18%;
+    --sidebar-primary: 146 26% 39%;
+    --sidebar-primary-foreground: 60 29% 98%;
+    --sidebar-accent: 60 15% 90%;
+    --sidebar-accent-foreground: 230 25% 18%;
+    --sidebar-border: 60 15% 85%;
+    --sidebar-ring: 146 26% 39%;
+  }
+
+  .dark {
+    --background: 230 25% 12%;
+    --foreground: 60 29% 96%;
+
+    --card: 230 25% 15%;
+    --card-foreground: 60 29% 96%;
+
+    --popover: 230 25% 15%;
+    --popover-foreground: 60 29% 96%;
+
+    --primary: 146 26% 45%;
+    --primary-foreground: 230 25% 12%;
+
+    --secondary: 106 45% 35%;
+    --secondary-foreground: 60 29% 96%;
+
+    --muted: 230 15% 20%;
+    --muted-foreground: 60 15% 65%;
+
+    --accent: 22 92% 67%;
+    --accent-foreground: 230 25% 12%;
+
+    --destructive: 11 80% 62%;
+    --destructive-foreground: 60 29% 96%;
+
+    --border: 230 15% 22%;
+    --input: 230 15% 22%;
+    --ring: 146 26% 45%;
+
+    --sidebar-background: 230 25% 15%;
+    --sidebar-foreground: 60 29% 96%;
+    --sidebar-primary: 146 26% 45%;
+    --sidebar-primary-foreground: 230 25% 12%;
+    --sidebar-accent: 230 15% 20%;
+    --sidebar-accent-foreground: 60 29% 96%;
+    --sidebar-border: 230 15% 22%;
+    --sidebar-ring: 146 26% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+  }
+}
+
+/* Custom trail-themed utilities */
+@layer utilities {
+  .sunset-gradient {
+    background: linear-gradient(135deg,
+      hsl(var(--sunset-orange)) 0%,
+      hsl(var(--sunset-coral)) 40%,
+      hsl(var(--sunset-purple)) 70%,
+      hsl(var(--sunset-blue)) 100%);
+  }
+
+  .forest-gradient {
+    background: linear-gradient(135deg,
+      hsl(var(--trail-forest)) 0%,
+      hsl(var(--trail-forest-deep)) 100%);
+  }
+
+  .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+}

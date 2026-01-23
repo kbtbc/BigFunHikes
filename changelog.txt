@@ -1,0 +1,124 @@
+# Changelog - Trail Tales
+
+## v1.0.0 - Initial Prototype (2026-01-19)
+
+### Features
+- Interactive Leaflet map with full Appalachian Trail route (312k GPS points)
+- Beautiful homepage with hero section, stats overview, and latest entry preview
+- Timeline page showing all journal entries in chronological order
+- Individual entry detail pages with full content, photos, and daily maps
+- Demo Day 1 journal entry: "Springer Mountain to Hawk Mountain Shelter"
+  - 7.8 miles hiked, 1,200 ft elevation gain
+  - Inspiring markdown content
+  - Two beautiful trail photos
+  - Sample GPX track
+
+### Design System
+- Custom color palette: forest greens, warm amber accents, earthy backgrounds
+- Typography: Outfit (headings) + Inter (body)
+- Sunset gradients and forest-inspired aesthetics
+- Mobile-first responsive design
+- Smooth animations and transitions
+
+### Backend
+- Complete REST API with Hono framework
+- SQLite database with Prisma ORM
+- Database models: User, JournalEntry, Photo
+- API endpoints for CRUD operations on journal entries and photos
+- Statistics endpoint for overall trail progress
+- Better Auth integration for user authentication (email + OTP)
+- Type-safe API contracts with Zod schemas
+
+### Technical Stack
+- Frontend: React 18 + Vite + TypeScript + Tailwind CSS
+- Maps: Leaflet.js with OpenTopoMap terrain tiles
+- Markdown: react-markdown with GitHub-flavored markdown support
+- Backend: Bun + Hono + Prisma + SQLite
+- Authentication: Better Auth
+- Type safety: Zod schemas shared between frontend and backend
+
+### Files Created
+- `/webapp/src/components/`: Navbar, TrailMap, Stats, JournalEntry, Timeline
+- `/webapp/src/pages/`: HomePage, TimelinePage, EntryDetailPage
+- `/webapp/src/data/journalEntries.ts`: Mock demo data
+- `/backend/src/routes/`: entries.ts, photos.ts, stats.ts
+- `/backend/src/types.ts`: Shared Zod schemas
+- `/backend/prisma/schema.prisma`: Database schema
+- `/webapp/public/data/appalachian_trail.gpx`: Full AT route
+- `/README.md`: Complete project documentation
+
+### Data Source
+- Appalachian Trail GPX file from TopoFusion (312,000 points, 4MB)
+- OpenTopoMap tiles for beautiful outdoor terrain visualization
+
+### Known Limitations
+- Currently using mock data for demo (authentication not yet integrated on frontend)
+- No offline mode yet
+- No voice-to-text support yet
+- No Google Drive sync yet
+
+### Next Steps
+- Integrate frontend with backend API
+- Add user authentication flow on frontend
+- Implement Google Drive sync for mobile publishing
+- Add voice-to-text for journal entries
+- Implement offline mode with service workers
+- Add photo upload functionality
+- Changes made by agent 2026-01-19T02:36:38Z
+- Changes made by agent 2026-01-19T02:41:25Z
+- Changes made by agent 2026-01-19T02:42:44Z
+- Changes made by agent 2026-01-19T02:43:39Z
+- Changes made by agent 2026-01-19T02:44:53Z
+- Changes made by agent 2026-01-19T02:45:42Z
+- Changes made by agent 2026-01-19T02:46:33Z
+- Changes made by agent 2026-01-19T02:48:21Z
+- Changes made by agent 2026-01-19T02:49:42Z
+- Changes made by agent 2026-01-19T02:50:48Z
+- Changes made by agent 2026-01-19T02:51:32Z
+- Changes made by agent 2026-01-19T02:52:24Z
+- Changes made by agent 2026-01-19T11:57:25Z
+- Changes made by agent 2026-01-19T11:59:26Z
+- Changes made by agent 2026-01-19T12:04:06Z
+- Changes made by agent 2026-01-19T12:06:32Z
+- Changes made by agent 2026-01-19T12:09:18Z
+- Changes made by agent 2026-01-19T12:14:34Z
+- Changes made by agent 2026-01-19T12:16:39Z
+- Changes made by agent 2026-01-19T12:18:29Z
+- Changes made by agent 2026-01-19T12:21:12Z
+- Changes made by agent 2026-01-19T12:26:41Z
+- Changes made by agent 2026-01-19T12:31:05Z
+- Changes made by agent 2026-01-19T12:33:46Z
+- Changes made by agent 2026-01-19T12:40:49Z
+- Changes made by agent 2026-01-20T19:01:49Z
+- Changes made by agent 2026-01-20T19:10:08Z
+- Changes made by agent 2026-01-21T02:36:39Z
+- Changes made by agent 2026-01-21T10:45:44Z
+- Changes made by agent 2026-01-21T10:47:53Z
+- Changes made by agent 2026-01-21T10:51:31Z
+- Changes made by agent 2026-01-22T02:41:07Z
+- Changes made by agent 2026-01-22T13:54:58Z
+- Changes made by agent 2026-01-22T14:10:07Z
+- Changes made by agent 2026-01-22T14:13:28Z
+- Changes made by agent 2026-01-22T14:14:41Z
+- Changes made by agent 2026-01-22T14:23:43Z
+- Changes made by agent 2026-01-22T14:28:38Z
+- Changes made by agent 2026-01-22T14:40:18Z
+- Changes made by agent 2026-01-22T14:46:06Z
+- Changes made by agent 2026-01-22T14:55:48Z
+- Changes made by agent 2026-01-22T15:03:45Z
+- Changes made by agent 2026-01-22T15:15:07Z
+- Changes made by agent 2026-01-22T15:26:02Z
+- Changes made by agent 2026-01-22T15:31:23Z
+- Changes made by agent 2026-01-22T15:50:03Z
+- Changes made by agent 2026-01-22T15:50:27Z
+- Changes made by agent 2026-01-22T15:52:06Z
+- Changes made by agent 2026-01-22T15:53:13Z
+- Changes made by agent 2026-01-22T15:58:57Z
+- Changes made by agent 2026-01-22T16:03:38Z
+- Changes made by agent 2026-01-22T16:11:55Z
+- Changes made by agent 2026-01-22T16:25:19Z
+- Changes made by agent 2026-01-22T16:27:43Z
+- Changes made by agent 2026-01-22T16:39:48Z
+- Changes made by agent 2026-01-22T20:56:58Z
+- Changes made by agent 2026-01-22T21:03:07Z
+- Changes made by agent 2026-01-22T21:12:02Z
