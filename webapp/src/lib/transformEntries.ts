@@ -58,6 +58,7 @@ export function transformApiEntryToComponent(
     id: apiEntry.id,
     day: apiEntry.dayNumber,
     date: apiEntry.date,
+    createdAt: apiEntry.createdAt,
     title: apiEntry.title,
     content: apiEntry.content,
     miles: apiEntry.milesHiked,

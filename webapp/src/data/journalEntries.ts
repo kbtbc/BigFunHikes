@@ -2,6 +2,7 @@ export interface JournalEntry {
   id: string;
   day: number;
   date: string;
+  createdAt?: string; // Timestamp when entry was created/posted
   title: string;
   content: string;
   miles: number;

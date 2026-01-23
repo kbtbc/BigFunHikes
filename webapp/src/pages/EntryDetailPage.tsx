@@ -120,14 +120,19 @@ export function EntryDetailPage() {
     );
   }
 
-  const formattedDate = entry ? format(new Date(entry.date), "MMMM d, yyyy") : "";
+  // Format the creation timestamp with both date and time
+  const formattedDateTime = entry?.createdAt
+    ? format(new Date(entry.createdAt), "MMMM d, yyyy 'at' h:mm a")
+    : entry
+    ? format(new Date(entry.date), "MMMM d, yyyy")
+    : "";
 
   return (
     <div className="min-h-screen py-8 md:py-12">
       <div className="container mx-auto px-4">
-        {/* Date heading */}
+        {/* Date and time heading */}
         <div className="mb-6">
-          <h2 className="text-sm italic text-muted-foreground">{formattedDate}</h2>
+          <h2 className="text-sm italic text-muted-foreground">{formattedDateTime}</h2>
         </div>
 
         {/* Main content */}
