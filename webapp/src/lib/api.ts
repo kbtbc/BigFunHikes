@@ -1,8 +1,21 @@
 // Determine API base URL based on DISABLE_VIBECODE setting
 const isVibecodeModeDisabled = import.meta.env.VITE_DISABLE_VIBECODE === "true";
-const API_BASE_URL = isVibecodeModeDisabled
-  ? "http://localhost:3000"
-  : (import.meta.env.VITE_BACKEND_URL || "http://localhost:3000");
+
+// Helper to get backend URL
+// When Vite proxy is configured, use relative URLs so requests go through the proxy
+// This makes everything same-origin so cookies work properly
+function getBackendUrl(): string {
+  // If Vibecode is disabled, use relative URLs (Vite proxy handles routing to backend)
+  // This ensures same-origin requests so cookies work across ports
+  if (isVibecodeModeDisabled) {
+    return ""; // Empty string = relative URLs, uses current origin
+  }
+  
+  // For Vibecode mode, use explicit backend URL
+  return import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+}
+
+const API_BASE_URL = getBackendUrl();
 
 class ApiError extends Error {
   constructor(message: string, public status: number, public data?: unknown) {
@@ -16,15 +29,28 @@ interface ApiResponse<T> {
   data: T;
 }
 
+// Helper to get auth token from localStorage
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("admin_auth_token");
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
+  // Include auth token in headers if available (for cross-origin HTTP)
+  const token = getAuthToken();
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const config: RequestInit = {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    headers,
     credentials: "include",
   };
 
@@ -59,11 +85,19 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 // Raw request for non-JSON endpoints (uploads, downloads, streams)
 async function rawRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  // Include auth token in headers if available (for cross-origin HTTP)
+  const token = getAuthToken();
+  const headers: HeadersInit = {
+    ...options.headers,
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
   const config: RequestInit = {
     ...options,
-    headers: {
-      ...options.headers,
-    },
+    headers,
     credentials: "include",
   };
   return fetch(url, config);

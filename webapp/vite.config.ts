@@ -12,6 +12,22 @@ export default defineConfig(({ mode }) => {
       host: "::",
       port: 8000,
       allowedHosts: true, // Allow all hosts
+      // Proxy API requests and static files to backend - this makes everything same-origin so cookies work
+      proxy: {
+        "/api": {
+          // Use VITE_BACKEND_URL if set, otherwise default to 127.0.0.1 (IPv4) instead of localhost
+          // This avoids IPv6 resolution issues
+          target: process.env.VITE_BACKEND_URL || "http://127.0.0.1:3000",
+          changeOrigin: true,
+          secure: false,
+        },
+        "/public": {
+          // Proxy static file requests (uploads) to backend
+          target: process.env.VITE_BACKEND_URL || "http://127.0.0.1:3000",
+          changeOrigin: true,
+          secure: false,
+        },
+      },
     },
     plugins: [
       react(),

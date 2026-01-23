@@ -113,5 +113,6 @@ const port = Number(process.env.PORT) || 3000;
 
 export default {
   port,
+  hostname: "0.0.0.0", // Bind to all interfaces to allow connections from other devices
   fetch: app.fetch,
 };

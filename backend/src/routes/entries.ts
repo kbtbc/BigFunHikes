@@ -45,6 +45,22 @@ entriesRouter.get(
         prisma.journalEntry.count(),
       ]);
 
+      // Helper to normalize photo URLs to relative paths (works with proxy)
+      const normalizePhotoUrl = (url: string): string => {
+        // If it's already a relative URL, return as-is
+        if (url.startsWith("/")) {
+          return url;
+        }
+        // If it's a full URL, extract the path
+        try {
+          const urlObj = new URL(url);
+          return urlObj.pathname;
+        } catch {
+          // If parsing fails, assume it's already relative
+          return url.startsWith("/") ? url : `/${url}`;
+        }
+      };
+
       const formattedEntries = entries.map((entry) => ({
         ...entry,
         date: entry.date.toISOString(),
@@ -52,6 +68,7 @@ entriesRouter.get(
         updatedAt: entry.updatedAt.toISOString(),
         photos: entry.photos.map((photo) => ({
           ...photo,
+          url: normalizePhotoUrl(photo.url),
           createdAt: photo.createdAt.toISOString(),
         })),
       }));
@@ -109,6 +126,22 @@ entriesRouter.get("/:id", async (c) => {
       );
     }
 
+    // Helper to normalize photo URLs to relative paths (works with proxy)
+    const normalizePhotoUrl = (url: string): string => {
+      // If it's already a relative URL, return as-is
+      if (url.startsWith("/")) {
+        return url;
+      }
+      // If it's a full URL, extract the path
+      try {
+        const urlObj = new URL(url);
+        return urlObj.pathname;
+      } catch {
+        // If parsing fails, assume it's already relative
+        return url.startsWith("/") ? url : `/${url}`;
+      }
+    };
+
     const formattedEntry = {
       ...entry,
       date: entry.date.toISOString(),
@@ -116,6 +149,7 @@ entriesRouter.get("/:id", async (c) => {
       updatedAt: entry.updatedAt.toISOString(),
       photos: entry.photos.map((photo) => ({
         ...photo,
+        url: normalizePhotoUrl(photo.url),
         createdAt: photo.createdAt.toISOString(),
       })),
     };
@@ -227,6 +261,22 @@ entriesRouter.put(
         include: { photos: { orderBy: { order: "asc" } } },
       });
 
+      // Helper to normalize photo URLs to relative paths (works with proxy)
+      const normalizePhotoUrl = (url: string): string => {
+        // If it's already a relative URL, return as-is
+        if (url.startsWith("/")) {
+          return url;
+        }
+        // If it's a full URL, extract the path
+        try {
+          const urlObj = new URL(url);
+          return urlObj.pathname;
+        } catch {
+          // If parsing fails, assume it's already relative
+          return url.startsWith("/") ? url : `/${url}`;
+        }
+      };
+
       const formattedEntry = {
         ...entry,
         date: entry.date.toISOString(),
@@ -234,6 +284,7 @@ entriesRouter.put(
         updatedAt: entry.updatedAt.toISOString(),
         photos: entry.photos.map((photo) => ({
           ...photo,
+          url: normalizePhotoUrl(photo.url),
           createdAt: photo.createdAt.toISOString(),
         })),
       };
