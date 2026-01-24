@@ -1,3 +1,14 @@
+export interface WeatherInfo {
+  temperature: number;
+  temperatureUnit: "F" | "C";
+  conditions: string;
+  weatherCode?: number;
+  humidity?: number;
+  windSpeed?: number;
+  windUnit?: string;
+  recordedAt: string;
+}
+
 export interface JournalEntry {
   id: string;
   day: number;
@@ -21,6 +32,8 @@ export interface JournalEntry {
     caption: string;
   }>;
   gpxTrack?: Array<[number, number]>; // Array of [lat, lng] coordinates
+  weather?: WeatherInfo; // Weather at time of entry
+  locationName?: string; // Human-readable location name
 }
 
 export const TOTAL_AT_MILES = 2190;

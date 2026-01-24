@@ -6,42 +6,64 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Features
+## Current Features (v2.0)
 
-### Current Features (v1.0)
+### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
-- **Photo Uploads**: Add and caption multiple photos per entry
+- **Photo Uploads**: Add and caption multiple photos per entry with carousel display
 - **Mile Tracking**: Daily miles hiked with automatic running total calculation
 - **Progress Tracking**: Total miles completed automatically calculated from all entries
-- **Day Numbering**: Auto-incrementing day counter from previous entries
+- **Day Numbering**: Track your hiking day count
+- **Elevation Tracking**: Record elevation gain per day
 - **Timeline View**: Beautiful chronological timeline of all your hiking days
-- **Statistics Dashboard**: Track total miles, entries, and hiking progress
+- **Statistics Dashboard**: Track total miles, entries, elevation, and average pace
+- **Interactive Map**: Leaflet map displaying trail routes and GPX tracks
 - **Mobile Responsive**: Optimized for on-trail updates from your phone
-- **Admin Authentication**: Secure login to manage your journal
+- **Admin Authentication**: Secure password-based login to manage your journal
 
-### Coming Soon
-- **Map Visualization**: Interactive map showing your Appalachian Trail route
-- **Elevation Tracking**: Track elevation gain per day
-- **Google Drive Sync**: Auto-publish entries by dropping files into a cloud folder
-- **Voice-to-Text**: Dictate journal entries on the trail
-- **Offline Mode**: Cache entries for areas without cell service
-- **Public/Private Entries**: Choose which entries to share publicly
+### Technical Features
+- Full CRUD operations (Create, Read, Update, Delete)
+- Photo management with file uploads
+- React Query for efficient data fetching/caching
+- GPX track display on maps
+- OpenTopoMap tiles for topographic visualization
+- 7-day session persistence
+
+## Coming Soon
+
+### Phase 3A: Location & Weather (Next)
+- **Auto GPS Location**: Automatically populate coordinates on new entries
+- **Auto Weather Recording**: Fetch and save current weather conditions
+- **Location Display**: Show coordinates and weather in entry views
+
+### Phase 3B: Enhancements
+- **Enhanced Statistics**: Pace calculations, projected completion
+- **Elevation Profiles**: Chart elevation gain over time
+
+### Phase 3C: Import/Export (Future)
+- **GPX Import UI**: Upload GPX tracks from hiking apps
+- **Export Features**: PDF export, JSON backup
+
+### Phase 3D: Offline (Future)
+- **PWA Support**: Offline mode for areas without service
 
 ## Tech Stack
 
 ### Frontend (Port 8000)
 - **Framework**: React 18 + Vite
 - **Styling**: Tailwind CSS + shadcn/ui components
-- **Maps**: Leaflet.js + react-leaflet
+- **Maps**: Leaflet.js with OpenTopoMap tiles
 - **Markdown**: react-markdown with remark-gfm
+- **Carousel**: Embla Carousel for photo galleries
 - **Routing**: React Router v6
+- **State**: React Query for server state
 - **Type Safety**: TypeScript with Zod schemas
 
 ### Backend (Port 3000)
 - **Runtime**: Bun
 - **Framework**: Hono (lightweight, fast API)
 - **Database**: SQLite + Prisma ORM
-- **Authentication**: Simple admin password (cookie-based)
+- **Authentication**: Password-based with cookie/token support
 - **Type Safety**: TypeScript + Zod validation
 
 ## Project Structure
@@ -56,26 +78,34 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 │   │   │   ├── Stats.tsx           # Progress statistics
 │   │   │   ├── JournalEntry.tsx    # Entry display component
 │   │   │   └── Timeline.tsx        # Timeline view
-│   │   ├── pages/          # Page components
+│   │   ├── pages/
 │   │   │   ├── HomePage.tsx        # Map + stats overview
 │   │   │   ├── TimelinePage.tsx    # All entries timeline
-│   │   │   └── EntryDetailPage.tsx # Individual entry view
-│   │   ├── data/           # Mock data (will be replaced with API)
-│   │   │   └── journalEntries.ts
-│   │   ├── index.css       # Design system & Tailwind config
-│   │   └── App.tsx         # Main app with routing
+│   │   │   ├── EntryDetailPage.tsx # Individual entry view
+│   │   │   ├── NewEntryPage.tsx    # Create new entry
+│   │   │   ├── EditEntryPage.tsx   # Edit existing entry
+│   │   │   └── LoginPage.tsx       # Admin authentication
+│   │   ├── hooks/
+│   │   │   └── use-entries.ts      # React Query hooks
+│   │   ├── context/
+│   │   │   └── AuthContext.tsx     # Auth state management
+│   │   ├── lib/
+│   │   │   ├── api.ts              # API client
+│   │   │   └── transformEntries.ts # Data transformation
+│   │   ├── index.css               # Design system & Tailwind
+│   │   └── App.tsx                 # Main app with routing
 │   └── public/
 │       └── data/
-│           └── appalachian_trail.gpx  # Full AT route (312k points)
+│           └── appalachian_trail.gpx  # Full AT route
 │
 └── backend/                # Backend API server
     ├── src/
-    │   ├── routes/         # API route handlers
-    │   │   ├── admin.ts    # Admin authentication
+    │   ├── routes/
+    │   │   ├── admin.ts    # Authentication endpoints
     │   │   ├── entries.ts  # Journal CRUD endpoints
     │   │   ├── photos.ts   # Photo upload endpoints
     │   │   └── stats.ts    # Statistics endpoints
-    │   ├── middleware/     # Route middleware
+    │   ├── middleware/
     │   │   └── adminAuth.ts # Admin session middleware
     │   ├── types.ts        # Zod schemas for API contracts
     │   ├── prisma.ts       # Prisma client setup
@@ -106,10 +136,9 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 ### JournalEntry
 - Date, day number, title
 - Markdown content
-- Location coordinates (lat/lon)
 - Daily statistics (miles hiked, elevation gain)
 - Cumulative progress (total miles completed)
-- GPX track data
+- GPX track data (optional)
 - Associated photos with captions
 
 ### Photo
@@ -124,17 +153,18 @@ All endpoints follow the `{ data: ... }` envelope pattern.
 **Journal Entries**:
 - `GET /api/entries` - List all entries (paginated)
 - `GET /api/entries/:id` - Get specific entry with photos
-- `POST /api/entries` - Create new entry
-- `PUT /api/entries/:id` - Update entry
-- `DELETE /api/entries/:id` - Delete entry
+- `POST /api/entries` - Create new entry (admin)
+- `PUT /api/entries/:id` - Update entry (admin)
+- `DELETE /api/entries/:id` - Delete entry (admin)
 
 **Photos**:
-- `POST /api/entries/:id/photos/upload` - Upload photo file with caption to entry (multipart/form-data)
+- `POST /api/entries/:id/photos/upload` - Upload photo file (multipart/form-data)
   - Accepts: JPEG, PNG, WebP, GIF (max 10MB)
   - Returns: Photo object with URL
+- `DELETE /api/entries/:id/photos/:photoId` - Delete photo (admin)
 
 **Statistics**:
-- `GET /api/stats` - Overall trail statistics (total miles, days, elevation gain)
+- `GET /api/stats` - Overall trail statistics
 
 **Authentication**:
 - `POST /api/admin/login` - Admin login with password
@@ -149,42 +179,44 @@ All endpoints follow the `{ data: ... }` envelope pattern.
 - [Bun](https://bun.sh/) (for backend)
 - [Node.js](https://nodejs.org/) v18+ (for frontend)
 
-**Step 1: Clone and Install**
+**Step 1: Backend Setup**
 
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd workspace
-
-# Backend setup
 cd backend
 bun install
+```
 
-# Create .env file
-cat > .env << 'EOF'
+Create a `backend/.env` file with:
+```env
 PORT=3000
 DATABASE_URL="file:./dev.db"
-ADMIN_PASSWORD="your-secure-password"
-EOF
+ADMIN_PASSWORD=<your-secure-password>
+BETTER_AUTH_SECRET=<random-string>
+DISABLE_VIBECODE=true
+```
 
-# Initialize database
+Then initialize and run:
+```bash
 bunx prisma db push
 bunx prisma generate
-
-# Start backend
 bun run dev  # Runs on http://localhost:3000
 ```
 
-**Step 2: Frontend Setup** (in a new terminal)
+**Step 2: Frontend Setup** (new terminal)
 
 ```bash
 cd webapp
-npm install  # or: bun install
+npm install
+```
 
-# Create .env file
-echo "VITE_BACKEND_URL=http://localhost:3000" > .env
+Create a `webapp/.env` file with:
+```env
+VITE_BACKEND_URL=http://localhost:3000
+VITE_DISABLE_VIBECODE=true
+```
 
-# Start frontend
+Then run:
+```bash
 npm run dev  # Runs on http://localhost:8000
 ```
 
@@ -192,41 +224,24 @@ npm run dev  # Runs on http://localhost:8000
 
 1. Open http://localhost:8000
 2. Go to http://localhost:8000/admin to login
-3. Enter your admin password (from backend `.env`)
+3. Enter your admin password
 4. Start creating journal entries!
 
 ### Hot Reload
 
-Both servers run automatically with hot reload:
+Both servers run with hot reload:
 - **Frontend**: http://localhost:8000 (Vite dev server)
 - **Backend**: http://localhost:3000 (Bun watch mode)
 
-Changes to code reload automatically.
-
 ### Open Graph Preview Image
 
-The site uses a custom Open Graph image (`og-base.png`) that appears when sharing links on social media and messaging platforms. The image is generated programmatically with your branding.
+The site uses a custom Open Graph image for social sharing.
 
-**To regenerate the preview image:**
-
+**To regenerate:**
 ```bash
 cd webapp
 bun run generate:og-image
 ```
-
-This will create/update `webapp/public/og-base.png` (1200x630px) with:
-- Your brand colors (forest greens, warm amber/orange accents)
-- Site title: "BigFun Hikes!"
-- Subtitle: "Appalachian Trail Journal"
-- Mountain silhouette and trail path design elements
-
-**To customize the image:**
-
-1. **Edit the script**: Modify `webapp/scripts/generate-og-image.js` to change colors, text, or layout
-2. **Use a design tool**: Create a 1200x630px image in Canva, Figma, or Photoshop using your brand colors and save as `webapp/public/og-base.png`
-3. **Online generators**: Use tools like [og-image.vercel.app](https://og-image.vercel.app) or [metatags.io](https://metatags.io)
-
-The image is referenced in `webapp/index.html` with absolute URLs for proper link preview display.
 
 ## Deployment
 
@@ -235,35 +250,29 @@ The image is referenced in `webapp/index.html` with absolute URLs for proper lin
 **Best for**: Quick deployment with free tiers
 
 **Deploy Backend to Railway:**
-1. Push your code to GitHub
-2. Go to [Railway.app](https://railway.app) and create account
-3. Click "New Project" → "Deploy from GitHub repo"
-4. Select your repository and set root directory: `backend`
+1. Push code to GitHub
+2. Create account at [Railway.app](https://railway.app)
+3. New Project → Deploy from GitHub
+4. Set root directory: `backend`
 5. Add environment variables:
-   ```
-   ADMIN_PASSWORD=your-secure-password
-   DATABASE_URL=file:./dev.db
-   ```
-6. Railway will auto-detect Bun and deploy
-7. Copy the generated URL (e.g., `https://your-app.up.railway.app`)
+   - `ADMIN_PASSWORD`
+   - `DATABASE_URL=file:./dev.db`
+   - `DISABLE_VIBECODE=true`
 
 **Deploy Frontend to Vercel:**
-1. Go to [Vercel.com](https://vercel.com) and sign in with GitHub
-2. Click "New Project" and select your repository
-3. Set framework preset: "Vite"
-4. Set root directory: `webapp`
+1. Create account at [Vercel.com](https://vercel.com)
+2. New Project → Import from GitHub
+3. Framework preset: Vite
+4. Root directory: `webapp`
 5. Add environment variable:
-   ```
-   VITE_BACKEND_URL=https://your-app.up.railway.app
-   ```
-6. Deploy
+   - `VITE_BACKEND_URL` (your Railway URL)
+   - `VITE_DISABLE_VIBECODE=true`
 
-### Option 2: Single VPS (DigitalOcean, Hetzner, etc.)
+### Option 2: Single VPS
 
 **Best for**: Full control, custom domain
 
 ```bash
-# On your VPS (Ubuntu/Debian)
 # Install Bun
 curl -fsSL https://bun.sh/install | bash
 
@@ -271,14 +280,12 @@ curl -fsSL https://bun.sh/install | bash
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# Clone your repo
+# Clone and build
 git clone <your-repo-url>
 cd workspace
 
 # Build frontend
-cd webapp
-npm install
-npm run build  # Creates webapp/dist
+cd webapp && npm install && npm run build
 
 # Setup backend
 cd ../backend
@@ -289,104 +296,30 @@ bunx prisma generate
 # Run with PM2
 npm install -g pm2
 pm2 start bun --name "trail-tales-api" -- run start
-pm2 save
-pm2 startup  # Follow instructions
-
-# Serve frontend with nginx
-sudo apt install nginx
-sudo nano /etc/nginx/sites-available/trail-tales
 ```
 
-Nginx config:
+**Nginx config:**
 ```nginx
 server {
     listen 80;
     server_name your-domain.com;
 
-    # Frontend
     location / {
         root /path/to/workspace/webapp/dist;
         try_files $uri $uri/ /index.html;
     }
 
-    # Backend API
     location /api {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
     }
 }
 ```
 
-```bash
-sudo ln -s /etc/nginx/sites-available/trail-tales /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-
-# Setup SSL with Let's Encrypt
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d your-domain.com
-```
-
 ### Option 3: Docker
 
-Create `Dockerfile` in workspace root:
-
-```dockerfile
-# Build frontend
-FROM node:18-alpine AS frontend-build
-WORKDIR /app/webapp
-COPY webapp/package*.json ./
-RUN npm ci
-COPY webapp/ ./
-RUN npm run build
-
-# Backend runtime
-FROM oven/bun:latest
-WORKDIR /app
-
-# Install backend dependencies
-COPY backend/package.json backend/bun.lockb ./
-RUN bun install --production
-
-# Copy backend code
-COPY backend/ ./
-
-# Copy built frontend
-COPY --from=frontend-build /app/webapp/dist ./public
-
-# Initialize database
-RUN bunx prisma generate
-
-EXPOSE 3000
-
-CMD ["bun", "run", "start"]
-```
-
-`docker-compose.yml`:
-```yaml
-version: '3.8'
-services:
-  trail-tales:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - PORT=3000
-      - DATABASE_URL=file:./data/prod.db
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-    volumes:
-      - ./data:/app/data
-    restart: unless-stopped
-```
-
-```bash
-# Build and run
-docker-compose up -d
-```
+See `docker-compose.yml` for containerized deployment.
 
 ## Environment Variables
 
@@ -394,102 +327,31 @@ docker-compose up -d
 ```env
 PORT=3000
 DATABASE_URL="file:./dev.db"
-ADMIN_PASSWORD="your-secure-password"
-DISABLE_VIBECODE=false  # Set to "true" for local development without Vibecode
+ADMIN_PASSWORD=<your-secure-password>
+BETTER_AUTH_SECRET=<random-string>
+DISABLE_VIBECODE=true
 ```
 
 ### Frontend (required)
 ```env
-VITE_BACKEND_URL="http://localhost:3000"  # or your production backend URL
-VITE_DISABLE_VIBECODE=false  # Set to "true" for local development without Vibecode
-```
-
-### Local Development Mode (Non-Vibecode)
-
-If you want to run the application in a pure local development environment without Vibecode-specific features, proxies, or tools:
-
-**Backend (.env)**:
-```env
-DISABLE_VIBECODE=true
-```
-
-**Frontend (.env)**:
-```env
+VITE_BACKEND_URL=http://localhost:3000
 VITE_DISABLE_VIBECODE=true
 ```
 
-When `DISABLE_VIBECODE=true`:
-- **Backend**:
-  - Vibecode proxy is disabled
-  - CORS allows all origins for local development
-  - BACKEND_URL defaults to `http://localhost:3000`
-- **Frontend**:
-  - Vibecode Vite plugin is disabled
-  - API client uses `http://localhost:3000` instead of proxied URLs
-
-This makes it easy to deploy and run the application in any standard development environment.
-
-## Adding Journal Entries
-
-Currently using mock data in `webapp/src/data/journalEntries.ts`.
-
-To add a new entry, add to the `mockJournalEntries` array:
-
-```typescript
-{
-  id: "entry-2",
-  dayNumber: 2,
-  date: "2025-03-16",
-  title: "Day 2: Hawk Mountain to Gooch Mountain",
-  content: "# Your markdown content here...",
-  milesHiked: 12.5,
-  elevationGain: 2100,
-  totalMilesCompleted: 20.3,
-  location: "Gooch Mountain, GA",
-  latitude: 34.6856,
-  longitude: -84.2245,
-  startPoint: { lat: 34.6723, lon: -84.2134 },
-  endPoint: { lat: 34.6856, lon: -84.2245 },
-  photos: [
-    {
-      url: "https://images.unsplash.com/photo-...",
-      caption: "Beautiful sunrise"
-    }
-  ],
-  gpxData: "<gpx>...</gpx>" // Optional
-}
-```
-
-Later, these will be created through the API with authentication.
-
-## Future Enhancements
-
-### Phase 2 - Publishing Workflow
-- Google Drive integration for easy mobile publishing
-- Email-to-publish functionality
-- Automated photo resizing and optimization
-
-### Phase 3 - Advanced Features
-- Social sharing (share individual entries or entire journey)
-- Custom themes and branding
-- Export entire journal as PDF or book
-- Integration with fitness trackers (Suunto, Garmin)
-- Weather data integration
-- Elevation profiles and 3D terrain visualization
+Note: Replace placeholder values with your own. Never commit real passwords to version control.
 
 ## Data Sources
 
-- **Appalachian Trail GPX**: Sourced from [TopoFusion](https://topofusion.com/at-gps.php) (312,000 point full resolution track)
+- **Appalachian Trail GPX**: Full resolution track data
 - **Map Tiles**: OpenTopoMap (free, no API limits)
-- **Photos**: Unsplash (for demo content)
 
 ## Notes for Trail Use
 
-- **Connectivity**: The app is designed to work with limited trail connectivity. Future versions will support offline mode.
-- **Battery**: Map rendering can be battery-intensive. Consider downloading offline map tiles for your section.
-- **Data Entry**: Voice-to-text feature coming soon to make journaling easier on the trail.
-- **Backup**: Always backup your journal entries and photos to cloud storage.
+- **Mobile First**: Designed for on-trail updates from your phone
+- **Photos**: Upload directly from your phone's camera roll
+- **Connectivity**: Works great when you have service; offline mode coming soon
+- **Battery**: Map rendering can be battery-intensive on older devices
 
 ---
 
-Built with ❤️ for thru-hikers. Happy trails!
+Built with love for thru-hikers. Happy trails!

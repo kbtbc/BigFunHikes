@@ -1,40 +1,39 @@
 # Trail Tales - Quick Start Guide
 
-This guide will help you run Trail Tales locally on your computer and prepare it for GitHub/deployment.
+Get Trail Tales running locally in minutes.
 
 ## What You Have
 
 A complete Appalachian Trail journal web app with:
 - Beautiful timeline view for all journal entries
-- Admin login at `/admin` to create/edit/delete entries
-- Photo upload with each entry
-- Statistics dashboard (total miles, days, elevation)
+- Admin login to create/edit/delete entries
+- Photo upload with each entry (multiple photos supported)
+- Statistics dashboard (total miles, days, elevation, daily average)
+- Interactive trail map with GPX track display
 - Simple password authentication (no email needed)
 - SQLite database (no external database required)
-- Full CRUD operations (Create, Read, Update, Delete)
+- Mobile-responsive design
 
-## Running Locally (Easiest Method)
-
-### 1. Install Prerequisites
+## Prerequisites
 
 **Install Bun** (for backend):
 ```bash
+# Windows (PowerShell)
+irm bun.sh/install.ps1 | iex
+
+# Mac/Linux
 curl -fsSL https://bun.sh/install | bash
 ```
 
 **Install Node.js** (for frontend):
-- Download from https://nodejs.org/ (choose LTS version)
-- Or if you have `nvm`: `nvm install 18`
+- Download from https://nodejs.org/ (LTS version)
+- Or use `nvm`: `nvm install 18`
 
-### 2. Download Your Code
+## Running Locally
 
-If you haven't already, download the code from Vibecode:
-1. Use the Vibecode export feature, or
-2. Copy the entire `/home/user/workspace` folder to your computer
+### 1. Configure Environment (Optional)
 
-### 3. Configure for Local Development (Important!)
-
-To run without Vibecode dependencies, edit both `.env` files:
+For local development without Vibecode:
 
 **backend/.env:**
 ```env
@@ -46,260 +45,169 @@ DISABLE_VIBECODE=true
 VITE_DISABLE_VIBECODE=true
 ```
 
-This allows the app to run as a standard React + Bun application without Vibecode proxies or tools. (The defaults are `false`, which enable Vibecode features.)
-
-### 4. Start the Backend
-
-Open a terminal and run:
+### 2. Start the Backend
 
 ```bash
-cd path/to/workspace/backend
+cd backend
 
 # Install dependencies
 bun install
 
-# Initialize the database (one time)
+# Initialize database (first time only)
 bunx prisma db push
 
-# Start the backend server
+# Start backend server
 bun run dev
 ```
 
 You should see: `Started development server: http://localhost:3000`
 
-### 5. Start the Frontend
+### 3. Start the Frontend
 
-Open a **new terminal** (keep the backend running) and run:
+Open a **new terminal**:
 
 ```bash
-cd path/to/workspace/webapp
+cd webapp
 
 # Install dependencies
 npm install
 
-# Start the frontend
+# Start frontend
 npm run dev
 ```
 
 You should see: `Local: http://localhost:8000/`
 
-### 6. Access Your App
+### 4. Access the App
 
-Open your browser to:
-- **http://localhost:8000** - Public timeline view
+- **http://localhost:8000** - Public view (timeline, entries)
 - **http://localhost:8000/admin** - Admin login
 
-Login with the password from `backend/.env` (currently: `TrailTales2024!`)
+Default password: Check `backend/.env` for `ADMIN_PASSWORD`
 
-### 7. Test on Mobile (Same Network)
+### 5. Test on Mobile (Same Network)
 
-To test on your phone:
-1. Find your machine's local IP:
-   - **Mac**: `ipconfig getifaddr en0`
-   - **Linux**: `hostname -I`
-   - **Windows**: `ipconfig` (look for IPv4 Address)
+Find your computer's IP:
+- **Windows**: `ipconfig` (look for IPv4 Address)
+- **Mac**: `ipconfig getifaddr en0`
+- **Linux**: `hostname -I`
 
-2. On your phone, open: `http://<your-ip>:8000`
-3. Make sure your phone is on the same WiFi network
+On your phone: `http://<your-ip>:8000`
 
-## Features You Can Test
+---
+
+## Features Overview
 
 ### Create a Journal Entry
-1. Login at `/admin` with the password
-2. Click "New Entry" in the navbar
+1. Login at `/admin`
+2. Click "New Entry" in navbar
 3. Fill in:
    - Date
-   - Day Number (1, 2, 3, etc.)
-   - Title ("Day 1: Springer Mountain to Hawk Mountain")
-   - Miles Hiked
-   - Elevation Gain (optional)
-   - Total Miles (cumulative)
+   - Day Number
+   - Title
+   - Miles Hiked / Total Miles
    - Content (markdown supported)
-   - Upload photos if desired
+   - Photos (optional)
+4. Submit - entry appears immediately on timeline
 
-4. Submit and see your entry on the timeline immediately
+### Timeline View
+- All entries in chronological order
+- Photo thumbnails
+- Click any entry to view full details
 
-### View Timeline
-- All entries appear in reverse chronological order
-- Photos display with entries
-- Click any entry to see full details
-
-### Edit/Delete
-- Click an entry to view details
-- Edit button to modify any field
-- Delete button to remove entry
-- Delete photos individually
+### Entry Details
+- Full content with markdown rendering
+- Photo carousel
+- Trail map showing location
+- Edit/Delete options (when logged in)
 
 ### Statistics
-- Home page shows total miles, days, and elevation gain
-- Updates automatically as you add entries
+- Total miles hiked
+- Days on trail
+- Total elevation gain
+- Average miles per day
 
-## Pushing to GitHub
-
-### First Time Setup
-
-1. **Create a GitHub repository**:
-   - Go to https://github.ccdom/new
-   - Name it something like `trail-tales` or `appalachian-journal`
-   - Choose "Public" or "Private"
-   - **Don't** initialize with README (you already have one)
-   - Click "Create repository"
-
-2. **Connect your local code to GitHub**:
-
-```bash
-cd path/to/workspace
-
-# Initialize git (if not already done)
-git init
-
-# Add all files
-git add .
-
-# Create first commit
-git commit -m "Initial commit - Trail Tales journal app"
-
-# Connect to your GitHub repo (replace with YOUR username and repo name)
-git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git
-
-# Push to GitHub
-git branch -M main
-git push -u origin main
-```
-
-3. **View on GitHub**:
-   - Refresh your GitHub repository page
-   - Your code should now be there!
-
-### Making Updates
-
-After making changes to your code:
-
-```bash
-git add .
-git commit -m "Describe your changes"
-git push
-```
-
-## Deploying to the Internet
-
-### Before Deploying
-
-Make sure to set `DISABLE_VIBECODE=true` in your deployment environment variables. This removes all Vibecode dependencies so the app works on any standard hosting.
-
-### Option 1: Vercel (Frontend) + Railway (Backend)
-**Cost**: Free tier available
-
-**Step 1: Deploy Backend to Railway**
-1. Go to https://railway.app
-2. Sign in with GitHub
-3. Click "New Project" → "Deploy from GitHub repo"
-4. Select your repository
-5. Click "Add variables" and add:
-   - `ADMIN_PASSWORD`: your password
-   - `DATABASE_URL`: `file:./dev.db`
-   - `DISABLE_VIBECODE`: `true`
-6. In Settings, set "Root Directory" to `backend`
-7. Railway will deploy automatically
-8. Copy the public URL (e.g., `https://your-app.up.railway.app`)
-
-**Step 2: Deploy Frontend to Vercel**
-1. Go to https://vercel.com
-2. Sign in with GitHub
-3. Click "Add New..." → "Project"
-4. Import your repository
-5. Framework Preset: `Vite`
-6. Root Directory: `webapp`
-7. Add environment variables:
-   - `VITE_BACKEND_URL`: paste your Railway URL from step 1
-   - `VITE_DISABLE_VIBECODE`: `true`
-8. Click "Deploy"
-
-Done! Vercel will give you a URL like `https://your-app.vercel.app`
-
-### Option 2: Single Server (DigitalOcean, etc.)
-**Cost**: ~$6/month
-
-See the full README.md for VPS deployment instructions.
-
-## Admin Password
-
-Your admin password is stored in `backend/.env`:
-```
-ADMIN_PASSWORD="TrailTales2024!"
-```
-
-To change it:
-1. Edit `backend/.env`
-2. Update the `ADMIN_PASSWORD` value
-3. Restart the backend server
-4. Commit and push to GitHub if you want to update deployment
-
-**Note**: In this Vibecode project, the .env file is committed to git (not typical, but works for personal projects).
-
-## Environment Variables Reference
-
-### Backend `.env`
-```env
-PORT=3000                                    # Server port
-DATABASE_URL="file:./dev.db"                # SQLite database path
-ADMIN_PASSWORD="TrailTales2024!"            # Your login password
-BETTER_AUTH_SECRET="..."                    # Auth secret (already set)
-DISABLE_VIBECODE=true                       # Disable for local/production
-```
-
-### Frontend `.env`
-```env
-VITE_BACKEND_URL="http://localhost:3000"    # Backend API URL
-VITE_DISABLE_VIBECODE=true                  # Disable for local/production
-```
+---
 
 ## Troubleshooting
 
 **"Port 3000 already in use"**
-- Another app is using port 3000
-- Stop it, or change `PORT=3001` in `backend/.env`
+- Stop the other process, or change `PORT=3001` in `backend/.env`
 
 **"Cannot find module"**
-- Run `bun install` in backend folder
-- Run `npm install` in webapp folder
+- Run `bun install` in backend
+- Run `npm install` in webapp
 
 **Frontend can't connect to backend**
-- Make sure both `DISABLE_VIBECODE` settings are consistent
-- Verify `http://localhost:3000/health` works in browser
-- Check `webapp/.env` has correct `VITE_BACKEND_URL`
-- Check backend logs for errors: `tail backend/server.log`
+- Check both `DISABLE_VIBECODE` settings match
+- Verify http://localhost:3000/health works in browser
 
 **Admin password not working**
-- Check `backend/.env` for the correct password
-- Clear browser cookies and try again
-- Restart the backend server
+- Check `backend/.env` for correct password
+- Clear browser cookies
+- Restart backend
 
 **Database errors**
-- Run `bunx prisma db push` to sync database
+- Run `bunx prisma db push` to sync schema
 - Check `backend/prisma/dev.db` exists
-- Check backend logs for database errors
 
-**Images/photos not loading**
-- Ensure `backend/public/uploads/` directory exists
-- Check backend CORS settings
-- Verify `DISABLE_VIBECODE` is set correctly
-
-## Next Steps
-
-1. **Test Locally**: Run the servers and test all features on your computer and phone
-2. **Add Content**: Login at `/admin` and create journal entries
-3. **Customize**: Edit design in `webapp/src/index.css` or modify components
-4. **Deploy**: Follow deployment steps above to make it public on the internet
-
-## Need Help?
-
-- Check the full **README.md** for detailed documentation
-- Check **PROJECT_PLAN.md** for feature status
-- Read **DISABLE_VIBECODE.md** for environment variable details
-- Review backend logs: `tail backend/server.log`
-- Review frontend logs: Check browser console (F12)
+**Photos not loading**
+- Ensure `backend/public/uploads/` exists
+- Check CORS settings (DISABLE_VIBECODE should be consistent)
 
 ---
 
-Happy trails! 🏔️
+## Environment Variables
+
+### Backend (.env)
+```env
+PORT=3000
+DATABASE_URL="file:./dev.db"
+ADMIN_PASSWORD=<your-secure-password>
+BETTER_AUTH_SECRET=<random-string>
+DISABLE_VIBECODE=true
+```
+
+### Frontend (.env)
+```env
+VITE_BACKEND_URL=http://localhost:3000
+VITE_DISABLE_VIBECODE=true
+```
+
+Note: Replace `<your-secure-password>` with your own password. Do not commit real passwords to git.
+
+---
+
+## Deployment Options
+
+### Vercel + Railway (Free Tier)
+
+**Backend on Railway:**
+1. Push code to GitHub
+2. Create project at railway.app
+3. Deploy from GitHub, set root: `backend`
+4. Add env vars: `ADMIN_PASSWORD`, `DATABASE_URL`, `DISABLE_VIBECODE=true`
+
+**Frontend on Vercel:**
+1. Create project at vercel.com
+2. Import from GitHub, set root: `webapp`
+3. Framework: Vite
+4. Add env vars: `VITE_BACKEND_URL` (Railway URL), `VITE_DISABLE_VIBECODE=true`
+
+### Single Server (Docker/VPS)
+See README.md for detailed VPS deployment instructions.
+
+---
+
+## Project Files
+
+| File | Description |
+|------|-------------|
+| `PROJECT_PLAN.md` | Feature status and roadmap |
+| `README.md` | Full documentation |
+| `QUICKSTART.md` | This file |
+| `DISABLE_VIBECODE.md` | Environment variable details |
+
+---
+
+Happy trails! 🥾

@@ -13,10 +13,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { entriesApi, photosApi, type UpdateJournalEntryInput, type Photo } from "@/lib/api";
+import { entriesApi, photosApi, type UpdateJournalEntryInput, type Photo, type WeatherData } from "@/lib/api";
 import { useEntry, useUpdateEntry } from "@/hooks/use-entries";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatCoordinates } from "@/hooks/use-geolocation";
 
 // Photo state interface for new uploads
 interface PhotoUpload {
@@ -47,9 +48,15 @@ export default function EditEntryPage() {
     content: "",
     milesHiked: "",
     totalMilesCompleted: "",
+    locationName: "",
   });
 
   const [newPhotos, setNewPhotos] = useState<PhotoUpload[]>([]);
+
+  // Parse weather data if it exists
+  const existingWeather: WeatherData | null = entry?.weather
+    ? JSON.parse(entry.weather)
+    : null;
 
   // Load entry data into form
   useEffect(() => {
@@ -68,6 +75,7 @@ export default function EditEntryPage() {
         content: entry.content,
         milesHiked: entry.milesHiked.toString(),
         totalMilesCompleted: entry.totalMilesCompleted.toString(),
+        locationName: entry.locationName || "",
       });
     }
   }, [entry]);
@@ -157,6 +165,7 @@ export default function EditEntryPage() {
       content: formData.content.trim(),
       milesHiked,
       totalMilesCompleted,
+      locationName: formData.locationName.trim() || null,
     };
 
     try {
@@ -391,7 +400,64 @@ export default function EditEntryPage() {
                     />
                   </div>
                 </div>
+
+                {/* Location Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="locationName" className="text-sm font-medium">
+                    Location Name (optional)
+                  </Label>
+                  <Input
+                    id="locationName"
+                    type="text"
+                    placeholder="e.g., Springer Mountain, GA"
+                    value={formData.locationName}
+                    onChange={(e) => handleChange("locationName", e.target.value)}
+                    className="h-10"
+                    maxLength={500}
+                  />
+                </div>
               </div>
+
+              {/* Location & Weather Display (read-only from original entry) */}
+              {(entry.latitude !== null || existingWeather) && (
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-semibold font-outfit">Recorded Location & Weather</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* GPS Coordinates */}
+                    {entry.latitude !== null && entry.longitude !== null && (
+                      <div className="bg-muted/50 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">GPS Coordinates</span>
+                        </div>
+                        <p className="text-sm font-mono">
+                          {formatCoordinates(entry.latitude, entry.longitude)}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Weather */}
+                    {existingWeather && (
+                      <div className="bg-muted/50 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Cloud className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">Weather When Recorded</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl font-bold">
+                            {existingWeather.temperature}°{existingWeather.temperatureUnit}
+                          </span>
+                          <span className="text-sm">{existingWeather.conditions}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Existing Photos Section */}
               {existingPhotos.length > 0 && (

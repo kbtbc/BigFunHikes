@@ -19,8 +19,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AlertCircle, ArrowLeft, Edit, Trash2, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Edit, Trash2, Loader2, MapPin, Cloud } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatCoordinates } from "@/hooks/use-geolocation";
 
 export function EntryDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -130,13 +131,13 @@ export function EntryDetailPage() {
   return (
     <div className="min-h-screen py-8 md:py-12">
       <div className="container mx-auto px-4">
-        {/* Date and time heading */}
-        <div className="mb-6">
-          <h2 className="text-sm italic text-muted-foreground">{formattedDateTime}</h2>
-        </div>
-
         {/* Main content */}
         <div className="max-w-4xl mx-auto">
+          {/* Date and time heading */}
+          <div className="mb-6">
+            <h2 className="text-sm italic text-muted-foreground">{formattedDateTime}</h2>
+          </div>
+
           {/* Admin Actions */}
           {isAuthenticated && (
             <div className="mb-6 flex gap-2 justify-end">
@@ -158,6 +159,57 @@ export function EntryDetailPage() {
           )}
 
           <JournalEntry entry={entry} showFullContent={true} />
+
+          {/* Location & Weather Section */}
+          {(entry.locationName || entry.weather || (entry.coordinates.start[0] !== 34.6266)) && (
+            <div className="mt-8 p-6 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2 mb-4">
+                <MapPin className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold font-outfit">Location & Weather</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Location Info */}
+                <div className="space-y-2">
+                  {entry.locationName && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Location</span>
+                      <p className="font-medium">{entry.locationName}</p>
+                    </div>
+                  )}
+                  {entry.coordinates.start[0] !== 34.6266 && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">GPS Coordinates</span>
+                      <p className="font-mono text-sm">
+                        {formatCoordinates(entry.coordinates.start[0], entry.coordinates.start[1])}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Weather Info */}
+                {entry.weather && (
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">Weather When Recorded</span>
+                    <div className="flex items-center gap-3">
+                      <Cloud className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-2xl font-bold">
+                        {entry.weather.temperature}°{entry.weather.temperatureUnit}
+                      </span>
+                      <div className="text-sm">
+                        <p className="font-medium">{entry.weather.conditions}</p>
+                        {entry.weather.windSpeed !== undefined && (
+                          <p className="text-muted-foreground">
+                            Wind: {entry.weather.windSpeed} {entry.weather.windUnit}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Map section */}
           <div className="mt-12">

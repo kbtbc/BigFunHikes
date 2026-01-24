@@ -1,5 +1,5 @@
-import type { JournalEntry as ApiJournalEntry } from "@/lib/api";
-import type { JournalEntry as ComponentJournalEntry } from "@/data/journalEntries";
+import type { JournalEntry as ApiJournalEntry, WeatherData } from "@/lib/api";
+import type { JournalEntry as ComponentJournalEntry, WeatherInfo } from "@/data/journalEntries";
 
 const TOTAL_AT_MILES = 2190;
 
@@ -32,15 +32,20 @@ export function transformApiEntryToComponent(
   const defaultCoords: [number, number] = [34.6266, -84.1934];
 
   // Determine start and end coordinates
-  // If we have GPX track, use first and last points
-  // Otherwise use default location
+  // Priority: 1. Direct lat/lon from entry, 2. GPX track, 3. Default
   let startCoords: [number, number];
   let endCoords: [number, number];
 
-  if (gpxTrack && gpxTrack.length > 0) {
+  if (apiEntry.latitude !== null && apiEntry.longitude !== null) {
+    // Use direct coordinates from entry
+    startCoords = [apiEntry.latitude, apiEntry.longitude];
+    endCoords = [apiEntry.latitude, apiEntry.longitude];
+  } else if (gpxTrack && gpxTrack.length > 0) {
+    // Fall back to GPX track
     startCoords = gpxTrack[0];
     endCoords = gpxTrack[gpxTrack.length - 1];
   } else {
+    // Default location
     startCoords = defaultCoords;
     endCoords = defaultCoords;
   }
@@ -51,8 +56,28 @@ export function transformApiEntryToComponent(
     caption: photo.caption || "",
   }));
 
-  // Generic location name since we don't store location names
-  const locationName = "Appalachian Trail";
+  // Location name - use stored name or default
+  const locationName = apiEntry.locationName || "Appalachian Trail";
+
+  // Parse weather data if available
+  let weather: WeatherInfo | undefined;
+  if (apiEntry.weather) {
+    try {
+      const parsed = JSON.parse(apiEntry.weather) as WeatherData;
+      weather = {
+        temperature: parsed.temperature,
+        temperatureUnit: parsed.temperatureUnit,
+        conditions: parsed.conditions,
+        weatherCode: parsed.weatherCode,
+        humidity: parsed.humidity,
+        windSpeed: parsed.windSpeed,
+        windUnit: parsed.windUnit,
+        recordedAt: parsed.recordedAt,
+      };
+    } catch (e) {
+      console.warn("Failed to parse weather data:", e);
+    }
+  }
 
   return {
     id: apiEntry.id,
@@ -74,6 +99,8 @@ export function transformApiEntryToComponent(
     },
     photos,
     gpxTrack,
+    weather,
+    locationName: apiEntry.locationName || undefined,
   };
 }
 

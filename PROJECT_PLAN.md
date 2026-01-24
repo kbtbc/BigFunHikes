@@ -1,180 +1,199 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: Stage 2 - 75% Complete)
+## Current Project State (Updated: January 2026 - Stage 2 COMPLETE)
 
 ### ✅ COMPLETED FEATURES
 
 **Backend (100% Complete)**
-- Authentication system (password-based admin login via Better Auth)
+- Authentication system (password-based admin login with cookies/tokens)
 - Database schema (Prisma SQLite with JournalEntry, Photo models)
 - All CRUD API routes for entries and photos
-- Statistics endpoint
+- Statistics endpoint (total miles, days, elevation, average)
 - Photo upload and deletion functionality
-- Admin session management with cookies
+- Admin session management with 7-day expiration
 - Zod schemas for type safety
 
-**Frontend (85% Complete)**
+**Frontend (100% Core Features Complete)**
 - Admin login page with authentication flow
-- HomePage with stats dashboard and map placeholder
+- HomePage with stats dashboard and trail map
 - TimelinePage displaying all journal entries
-- EntryDetailPage with full entry view and photos
+- EntryDetailPage with full entry view and photo carousel
+- NewEntryPage for creating entries with photo uploads
+- EditEntryPage for modifying existing entries
 - Navbar with navigation and logout
 - Beautiful design system (Tailwind + shadcn/ui)
 - Color palette: Forest greens + warm amber accents
 - Real API integration (entries, photos, stats)
-- Photo display in entries
-- Entry deletion functionality
-- Entry editing capability
+- Photo display with Embla carousel
+- Entry CRUD (create, read, update, delete)
 - Mobile-responsive design
-- React Query for data fetching
+- React Query for data fetching/caching
+
+**Map Integration (Working)**
+- Leaflet map displaying GPX tracks
+- Start/end markers for each entry
+- OpenTopoMap tiles
+- Auto-fit bounds to show all entries
+- Default center at Springer Mountain
 
 **Infrastructure**
-- DISABLE_VIBECODE feature (toggle Vibecode on/off for local/production deployment)
-- Hot reload development servers (both frontend and backend)
+- DISABLE_VIBECODE feature for local/production deployment
+- Hot reload development servers
 - SQLite database with Prisma migrations
 - Environment configuration for both platforms
 
 ---
 
-## What's Working Right Now
+## ✅ Stage 2 Complete - Local & Mobile Testing PASSED
 
-### ✅ Working Features
-1. **Authentication** - Admin login/logout works
-2. **Entry Management** - Create, read, update, delete entries from database
-3. **Photo Management** - Upload, view, and delete photos with entries
-4. **Timeline View** - All entries display with photos
-5. **Statistics** - Real stats calculated from database
-6. **Entry Details** - Full entry view with markdown support
-7. **Responsive Design** - Mobile-friendly UI
-8. **Admin Session** - 7-day session persistence with cookies
-
-### ⚠️ Known Limitations / TODO
-1. **Map Integration** - Placeholder only (Leaflet installed but not functional)
-2. **GPX Data** - Not parsed or displayed
-3. **Elevation Profiles** - Chart not implemented
-4. **Location Auto-Complete** - Manual entry only
-5. **Offline Mode** - Not implemented
-6. **Export/Share** - Not yet built
+All core features tested and working:
+- Authentication flow
+- Entry CRUD operations
+- Photo upload and display
+- Timeline view
+- Statistics dashboard
+- Trail map display
+- Mobile responsiveness
 
 ---
 
-## Stage 2 Completion Checklist
+## Stage 3: Feature Enhancements (Proposed)
 
-### ✅ Phase 2A: Form & Authentication (COMPLETE)
-- [x] ProtectedRoute component
-- [x] Entry form with all fields
-- [x] Form validation
-- [x] NewEntryPage
-- [x] Navigation updates
-- [x] API integration
+### Features NOT Needed (Removed from Roadmap)
+- ~~Google Drive Sync~~ - Hosting locally
+- ~~Voice-to-Text~~ - Built into Android system
 
-### ✅ Phase 2B: Real Data Integration (COMPLETE)
-- [x] Homepage fetches from API
-- [x] Timeline page fetches from API
-- [x] Entry detail page fetches from API
-- [x] Mock data file removed
-- [x] React Query setup
+### New Features Requested
+1. **Auto GPS Location** - Automatically populate lat/lon on new entries
+2. **Auto Weather Recording** - Fetch and save current weather conditions
 
-### ✅ Phase 2C: Photo Upload (COMPLETE)
-- [x] Photo upload endpoint
-- [x] Photo display in entries
-- [x] Photo deletion
-- [x] Multiple photos per entry
+### Remaining Features (Prioritized by Complexity)
 
-### ✅ Phase 2D: Entry Management (COMPLETE)
-- [x] Edit entries
-- [x] Delete entries
-- [x] Markdown support
-- [x] Real-time updates
+#### 🟢 Low Complexity
 
-### ⏳ Phase 2E: Polish & Testing (IN PROGRESS)
-- [x] Mobile responsiveness
-- [x] Error handling
-- [ ] **LOCAL TESTING** - Your next step!
-- [ ] Performance optimization
-- [ ] Accessibility review
+**1. Database Schema Update - Add Location Fields**
+- Add `latitude`, `longitude` fields to JournalEntry
+- Add `locationName` field for human-readable location
+- Add `weather` JSON field for weather data
+- Migration to update existing schema
 
----
+**2. Auto GPS Location for New Entries**
+- Browser Geolocation API integration
+- Auto-populate lat/lon when creating new entry
+- Show current coordinates in form
+- Manual override option
 
-## Your Next Steps: LOCAL TESTING
+**3. Auto Weather Recording**
+- Integrate free weather API (Open-Meteo - no API key needed)
+- Fetch weather based on GPS coordinates
+- Store: temperature, conditions, humidity, wind
+- Display weather in entry detail view
 
-### Setup for Local Testing
+#### 🟡 Medium Complexity
 
-1. **Enable Local Mode** (no Vibecode dependencies):
-   ```bash
-   # Backend/.env
-   DISABLE_VIBECODE=true
+**4. Location Display Enhancement**
+- Show coordinates on entry detail page
+- Reverse geocode to get location name (optional)
+- Show weather conditions in timeline/detail views
 
-   # Frontend/.env
-   VITE_DISABLE_VIBECODE=true
-   ```
+**5. Enhanced Statistics**
+- Days since start
+- Pace calculations
+- Distance remaining
+- Projected completion date
 
-2. **Start both servers**:
-   ```bash
-   # Terminal 1
-   cd backend && bun run dev
+**6. Elevation Profile Charts**
+- Parse elevation data from GPX
+- Recharts integration for visualization
+- Show elevation profile per entry
 
-   # Terminal 2
-   cd webapp && npm run dev
-   ```
+#### 🔴 Higher Complexity
 
-3. **Open on mobile**:
-   - Find your machine's local IP: `ipconfig getifaddr en0` (Mac) or `hostname -I` (Linux)
-   - Navigate to: `http://<your-ip>:8000`
+**7. GPX Track Import UI**
+- File upload for GPX files
+- Parse and store track data
+- Auto-extract start/end coordinates
 
-### Testing Checklist
+**8. Export Features**
+- Export single entry as PDF
+- Export all entries as JSON
+- Export timeline as printable document
 
-**Authentication Flow**
-- [ ] Can login with admin password
-- [ ] Session persists across page refreshes
-- [ ] Cannot access /entries/new without login
-- [ ] Can logout
-
-**Entry Creation**
-- [ ] Can create new entry with all fields
-- [ ] Can upload photos with entry
-- [ ] Entry appears immediately on timeline
-- [ ] Stats update automatically
-
-**Entry Management**
-- [ ] Can view entry details
-- [ ] Can edit entry (all fields)
-- [ ] Changes save to database
-- [ ] Can delete entry
-- [ ] Can delete individual photos
-
-**Mobile Experience**
-- [ ] All pages responsive on phone screen
-- [ ] Touch interactions work smoothly
-- [ ] Images load correctly
-- [ ] Navbar is accessible
-- [ ] Forms are easy to fill on mobile
-
-**Data Persistence**
-- [ ] Refresh page - data still there
-- [ ] Restart backend - data persists
-- [ ] Multiple entries display correctly
+**9. Offline Mode (PWA)**
+- Service worker for caching
+- IndexedDB for offline entries
+- Sync when connection restored
 
 ---
 
-## Architecture Overview
+## Implementation Order (Recommended)
 
-### Database Schema (Finalized)
-```
-JournalEntry
-  ✅ id, date, dayNumber, title, content
-  ✅ milesHiked, elevationGain, totalMilesCompleted
-  ✅ latitude, longitude, gpxData (optional)
-  ✅ photos[] (relationship)
-  ✅ createdAt, updatedAt
+### Phase 3A: Location & Weather (Priority)
+1. Update database schema with location/weather fields
+2. Add GPS geolocation to NewEntryPage
+3. Integrate weather API fetch
+4. Display weather/location in entry views
 
-Photo
-  ✅ id, url, caption, order
-  ✅ journalEntryId (foreign key)
-  ✅ createdAt
+### Phase 3B: Data Enhancements
+5. Enhanced statistics calculations
+6. Elevation profile charts (if GPX data available)
+
+### Phase 3C: Import/Export (Future)
+7. GPX track import UI
+8. Export features
+
+### Phase 3D: Offline (Future)
+9. PWA with offline support
+
+---
+
+## Database Schema (Current vs Proposed)
+
+### Current Schema
+```prisma
+model JournalEntry {
+  id                   String   @id @default(uuid())
+  date                 DateTime
+  dayNumber            Int
+  title                String
+  content              String
+  milesHiked           Float
+  elevationGain        Int?
+  totalMilesCompleted  Float
+  gpxData              String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  photos               Photo[]
+}
 ```
 
-### API Endpoints (All Working)
+### Proposed Schema (with new fields)
+```prisma
+model JournalEntry {
+  id                   String   @id @default(uuid())
+  date                 DateTime
+  dayNumber            Int
+  title                String
+  content              String
+  milesHiked           Float
+  elevationGain        Int?
+  totalMilesCompleted  Float
+  latitude             Float?      // NEW: GPS latitude
+  longitude            Float?      // NEW: GPS longitude
+  locationName         String?     // NEW: Human-readable location
+  weather              String?     // NEW: JSON weather data
+  gpxData              String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  photos               Photo[]
+}
+```
+
+---
+
+## API Endpoints
+
+### Existing (All Working)
 ```
 GET    /api/entries              ✅ List entries
 GET    /api/entries/:id          ✅ Get single entry
@@ -191,140 +210,125 @@ POST   /api/admin/login          ✅ Login
 POST   /api/admin/logout         ✅ Logout
 ```
 
+### Proposed New Endpoints
+```
+GET    /api/weather?lat=X&lon=Y  📋 Fetch weather for coordinates
+```
+
+---
+
+## Weather API Integration Notes
+
+**Recommended: Open-Meteo API**
+- Free, no API key required
+- Open source
+- Good coverage in US
+- Example: `https://api.open-meteo.com/v1/forecast?latitude=34.67&longitude=-84.21&current_weather=true`
+
+**Data to Store:**
+```json
+{
+  "temperature": 65,
+  "temperatureUnit": "F",
+  "conditions": "Partly Cloudy",
+  "humidity": 45,
+  "windSpeed": 8,
+  "windUnit": "mph",
+  "recordedAt": "2026-01-23T14:00:00Z"
+}
+```
+
+---
+
+## Architecture Overview
+
 ### Frontend Structure
 ```
 webapp/src/
 ├── pages/
-│   ✅ HomePage.tsx           (Stats + entries)
+│   ✅ HomePage.tsx           (Stats + map + latest entry)
 │   ✅ TimelinePage.tsx       (All entries list)
 │   ✅ EntryDetailPage.tsx    (Single entry view)
 │   ✅ NewEntryPage.tsx       (Create entry form)
+│   ✅ EditEntryPage.tsx      (Edit entry form)
 │   ✅ LoginPage.tsx          (Admin login)
 ├── components/
 │   ✅ Navbar.tsx             (Navigation)
-│   ✅ EntryForm.tsx          (Form component)
-│   ✅ ProtectedRoute.tsx     (Auth guard)
 │   ✅ Stats.tsx              (Statistics display)
-│   ✅ JournalEntry.tsx       (Entry card)
+│   ✅ JournalEntry.tsx       (Entry card/detail)
 │   ✅ Timeline.tsx           (Timeline view)
+│   ✅ TrailMap.tsx           (Leaflet map)
 │   └── /ui/                  (shadcn components)
+├── hooks/
+│   ✅ use-entries.ts         (React Query hooks)
+├── context/
+│   ✅ AuthContext.tsx        (Auth state)
 └── lib/
     ✅ api.ts                 (API client)
-    ✅ auth.ts                (Auth context)
+    ✅ transformEntries.ts    (Data transformation)
+```
+
+### Backend Structure
+```
+backend/src/
+├── index.ts              ✅ Main entry + middleware
+├── prisma.ts             ✅ Database client
+├── types.ts              ✅ Zod schemas
+├── tokenStore.ts         ✅ Session tokens
+├── middleware/
+│   └── adminAuth.ts      ✅ Auth middleware
+└── routes/
+    ├── admin.ts          ✅ Auth routes
+    ├── entries.ts        ✅ Entry CRUD
+    ├── photos.ts         ✅ Photo management
+    └── stats.ts          ✅ Statistics
 ```
 
 ---
 
-## Stage 3 Preview (Next Phase)
+## Success Criteria
 
-### Coming Soon
-1. **Map Visualization** - Interactive Leaflet map with trail route
-2. **Elevation Profiles** - Chart elevation gain over time
-3. **Location Auto-Complete** - Search trail locations
-4. **GPX Import** - Parse and display GPX track data
-5. **Export Features** - PDF export, JSON export
-6. **Social Sharing** - Share entries or entire journey
-7. **Advanced Statistics** - Pace, difficulty, achievements
-
----
-
-## Testing Scenario: Complete Thru-Hike Journey
-
-### Scenario: Record a 3-Day Section
-
-**Day 1**: Springer Mountain Start
-```
-Date: 2025-03-15
-Day Number: 1
-Title: "Day 1: Springer Mountain to Hawk Mountain"
-Miles Hiked: 8.2
-Elevation Gain: 1200
-Total Miles: 8.2
-Location: Springer Mountain, GA
-Lat/Lon: 34.6723, -84.2134
-Content: "Beautiful first day on the trail! The weather was perfect..."
-Photos: [Sunrise photo, Trail marker photo]
-```
-
-**Day 2**: Hawk Mountain to Low Gap
-```
-Date: 2025-03-16
-Day Number: 2
-Title: "Day 2: Hawk Mountain to Low Gap"
-Miles Hiked: 12.1
-Elevation Gain: 1800
-Total Miles: 20.3
-Location: Low Gap, GA
-Lat/Lon: 34.7891, -84.3456
-Content: "Challenging day with lots of elevation gain..."
-Photos: [Mountain view, Fellow hiker photo]
-```
-
-**Day 3**: Low Gap to Mountain Crossings
-```
-Date: 2025-03-17
-Day Number: 3
-Title: "Day 3: Low Gap to Mountain Crossings"
-Miles Hiked: 11.5
-Elevation Gain: 1500
-Total Miles: 31.8
-Location: Mountain Crossings, GA
-Lat/Lon: 34.8234, -84.4123
-Content: "Great resupply day. Met other hikers..."
-Photos: [Store photo, Trail magic photo]
-```
-
-**Expected Results**:
-- Stats show: 31.8 miles, 3 entries, 4500 ft elevation
-- Timeline shows all 3 entries in reverse chronological order
-- Each entry displays with photos
-- Can edit any entry
-- Can delete individual photos or entire entries
-
----
-
-## Notes & Tips
-
-### For Mobile Testing
-- Use same WiFi network as your development machine
-- Check terminal for server IP if needed
-- Use Chrome DevTools to simulate mobile if needed
-- Test with actual phone orientation changes
-
-### For Local Deployment (Non-Vibecode)
-- Set `DISABLE_VIBECODE=true` in both `.env` files
-- Can now deploy to any standard hosting (Vercel, Railway, VPS, Docker)
-- No Vibecode proxies or special requirements
-- Works like any standard React + Bun app
-
-### Common Issues
-1. **Port already in use**: Kill process on port 3000/8000
-2. **CORS errors**: Make sure DISABLE_VIBECODE=true if testing locally
-3. **Images not loading**: Check `/public/uploads` directory exists
-4. **Database errors**: Run `bunx prisma db push` if schema changes
-
----
-
-## Success Criteria for Stage 2
-
+### Stage 2 (COMPLETE ✅)
 - [x] All CRUD operations work
 - [x] Authentication system functional
 - [x] Real data from database
 - [x] Photos upload and display
 - [x] Mobile-responsive design
-- [ ] **Local testing confirms all features work on actual device**
-- [ ] **Performance is acceptable on mobile**
+- [x] Local testing confirms all features work
+- [x] Mobile testing passed
+
+### Stage 3A (Location & Weather)
+- [ ] Database schema updated with location/weather fields
+- [ ] GPS auto-population working on new entries
+- [ ] Weather auto-fetched and stored
+- [ ] Location/weather displayed in entry views
+
+### Stage 3B (Enhancements)
+- [ ] Enhanced statistics displayed
+- [ ] Elevation profiles (if GPX data used)
 
 ---
 
-## Questions for You
+## Quick Start for Development
 
-Before we move to Stage 3, test locally and let me know:
+```bash
+# Terminal 1: Backend
+cd backend
+bun install
+bunx prisma db push
+bun run dev
 
-1. **Does it work smoothly on your phone?**
-2. **Are there any UI/UX issues on mobile?**
-3. **Performance acceptable (fast enough)?**
-4. **Any bugs or crashes?**
-5. **Ready for map implementation, or want to fix anything first?**
+# Terminal 2: Frontend
+cd webapp
+npm install
+npm run dev
 
-Happy testing! 🥾
+# Access
+# Frontend: http://localhost:8000
+# Backend:  http://localhost:3000
+# Admin:    http://localhost:8000/admin
+```
+
+---
+
+Happy trails! 🥾

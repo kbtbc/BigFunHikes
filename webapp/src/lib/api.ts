@@ -159,6 +159,17 @@ export interface Photo {
   createdAt: string;
 }
 
+export interface WeatherData {
+  temperature: number;
+  temperatureUnit: "F" | "C";
+  conditions: string;
+  weatherCode?: number;
+  humidity?: number;
+  windSpeed?: number;
+  windUnit?: string;
+  recordedAt: string;
+}
+
 export interface JournalEntry {
   id: string;
   userId: string;
@@ -169,6 +180,10 @@ export interface JournalEntry {
   milesHiked: number;
   elevationGain: number | null;
   totalMilesCompleted: number;
+  latitude: number | null;
+  longitude: number | null;
+  locationName: string | null;
+  weather: string | null; // JSON string of WeatherData
   gpxData: string | null;
   createdAt: string;
   updatedAt: string;
@@ -183,6 +198,10 @@ export interface CreateJournalEntryInput {
   milesHiked: number;
   elevationGain?: number | null;
   totalMilesCompleted: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  locationName?: string | null;
+  weather?: string | null;
   gpxData?: string | null;
 }
 
@@ -194,6 +213,10 @@ export interface UpdateJournalEntryInput {
   milesHiked?: number;
   elevationGain?: number | null;
   totalMilesCompleted?: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  locationName?: string | null;
+  weather?: string | null;
   gpxData?: string | null;
 }
 

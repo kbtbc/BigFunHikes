@@ -16,6 +16,10 @@ model JournalEntry {
   milesHiked           Float
   elevationGain        Int?
   totalMilesCompleted  Float
+  latitude             Float?
+  longitude            Float?
+  locationName         String?
+  weather              String?
   gpxData              String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt

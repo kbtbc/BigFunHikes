@@ -15,6 +15,10 @@ export const createJournalEntrySchema = z.object({
   milesHiked: z.number().nonnegative(),
   elevationGain: z.number().int().nullable().optional(),
   totalMilesCompleted: z.number().nonnegative(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  locationName: z.string().max(500).nullable().optional(),
+  weather: z.string().nullable().optional(), // JSON string of weather data
   gpxData: z.string().nullable().optional(),
 });
 
@@ -31,6 +35,10 @@ export const updateJournalEntrySchema = z.object({
   milesHiked: z.number().nonnegative().optional(),
   elevationGain: z.number().int().nullable().optional(),
   totalMilesCompleted: z.number().nonnegative().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  locationName: z.string().max(500).nullable().optional(),
+  weather: z.string().nullable().optional(), // JSON string of weather data
   gpxData: z.string().nullable().optional(),
 });
 
@@ -63,6 +71,10 @@ export const journalEntrySchema = z.object({
   milesHiked: z.number(),
   elevationGain: z.number().int().nullable(),
   totalMilesCompleted: z.number(),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+  locationName: z.string().nullable(),
+  weather: z.string().nullable(), // JSON string of weather data
   gpxData: z.string().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -70,6 +82,22 @@ export const journalEntrySchema = z.object({
 });
 
 export type JournalEntry = z.infer<typeof journalEntrySchema>;
+
+/**
+ * Schema for weather data stored in entries
+ */
+export const weatherDataSchema = z.object({
+  temperature: z.number(),
+  temperatureUnit: z.enum(["F", "C"]),
+  conditions: z.string(),
+  weatherCode: z.number().optional(),
+  humidity: z.number().optional(),
+  windSpeed: z.number().optional(),
+  windUnit: z.string().optional(),
+  recordedAt: z.string().datetime(),
+});
+
+export type WeatherData = z.infer<typeof weatherDataSchema>;
 
 /**
  * Schema for paginated journal entries list

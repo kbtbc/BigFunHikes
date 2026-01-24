@@ -13,9 +13,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { entriesApi, type CreateJournalEntryInput } from "@/lib/api";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X } from "lucide-react";
+import { entriesApi, type CreateJournalEntryInput, type WeatherData } from "@/lib/api";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useGeolocation, formatCoordinates, formatAccuracy } from "@/hooks/use-geolocation";
 
 // Photo state interface
 interface PhotoUpload {
@@ -25,10 +26,47 @@ interface PhotoUpload {
   preview: string;
 }
 
+// Weather code to description mapping (WMO codes)
+function getWeatherDescription(code: number): string {
+  const descriptions: Record<number, string> = {
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Depositing rime fog",
+    51: "Light drizzle",
+    53: "Moderate drizzle",
+    55: "Dense drizzle",
+    61: "Slight rain",
+    63: "Moderate rain",
+    65: "Heavy rain",
+    71: "Slight snow",
+    73: "Moderate snow",
+    75: "Heavy snow",
+    77: "Snow grains",
+    80: "Slight rain showers",
+    81: "Moderate rain showers",
+    82: "Violent rain showers",
+    85: "Slight snow showers",
+    86: "Heavy snow showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with slight hail",
+    99: "Thunderstorm with heavy hail",
+  };
+  return descriptions[code] || "Unknown";
+}
+
 export default function NewEntryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // GPS location
+  const geo = useGeolocation({ autoFetch: true });
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
 
   // Get today's date in local timezone
   const today = new Date();
@@ -42,10 +80,55 @@ export default function NewEntryPage() {
     title: "",
     content: "",
     milesHiked: "",
+    locationName: "",
   });
 
   const [photos, setPhotos] = useState<PhotoUpload[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+
+  // Fetch weather when we have GPS coordinates
+  useEffect(() => {
+    async function fetchWeather() {
+      if (geo.latitude === null || geo.longitude === null) return;
+      if (weatherData) return; // Already have weather
+
+      setWeatherLoading(true);
+      setWeatherError(null);
+
+      try {
+        // Use Open-Meteo API (free, no API key needed)
+        const response = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch weather");
+        }
+
+        const data = await response.json();
+        const current = data.current_weather;
+
+        const weather: WeatherData = {
+          temperature: Math.round(current.temperature),
+          temperatureUnit: "F",
+          conditions: getWeatherDescription(current.weathercode),
+          weatherCode: current.weathercode,
+          windSpeed: Math.round(current.windspeed),
+          windUnit: "mph",
+          recordedAt: new Date().toISOString(),
+        };
+
+        setWeatherData(weather);
+      } catch (error) {
+        console.error("Weather fetch error:", error);
+        setWeatherError("Could not fetch weather data");
+      } finally {
+        setWeatherLoading(false);
+      }
+    }
+
+    fetchWeather();
+  }, [geo.latitude, geo.longitude, weatherData]);
 
   // Fetch the last entry to calculate running total and next day number
   const { data: lastEntryData } = useQuery({
@@ -184,6 +267,10 @@ export default function NewEntryPage() {
       milesHiked,
       elevationGain: null,
       totalMilesCompleted,
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+      locationName: formData.locationName.trim() || null,
+      weather: weatherData ? JSON.stringify(weatherData) : null,
       gpxData: null,
     });
   };
@@ -307,6 +394,122 @@ export default function NewEntryPage() {
                     onChange={(e) => handleChange("milesHiked", e.target.value)}
                     className="h-10"
                   />
+                </div>
+
+                {/* Location Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="locationName" className="text-sm font-medium">
+                    Location Name (optional)
+                  </Label>
+                  <Input
+                    id="locationName"
+                    type="text"
+                    placeholder="e.g., Springer Mountain, GA"
+                    value={formData.locationName}
+                    onChange={(e) => handleChange("locationName", e.target.value)}
+                    className="h-10"
+                    maxLength={500}
+                  />
+                </div>
+              </div>
+
+              {/* Location & Weather Section */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold font-outfit">Location & Weather</h3>
+                </div>
+
+                {/* GPS Status */}
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">GPS Coordinates</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={geo.fetchLocation}
+                      disabled={geo.loading}
+                      className="h-7 px-2"
+                    >
+                      <RefreshCw className={`h-3 w-3 mr-1 ${geo.loading ? "animate-spin" : ""}`} />
+                      Refresh
+                    </Button>
+                  </div>
+
+                  {geo.loading && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Getting your location...
+                    </p>
+                  )}
+
+                  {geo.error && (
+                    <p className="text-sm text-destructive">{geo.error}</p>
+                  )}
+
+                  {geo.latitude !== null && geo.longitude !== null && (
+                    <div className="space-y-1">
+                      <p className="text-sm font-mono text-foreground">
+                        {formatCoordinates(geo.latitude, geo.longitude)}
+                      </p>
+                      {geo.accuracy && (
+                        <p className="text-xs text-muted-foreground">
+                          {formatAccuracy(geo.accuracy)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {!geo.loading && !geo.error && geo.latitude === null && (
+                    <p className="text-sm text-muted-foreground">
+                      Location not available. Click Refresh to try again.
+                    </p>
+                  )}
+                </div>
+
+                {/* Weather Status */}
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Cloud className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Current Weather</span>
+                  </div>
+
+                  {weatherLoading && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Fetching weather...
+                    </p>
+                  )}
+
+                  {weatherError && (
+                    <p className="text-sm text-destructive">{weatherError}</p>
+                  )}
+
+                  {weatherData && (
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl font-bold">
+                        {weatherData.temperature}°{weatherData.temperatureUnit}
+                      </span>
+                      <div className="text-sm">
+                        <p className="font-medium">{weatherData.conditions}</p>
+                        {weatherData.windSpeed !== undefined && (
+                          <p className="text-muted-foreground">
+                            Wind: {weatherData.windSpeed} {weatherData.windUnit}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {!weatherLoading && !weatherError && !weatherData && geo.latitude === null && (
+                    <p className="text-sm text-muted-foreground">
+                      Weather will be fetched once location is available.
+                    </p>
+                  )}
                 </div>
               </div>
 
