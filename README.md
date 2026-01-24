@@ -203,6 +203,31 @@ Both servers run automatically with hot reload:
 
 Changes to code reload automatically.
 
+### Open Graph Preview Image
+
+The site uses a custom Open Graph image (`og-base.png`) that appears when sharing links on social media and messaging platforms. The image is generated programmatically with your branding.
+
+**To regenerate the preview image:**
+
+```bash
+cd webapp
+bun run generate:og-image
+```
+
+This will create/update `webapp/public/og-base.png` (1200x630px) with:
+- Your brand colors (forest greens, warm amber/orange accents)
+- Site title: "BigFun Hikes!"
+- Subtitle: "Appalachian Trail Journal"
+- Mountain silhouette and trail path design elements
+
+**To customize the image:**
+
+1. **Edit the script**: Modify `webapp/scripts/generate-og-image.js` to change colors, text, or layout
+2. **Use a design tool**: Create a 1200x630px image in Canva, Figma, or Photoshop using your brand colors and save as `webapp/public/og-base.png`
+3. **Online generators**: Use tools like [og-image.vercel.app](https://og-image.vercel.app) or [metatags.io](https://metatags.io)
+
+The image is referenced in `webapp/index.html` with absolute URLs for proper link preview display.
+
 ## Deployment
 
 ### Option 1: Vercel (Frontend) + Railway (Backend)
