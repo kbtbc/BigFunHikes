@@ -1,6 +1,6 @@
 # Vibecode Workspace
 
-This workspace contains a mobile app and backend server.
+This workspace contains a web app and backend server.
 
 <projects>
   webapp/    — React app (port 8000, environment variable VITE_BASE_URL)
