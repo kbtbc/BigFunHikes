@@ -55,6 +55,14 @@ export function HomePage() {
                 </Button>
               </Link>
             </div>
+            <div className="mt-6 max-w-2xl mx-auto">
+              <Alert className="bg-amber-50/95 dark:bg-amber-950/95 border-amber-200 dark:border-amber-800">
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <AlertDescription className="text-amber-900 dark:text-amber-100">
+                  <strong>Under Construction</strong> - Currently using test data (I don't start hiking until mid Feb)
+                </AlertDescription>
+              </Alert>
+            </div>
           </div>
         </div>
       </section>
