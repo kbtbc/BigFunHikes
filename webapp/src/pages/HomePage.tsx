@@ -153,7 +153,20 @@ export function HomePage() {
               </AlertDescription>
             </Alert>
           ) : (
-            <TrailMap entries={allEntries} height="500px" />
+            <TrailMap
+              height="500px"
+              showFullTrail={true}
+              latestEntryMarker={
+                latestEntry && latestEntry.coordinates.start[0] !== 34.6266
+                  ? {
+                      lat: latestEntry.coordinates.start[0],
+                      lng: latestEntry.coordinates.start[1],
+                      title: latestEntry.title,
+                      day: latestEntry.day,
+                    }
+                  : null
+              }
+            />
           )}
         </div>
       </section>

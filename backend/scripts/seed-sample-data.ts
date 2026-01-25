@@ -39,6 +39,9 @@ const SAMPLE_ENTRIES = [
     day: 1,
     date: '2026-03-15',
     title: 'Springer Mountain to Hawk Mountain Shelter',
+    location: 'Springer Mountain, GA',
+    latitude: 34.6266,
+    longitude: -84.1934,
     content: `Started my Appalachian Trail journey at Springer Mountain! The weather was perfect - crisp morning air with sunshine breaking through the trees. The first climb was tougher than expected with a full pack, but the views from the summit made it worthwhile.
 
 Met several other thru-hikers at the shelter tonight. Everyone is excited and a bit nervous. Trail names are already starting to emerge. Someone called me "Basecamp" because of my oversized pack. Might need to mail some gear home!
@@ -64,6 +67,9 @@ The shelter is cozy but crowded. Hanging my food bag and settling in for my firs
     day: 2,
     date: '2026-03-16',
     title: 'Hawk Mountain to Gooch Gap',
+    location: 'Gooch Gap, GA',
+    latitude: 34.6608,
+    longitude: -84.1256,
     content: `Second day and my feet are already feeling it! Broke camp early and made good time despite some challenging climbs. The Georgia mountains don't mess around.
 
 Passed through some beautiful hardwood forests. The trees are just starting to show signs of spring. Saw my first wildflowers of the trip - tiny white blossoms along the trail.
@@ -88,6 +94,9 @@ Took a longer break at Gooch Gap to soak my feet in the creek. Absolute heaven. 
     day: 3,
     date: '2026-03-17',
     title: 'Gooch Gap to Woody Gap',
+    location: 'Woody Gap, GA',
+    latitude: 34.6789,
+    longitude: -84.0456,
     content: `Legs are getting stronger! Today felt much better than yesterday. The trail follows ridgelines with constant ups and downs, but I'm finding my rhythm.
 
 Stopped at Neel Gap to resupply. The outfitter there is legendary - they have a "hiker box" full of gear people have mailed home. I contributed my camp chair and grabbed some freeze-dried meals.
@@ -113,6 +122,9 @@ Met a trail angel named "Biscuit" who gave me fresh baked goods. Trail magic is 
     day: 4,
     date: '2026-03-18',
     title: 'Woody Gap to Low Gap Shelter',
+    location: 'Blood Mountain, GA',
+    latitude: 34.7398,
+    longitude: -83.9367,
     content: `Big mile day today! Feeling strong and the weather cooperated perfectly. The trail was well-maintained through this section with gentle grades.
 
 Saw my first bear! It was a black bear cub, which meant mama was nearby. I made noise and backed away slowly. My heart was racing but it was incredible to see wildlife up close.
@@ -137,6 +149,9 @@ The sunset from Low Gap was spectacular - layers of blue mountains fading into t
     day: 5,
     date: '2026-03-19',
     title: 'Low Gap to Blue Mountain Shelter',
+    location: 'Neel Gap, GA',
+    latitude: 34.7319,
+    longitude: -83.9186,
     content: `Tougher day mentally. Woke up to rain and hiked in drizzle most of the morning. Everything is wet and staying motivated was hard.
 
 But the afternoon cleared up and I pushed through. The climb up to Blue Mountain was steep but the views at the top were worth every step. Could see for miles in every direction.
@@ -162,6 +177,9 @@ Met a SOBO (southbound) hiker who's finishing up. She gave me encouragement and 
     day: 6,
     date: '2026-03-20',
     title: 'Blue Mountain to Deep Gap Shelter',
+    location: 'Tesnatee Gap, GA',
+    latitude: 34.7456,
+    longitude: -83.8534,
     content: `Incredible day! The trail followed a ridge with 360-degree views for miles. Spring is arriving in the lowlands but up here it still feels like winter in spots.
 
 Found a great rhythm today. My pack feels lighter (or I'm getting stronger). Either way, hiking is becoming more enjoyable and less of a grind.
@@ -186,6 +204,9 @@ Camped with a great group tonight. We cooked dinner together and shared stories 
     day: 7,
     date: '2026-03-21',
     title: 'Deep Gap to Standing Indian Shelter',
+    location: 'Standing Indian Mountain, NC',
+    latitude: 35.0275,
+    longitude: -83.5583,
     content: `Week one complete! Can't believe I've been out here for a full week. My body is adapting but my feet are still angry at me.
 
 Today's highlight was crossing into North Carolina! State #2 of 14. The border was marked with a simple sign but it felt like a huge milestone.
@@ -211,6 +232,9 @@ The climb up Standing Indian Mountain was brutal - over 1,000 feet in less than 
     day: 8,
     date: '2026-03-22',
     title: 'Standing Indian to Carter Gap Shelter',
+    location: 'Carter Gap, NC',
+    latitude: 35.0756,
+    longitude: -83.5234,
     content: `Recovery day - took it easy with lower mileage. My body needed the break. Lots of rolling terrain through beautiful forest.
 
 Saw wild turkeys this morning! A whole flock of them crossed the trail in front of me. They're surprisingly large up close.
@@ -237,6 +261,9 @@ Town stop tomorrow for resupply. Already dreaming about real food!`,
     day: 9,
     date: '2026-03-23',
     title: 'Carter Gap to Rock Gap Shelter',
+    location: 'Rock Gap, NC',
+    latitude: 35.1123,
+    longitude: -83.4567,
     content: `Town day! Hiked down to Franklin, NC for resupply. Got a burger, fries, and ice cream. Pretty sure I ate my body weight in calories.
 
 Resupplied at the outfitter and grabbed some blister supplies. My feet are slowly toughening up but still have some hot spots.
@@ -262,6 +289,9 @@ Back on trail feeling refreshed and motivated. The shower and laundry made me fe
     day: 10,
     date: '2026-03-24',
     title: 'Rock Gap to Wayah Shelter',
+    location: 'Wayah Bald, NC',
+    latitude: 35.1756,
+    longitude: -83.5589,
     content: `Double-digit day number! Feels like a real milestone. The trail is becoming my new normal.
 
 Today was all about climbing - gained over 3,000 feet. The ascent to Wayah Bald was steep but the 360-degree views from the stone tower at the top were unbelievable. Could see the Smokies in the distance!
@@ -314,9 +344,9 @@ async function main() {
         elevationGain: entry.elevationGain,
         totalMilesCompleted: totalMiles,
         weather: JSON.stringify(entry.weather),
-        latitude: null,
-        longitude: null,
-        locationName: null,
+        latitude: entry.latitude ?? null,
+        longitude: entry.longitude ?? null,
+        locationName: entry.location ?? null,
         gpxData: null,
       },
     });
