@@ -6,7 +6,7 @@ import { JournalEntry } from "@/components/JournalEntry";
 import { useEntries, useStats } from "@/hooks/use-entries";
 import { useAuth } from "@/context/AuthContext";
 import { transformApiEntryToComponent } from "@/lib/transformEntries";
-import { ArrowRight, AlertCircle } from "lucide-react";
+import { ArrowRight, AlertCircle, Youtube } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -61,6 +61,30 @@ export function HomePage() {
                   <strong>Under Construction</strong> - Currently using test data (I don't start hiking until mid Feb)
                 </AlertDescription>
               </Alert>
+            </div>
+
+            {/* YouTube Intro Video */}
+            <div className="mt-6 max-w-md mx-auto">
+              <div className="rounded-lg overflow-hidden shadow-lg border-2 border-white/20">
+                <div className="aspect-video">
+                  <iframe
+                    src="https://www.youtube.com/embed/VIDEO_ID_HERE"
+                    title="BigFun Hikes Intro"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full"
+                  />
+                </div>
+              </div>
+              <a
+                href="https://www.youtube.com/@BigFunHikes"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-3 text-white/80 hover:text-white transition-colors text-sm"
+              >
+                <Youtube className="h-4 w-4" />
+                Subscribe on YouTube
+              </a>
             </div>
           </div>
         </div>
