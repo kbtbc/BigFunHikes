@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { JournalEntry } from "@/components/JournalEntry";
-import { TrailMap } from "@/components/TrailMap";
+import { EntryMap } from "@/components/EntryMap";
 import { useEntry, useDeleteEntry, useEntries } from "@/hooks/use-entries";
 import { useAuth } from "@/context/AuthContext";
 import { transformApiEntryToComponent } from "@/lib/transformEntries";
@@ -289,9 +289,14 @@ export function EntryDetailPage() {
               <MapPin className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold font-outfit">Today's Route</h3>
             </div>
-            <div className="rounded-lg overflow-hidden border-2 shadow-md">
-              <TrailMap entries={[entry]} selectedEntry={entry} height="400px" />
-            </div>
+            <EntryMap
+              dayNumber={entry.day}
+              title={entry.title}
+              startLocation={entry.location.start}
+              endLocation={entry.location.end}
+              milesHiked={entry.miles}
+              height="350px"
+            />
           </div>
 
           {/* Bottom Navigation */}
