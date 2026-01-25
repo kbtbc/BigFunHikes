@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { entriesApi, api, type CreateJournalEntryInput, type WeatherData } from "@/lib/api";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw } from "lucide-react";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw, Pencil, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGeolocation, formatCoordinates, formatAccuracy } from "@/hooks/use-geolocation";
 
@@ -64,9 +64,17 @@ export default function NewEntryPage() {
 
   // GPS location
   const geo = useGeolocation({ autoFetch: true });
+  const [manualCoords, setManualCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [editingCoords, setEditingCoords] = useState(false);
+  const [coordsInput, setCoordsInput] = useState("");
+  const [coordsError, setCoordsError] = useState<string | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
+
+  // Get effective coordinates (manual overrides auto)
+  const effectiveLat = manualCoords?.lat ?? geo.latitude;
+  const effectiveLng = manualCoords?.lng ?? geo.longitude;
 
   // Get today's date in local timezone
   const today = new Date();
@@ -89,7 +97,7 @@ export default function NewEntryPage() {
   // Fetch weather when we have GPS coordinates
   useEffect(() => {
     async function fetchWeather() {
-      if (geo.latitude === null || geo.longitude === null) return;
+      if (effectiveLat === null || effectiveLng === null) return;
       if (weatherData) return; // Already have weather
 
       setWeatherLoading(true);
@@ -98,7 +106,7 @@ export default function NewEntryPage() {
       try {
         // Use Open-Meteo API (free, no API key needed)
         const response = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph`
+          `https://api.open-meteo.com/v1/forecast?latitude=${effectiveLat}&longitude=${effectiveLng}&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph`
         );
 
         if (!response.ok) {
@@ -128,7 +136,7 @@ export default function NewEntryPage() {
     }
 
     fetchWeather();
-  }, [geo.latitude, geo.longitude, weatherData]);
+  }, [effectiveLat, effectiveLng, weatherData]);
 
   // Fetch the last entry to calculate running total and next day number
   const { data: lastEntryData } = useQuery({
@@ -266,8 +274,8 @@ export default function NewEntryPage() {
       milesHiked,
       elevationGain: null,
       totalMilesCompleted,
-      latitude: geo.latitude,
-      longitude: geo.longitude,
+      latitude: effectiveLat,
+      longitude: effectiveLng,
       locationName: formData.locationName.trim() || null,
       weather: weatherData ? JSON.stringify(weatherData) : null,
       gpxData: null,
@@ -279,6 +287,57 @@ export default function NewEntryPage() {
     value: string | number
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Parse and validate coordinate input
+  const parseCoordinates = (input: string): { lat: number; lng: number } | null => {
+    const cleaned = input.trim();
+    const parts = cleaned.split(/[,\s]+/).filter(Boolean);
+    if (parts.length !== 2) return null;
+
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
+
+    if (isNaN(lat) || isNaN(lng)) return null;
+    if (lat < -90 || lat > 90) return null;
+    if (lng < -180 || lng > 180) return null;
+
+    return { lat, lng };
+  };
+
+  const handleStartEditCoords = () => {
+    const lat = effectiveLat ?? 0;
+    const lng = effectiveLng ?? 0;
+    setCoordsInput(`${lat}, ${lng}`);
+    setCoordsError(null);
+    setEditingCoords(true);
+  };
+
+  const handleSaveCoords = () => {
+    const coords = parseCoordinates(coordsInput);
+    if (!coords) {
+      setCoordsError("Invalid format. Use: lat, lng (e.g., 34.6266, -84.1934)");
+      return;
+    }
+    setManualCoords(coords);
+    setEditingCoords(false);
+    setCoordsError(null);
+    // Clear weather so it refetches for new location
+    setWeatherData(null);
+  };
+
+  const handleCancelEditCoords = () => {
+    setEditingCoords(false);
+    setCoordsError(null);
+  };
+
+  const handleCoordsKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSaveCoords();
+    } else if (e.key === "Escape") {
+      handleCancelEditCoords();
+    }
   };
 
   const isPending = createMutation.isPending || uploadingPhotos;
@@ -425,48 +484,111 @@ export default function NewEntryPage() {
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-medium">GPS Coordinates</span>
+                      {manualCoords && (
+                        <span className="text-xs text-muted-foreground">(manual)</span>
+                      )}
                     </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={geo.fetchLocation}
+                      onClick={() => {
+                        setManualCoords(null);
+                        setWeatherData(null);
+                        geo.fetchLocation();
+                      }}
                       disabled={geo.loading}
                       className="h-7 px-2"
                     >
                       <RefreshCw className={`h-3 w-3 mr-1 ${geo.loading ? "animate-spin" : ""}`} />
-                      Refresh
+                      Auto
                     </Button>
                   </div>
 
-                  {geo.loading && (
+                  {geo.loading && !manualCoords && (
                     <p className="text-sm text-muted-foreground flex items-center gap-2">
                       <Loader2 className="h-3 w-3 animate-spin" />
                       Getting your location...
                     </p>
                   )}
 
-                  {geo.error && (
+                  {geo.error && !manualCoords && (
                     <p className="text-sm text-destructive">{geo.error}</p>
                   )}
 
-                  {geo.latitude !== null && geo.longitude !== null && (
-                    <div className="space-y-1">
-                      <p className="text-sm font-mono text-foreground">
-                        {formatCoordinates(geo.latitude, geo.longitude)}
+                  {editingCoords ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="text"
+                          value={coordsInput}
+                          onChange={(e) => {
+                            setCoordsInput(e.target.value);
+                            setCoordsError(null);
+                          }}
+                          onKeyDown={handleCoordsKeyDown}
+                          placeholder="lat, lng"
+                          className="font-mono text-sm h-8 w-48"
+                          autoFocus
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                          onClick={handleSaveCoords}
+                        >
+                          <Check className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                          onClick={handleCancelEditCoords}
+                        >
+                          <X className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                      {coordsError && <p className="text-xs text-destructive">{coordsError}</p>}
+                      <p className="text-xs text-muted-foreground">
+                        Format: latitude, longitude (e.g., 34.6266, -84.1934)
                       </p>
-                      {geo.accuracy && (
+                    </div>
+                  ) : effectiveLat !== null && effectiveLng !== null ? (
+                    <div className="space-y-1">
+                      <div
+                        className="group flex items-center gap-2 cursor-pointer"
+                        onClick={handleStartEditCoords}
+                        title="Click to edit coordinates"
+                      >
+                        <p className="text-sm font-mono text-foreground">
+                          {formatCoordinates(effectiveLat, effectiveLng)}
+                        </p>
+                        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      {!manualCoords && geo.accuracy && (
                         <p className="text-xs text-muted-foreground">
                           {formatAccuracy(geo.accuracy)}
                         </p>
                       )}
                     </div>
-                  )}
-
-                  {!geo.loading && !geo.error && geo.latitude === null && (
-                    <p className="text-sm text-muted-foreground">
-                      Location not available. Click Refresh to try again.
-                    </p>
+                  ) : !geo.loading && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Location not available.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleStartEditCoords}
+                        className="h-7"
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Enter manually
+                      </Button>
+                    </div>
                   )}
                 </div>
 
@@ -504,7 +626,7 @@ export default function NewEntryPage() {
                     </div>
                   )}
 
-                  {!weatherLoading && !weatherError && !weatherData && geo.latitude === null && (
+                  {!weatherLoading && !weatherError && !weatherData && effectiveLat === null && (
                     <p className="text-sm text-muted-foreground">
                       Weather will be fetched once location is available.
                     </p>
