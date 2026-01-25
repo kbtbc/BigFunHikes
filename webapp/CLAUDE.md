@@ -17,6 +17,7 @@
     ui/             — shadcn/ui components (pre-built)
     TrailMap.tsx    — Full AT trail display (home page)
     EntryMap.tsx    — Dynamic route segment map (entry pages)
+    GpxFileUpload.tsx — GPX file upload with auto-parsing
     EditableCoordinates.tsx — Inline GPS coordinate editor
     EnhancedStats.tsx — Statistics dashboard with charts
   src/hooks/
@@ -25,6 +26,7 @@
     use-dynamic-trail-segment.ts — Dynamic route calculation
   src/lib/
     api.ts          — API client with auth support
+    gpx-parser.ts   — GPX parsing and distance/elevation calculations
     transformEntries.ts — Data transformation utilities
   public/data/
     appalachian_trail.gpx — Full AT route (26MB, source)
@@ -42,11 +44,20 @@
   - Toggle between types on NewEntryPage
   - Training entries show single location marker on map (no trail path)
 
+  GPX Import:
+  - Upload GPX files from Suunto, Garmin, or other fitness watches
+  - gpx-parser.ts handles parsing, distance, and elevation calculations
+  - GpxFileUpload component provides UI with auto-fill
+  - Auto-populates miles hiked, elevation gain, and GPS coordinates
+  - EntryMap displays GPX tracks (red for trail, amber for training)
+  - GPX track overrides AT segment estimation when present
+
   Maps:
   - TrailMap: Full AT trail on home page with current location marker
   - EntryMap: Dynamic route segment between entries (trail) or single marker (training)
   - Uses at-trail-indexed.json for segment calculation
   - Haversine distance to find closest points on trail
+  - Supports GPX track overlay when imported
 
   GPS/Location:
   - Auto-capture via useGeolocation hook
