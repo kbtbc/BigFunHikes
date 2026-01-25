@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { JournalEntry } from "@/data/journalEntries";
 
 // Fix for default marker icons - use CDN URLs
 const iconUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
-const iconRetinaUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png";
-const shadowUrl = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
+const iconRetinaUrl =
+  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png";
+const shadowUrl =
+  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
 
 const DefaultIcon = L.icon({
   iconUrl,
@@ -22,7 +24,8 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 // Custom icon for latest entry (larger, prominent)
 const latestEntryIcon = L.icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
   shadowUrl,
   iconSize: [30, 49],
   iconAnchor: [15, 49],
@@ -30,12 +33,24 @@ const latestEntryIcon = L.icon({
   shadowSize: [41, 41],
 });
 
+interface OptimizedTrailData {
+  name: string;
+  pointCount: number;
+  bounds: { south: number; north: number; west: number; east: number };
+  coordinates: number[]; // flat array: [lat1, lng1, lat2, lng2, ...]
+}
+
 interface TrailMapProps {
   entries?: JournalEntry[];
   selectedEntry?: JournalEntry;
   height?: string;
   showFullTrail?: boolean;
-  latestEntryMarker?: { lat: number; lng: number; title: string; day: number } | null;
+  latestEntryMarker?: {
+    lat: number;
+    lng: number;
+    title: string;
+    day: number;
+  } | null;
   className?: string;
 }
 
@@ -49,73 +64,72 @@ export function TrailMap({
 }: TrailMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const [trailLoaded, setTrailLoaded] = useState(false);
   const trailLayerRef = useRef<L.Polyline | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
-  // Parse GPX file and extract track points (simplified for performance)
-  const parseGPX = useCallback(async (gpxText: string): Promise<[number, number][]> => {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(gpxText, "text/xml");
-    const trkpts = xmlDoc.querySelectorAll("trkpt");
+  // Initialize map
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current) return;
 
-    const points: [number, number][] = [];
-    // Sample every Nth point for performance (full trail has ~300k points)
-    const sampleRate = Math.max(1, Math.floor(trkpts.length / 5000));
+    // Default center (middle of AT)
+    const defaultCenter: [number, number] = [39.5, -77.5];
+    const defaultZoom = 5;
 
-    for (let i = 0; i < trkpts.length; i += sampleRate) {
-      const pt = trkpts[i];
-      const lat = parseFloat(pt.getAttribute("lat") || "0");
-      const lon = parseFloat(pt.getAttribute("lon") || "0");
-      if (lat && lon) {
-        points.push([lat, lon]);
-      }
-    }
+    const map = L.map(mapRef.current).setView(defaultCenter, defaultZoom);
+    mapInstanceRef.current = map;
 
-    // Always include the last point
-    if (trkpts.length > 0) {
-      const lastPt = trkpts[trkpts.length - 1];
-      const lat = parseFloat(lastPt.getAttribute("lat") || "0");
-      const lon = parseFloat(lastPt.getAttribute("lon") || "0");
-      if (lat && lon) {
-        points.push([lat, lon]);
-      }
-    }
+    // Add tile layer
+    L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+      maxZoom: 17,
+    }).addTo(map);
 
-    return points;
+    setMapReady(true);
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+      trailLayerRef.current = null;
+      markerRef.current = null;
+      setMapReady(false);
+    };
   }, []);
 
-  // Load and render full AT trail
+  // Load and render full AT trail from optimized JSON
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !showFullTrail || trailLoaded) return;
+    if (!map || !mapReady || !showFullTrail) return;
+
+    // Don't reload if already loaded
+    if (trailLayerRef.current) return;
 
     const loadTrail = async () => {
       try {
-        const response = await fetch("/data/appalachian_trail.gpx");
-        if (!response.ok) throw new Error("Failed to load GPX");
+        const response = await fetch("/data/at-trail-optimized.json");
+        if (!response.ok) throw new Error("Failed to load trail data");
 
-        const gpxText = await response.text();
-        const points = await parseGPX(gpxText);
+        const data: OptimizedTrailData = await response.json();
 
-        if (points.length > 0 && map) {
-          // Remove existing trail layer if any
-          if (trailLayerRef.current) {
-            map.removeLayer(trailLayerRef.current);
-          }
+        // Convert flat array back to coordinate pairs
+        const points: [number, number][] = [];
+        for (let i = 0; i < data.coordinates.length; i += 2) {
+          points.push([data.coordinates[i], data.coordinates[i + 1]]);
+        }
 
-          // Add the full trail as a polyline
+        if (points.length > 0) {
           const trailLine = L.polyline(points, {
             color: "#2d5016",
             weight: 3,
-            opacity: 0.7,
-            smoothFactor: 1.5,
+            opacity: 0.8,
+            smoothFactor: 1,
           }).addTo(map);
 
           trailLayerRef.current = trailLine;
 
           // Fit to trail bounds
-          map.fitBounds(trailLine.getBounds(), { padding: [30, 30] });
-          setTrailLoaded(true);
+          map.fitBounds(trailLine.getBounds(), { padding: [20, 20] });
         }
       } catch (error) {
         console.error("Error loading AT trail:", error);
@@ -123,75 +137,65 @@ export function TrailMap({
     };
 
     loadTrail();
-  }, [showFullTrail, trailLoaded, parseGPX]);
+  }, [mapReady, showFullTrail]);
 
-  useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
-
-    // Default center on Springer Mountain (AT southern terminus)
-    const defaultCenter: [number, number] = [34.6266, -84.1934];
-    const defaultZoom = 10;
-
-    // Initialize map
-    const map = L.map(mapRef.current).setView(defaultCenter, defaultZoom);
-    mapInstanceRef.current = map;
-
-    // Add tile layer
-    L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
-      maxZoom: 17,
-    }).addTo(map);
-
-    // Cleanup on unmount
-    return () => {
-      map.remove();
-      mapInstanceRef.current = null;
-    };
-  }, []);
-
-  // Update markers and polylines when entries change
+  // Add latest entry marker (separate effect to avoid race conditions)
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !mapReady || !showFullTrail) return;
 
-    // Clear existing marker layers (but NOT polylines - preserve the full trail)
-    map.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        map.removeLayer(layer);
-      }
-      // Only remove polylines that are NOT the full trail
-      if (layer instanceof L.Polyline && layer !== trailLayerRef.current) {
-        map.removeLayer(layer);
-      }
-    });
+    // Remove existing marker
+    if (markerRef.current) {
+      map.removeLayer(markerRef.current);
+      markerRef.current = null;
+    }
 
-    // If showing full trail with latest entry marker, just add that marker
-    if (showFullTrail && latestEntryMarker) {
+    // Add new marker if provided
+    if (latestEntryMarker) {
       const marker = L.marker([latestEntryMarker.lat, latestEntryMarker.lng], {
         icon: latestEntryIcon,
-        zIndexOffset: 1000, // Ensure it's on top
+        zIndexOffset: 1000,
       })
-        .bindPopup(`
+        .bindPopup(
+          `
           <div class="text-sm">
             <div class="font-semibold text-orange-600">Current Location</div>
             <div class="font-medium">Day ${latestEntryMarker.day}</div>
             <div>${latestEntryMarker.title}</div>
           </div>
-        `)
+        `
+        )
         .addTo(map);
 
-      // Open popup by default
-      marker.openPopup();
-      return;
+      markerRef.current = marker;
+
+      // Open popup after a short delay to ensure map is ready
+      setTimeout(() => marker.openPopup(), 500);
     }
+  }, [mapReady, showFullTrail, latestEntryMarker]);
+
+  // Handle entries-based display (for timeline/entry detail views)
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !mapReady || showFullTrail) return;
+
+    // Clear existing markers and non-trail polylines
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+      if (layer instanceof L.Polyline && layer !== trailLayerRef.current) {
+        map.removeLayer(layer);
+      }
+    });
 
     if (entries.length === 0) return;
 
     const bounds: L.LatLngExpression[] = [];
 
-    // Create custom icons
     const startIcon = L.icon({
-      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
       shadowUrl,
       iconSize: [25, 41],
       iconAnchor: [12, 41],
@@ -200,7 +204,8 @@ export function TrailMap({
     });
 
     const endIcon = L.icon({
-      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
       shadowUrl,
       iconSize: [25, 41],
       iconAnchor: [12, 41],
@@ -211,7 +216,6 @@ export function TrailMap({
     entries.forEach((entry) => {
       const isSelected = selectedEntry?.id === entry.id;
 
-      // Add GPX track line
       if (entry.gpxTrack && entry.gpxTrack.length > 0) {
         L.polyline(entry.gpxTrack, {
           color: isSelected ? "#f4a261" : "#4a7c59",
@@ -222,36 +226,37 @@ export function TrailMap({
         bounds.push(...entry.gpxTrack);
       }
 
-      // Add start marker
       L.marker(entry.coordinates.start, { icon: startIcon })
-        .bindPopup(`
+        .bindPopup(
+          `
           <div class="text-sm">
             <div class="font-semibold">Day ${entry.day} - Start</div>
             <div>${entry.location.start}</div>
             <div class="text-xs">${entry.date}</div>
           </div>
-        `)
+        `
+        )
         .addTo(map);
       bounds.push(entry.coordinates.start);
 
-      // Add end marker
       L.marker(entry.coordinates.end, { icon: endIcon })
-        .bindPopup(`
+        .bindPopup(
+          `
           <div class="text-sm">
             <div class="font-semibold">Day ${entry.day} - End</div>
             <div>${entry.location.end}</div>
             <div class="text-xs">${entry.miles} miles • ${entry.elevationGain}ft gain</div>
           </div>
-        `)
+        `
+        )
         .addTo(map);
       bounds.push(entry.coordinates.end);
     });
 
-    // Fit bounds to show all markers
     if (bounds.length > 0) {
       map.fitBounds(bounds as L.LatLngBoundsExpression, { padding: [50, 50] });
     }
-  }, [entries, selectedEntry, showFullTrail, latestEntryMarker]);
+  }, [mapReady, entries, selectedEntry, showFullTrail]);
 
   return (
     <div
