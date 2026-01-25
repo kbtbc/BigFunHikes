@@ -68,7 +68,7 @@ export function HomePage() {
               <div className="rounded-lg overflow-hidden shadow-lg border-2 border-white/20">
                 <div className="aspect-video">
                   <iframe
-                    src="https://www.youtube.com/embed/VIDEO_ID_HERE"
+                    src="https://www.youtube.com/embed/kgKnqN4yDGU"
                     title="BigFun Hikes Intro"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
@@ -80,7 +80,7 @@ export function HomePage() {
                 href="https://www.youtube.com/@BigFunHikes"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-3 text-white/80 hover:text-white transition-colors text-sm"
+                className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors text-sm font-medium"
               >
                 <Youtube className="h-4 w-4" />
                 Subscribe on YouTube
