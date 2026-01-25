@@ -4,7 +4,8 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { JournalEntry } from "@/components/JournalEntry";
 import { EntryMap } from "@/components/EntryMap";
-import { useEntry, useDeleteEntry, useEntries } from "@/hooks/use-entries";
+import { EditableCoordinates } from "@/components/EditableCoordinates";
+import { useEntry, useDeleteEntry, useEntries, useUpdateEntry } from "@/hooks/use-entries";
 import { useAuth } from "@/context/AuthContext";
 import { transformApiEntryToComponent } from "@/lib/transformEntries";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,7 +22,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AlertCircle, ArrowLeft, Edit, Trash2, Loader2, MapPin, Cloud, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatCoordinates } from "@/hooks/use-geolocation";
 
 // Reusable Entry Navigation Component
 function EntryNavigation({
@@ -83,6 +83,7 @@ export function EntryDetailPage() {
   const { data: allEntriesData } = useEntries(1, 1000, { enabled: true });
 
   const deleteMutation = useDeleteEntry();
+  const updateMutation = useUpdateEntry();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const entry = apiEntry ? transformApiEntryToComponent(apiEntry) : null;
@@ -249,12 +250,24 @@ export function EntryDetailPage() {
                       <p className="font-medium">{entry.locationName}</p>
                     </div>
                   )}
-                  {entry.coordinates.start[0] !== 34.6266 && (
+                  {(entry.coordinates.start[0] !== 34.6266 || isAuthenticated) && (
                     <div>
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">GPS Coordinates</span>
-                      <p className="font-mono text-sm">
-                        {formatCoordinates(entry.coordinates.start[0], entry.coordinates.start[1])}
-                      </p>
+                      <EditableCoordinates
+                        latitude={entry.coordinates.start[0]}
+                        longitude={entry.coordinates.start[1]}
+                        isAdmin={isAuthenticated}
+                        onSave={async (lat, lng) => {
+                          await updateMutation.mutateAsync({
+                            id: id!,
+                            data: { latitude: lat, longitude: lng },
+                          });
+                          toast({
+                            title: "Coordinates updated",
+                            description: `Location set to ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+                          });
+                        }}
+                      />
                     </div>
                   )}
                 </div>
