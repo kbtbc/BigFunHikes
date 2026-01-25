@@ -819,7 +819,7 @@ export default function NewEntryPage() {
                   type="submit"
                   size="lg"
                   disabled={isPending}
-                  className={`flex-1 ${entryType === "training" ? "bg-amber-600 hover:bg-amber-700" : ""}`}
+                  className={`flex-1 ${entryType === "training" ? "bg-amber-600 hover:bg-amber-700 text-white" : ""}`}
                 >
                   {isPending ? (
                     <>
