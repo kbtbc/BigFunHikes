@@ -27,6 +27,17 @@ const endIcon = L.icon({
   shadowSize: [41, 41],
 });
 
+// Custom icon for training hikes (orange/amber)
+const trainingIcon = L.icon({
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
+  shadowUrl,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
 interface EntryMapProps {
   dayNumber: number;
   title: string;
@@ -41,6 +52,8 @@ interface EntryMapProps {
   milesHiked?: number;
   height?: string;
   className?: string;
+  // Entry type - training entries show single marker, no trail segment
+  entryType?: "trail" | "training";
 }
 
 export function EntryMap({
@@ -55,17 +68,21 @@ export function EntryMap({
   milesHiked,
   height = "300px",
   className = "",
+  entryType = "trail",
 }: EntryMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
+  const isTraining = entryType === "training";
+
   // Use dynamic trail segment based on actual coordinates
+  // Skip trail segment calculation for training entries - just show single marker
   const { coordinates, bounds, loading, error } = useTrailSegmentForEntry(
-    latitude ?? null,
-    longitude ?? null,
-    prevLatitude,
-    prevLongitude
+    isTraining ? null : (latitude ?? null),
+    isTraining ? null : (longitude ?? null),
+    isTraining ? null : prevLatitude,
+    isTraining ? null : prevLongitude
   );
 
   // Initialize map
@@ -109,6 +126,23 @@ export function EntryMap({
         map.removeLayer(layer);
       }
     });
+
+    // For training entries, just show a single marker at the location
+    if (isTraining && latitude && longitude) {
+      L.marker([latitude, longitude], { icon: trainingIcon })
+        .bindPopup(
+          `<div class="text-sm">
+            <div class="font-semibold text-amber-600">Training Hike</div>
+            <div>${title}</div>
+            ${milesHiked ? `<div class="text-xs mt-1">${milesHiked} miles hiked</div>` : ""}
+            ${startLocation ? `<div class="text-xs text-gray-500">${startLocation}</div>` : ""}
+          </div>`
+        )
+        .addTo(map);
+
+      map.setView([latitude, longitude], 13);
+      return;
+    }
 
     // If we have coordinates from the trail, draw them
     if (coordinates.length > 0) {
@@ -179,6 +213,7 @@ export function EntryMap({
     startLocation,
     endLocation,
     milesHiked,
+    isTraining,
   ]);
 
   // Show placeholder if no coordinates at all

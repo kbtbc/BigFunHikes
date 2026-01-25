@@ -323,7 +323,9 @@ export function EntryDetailPage() {
           <div className="mt-8">
             <div className="flex items-center gap-2 mb-4">
               <MapPin className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold font-outfit">Today's Route</h3>
+              <h3 className="text-lg font-semibold font-outfit">
+                {entry.entryType === "training" ? "Training Location" : "Today's Route"}
+              </h3>
             </div>
             <EntryMap
               dayNumber={entry.day}
@@ -336,6 +338,7 @@ export function EntryDetailPage() {
               endLocation={entry.location.end}
               milesHiked={entry.miles}
               height="350px"
+              entryType={entry.entryType}
             />
           </div>
 
