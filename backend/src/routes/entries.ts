@@ -46,19 +46,18 @@ entriesRouter.get(
       ]);
 
       // Helper to normalize photo URLs to relative paths (works with proxy)
+      // Only normalizes local uploads, leaves external URLs intact
       const normalizePhotoUrl = (url: string): string => {
         // If it's already a relative URL, return as-is
         if (url.startsWith("/")) {
           return url;
         }
-        // If it's a full URL, extract the path
-        try {
-          const urlObj = new URL(url);
-          return urlObj.pathname;
-        } catch {
-          // If parsing fails, assume it's already relative
-          return url.startsWith("/") ? url : `/${url}`;
+        // If it's an external URL (http/https), keep it as-is
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+          return url;
         }
+        // Otherwise, treat as relative path
+        return url.startsWith("/") ? url : `/${url}`;
       };
 
       const formattedEntries = entries.map((entry) => ({
@@ -262,19 +261,18 @@ entriesRouter.put(
       });
 
       // Helper to normalize photo URLs to relative paths (works with proxy)
+      // Only normalizes local uploads, leaves external URLs intact
       const normalizePhotoUrl = (url: string): string => {
         // If it's already a relative URL, return as-is
         if (url.startsWith("/")) {
           return url;
         }
-        // If it's a full URL, extract the path
-        try {
-          const urlObj = new URL(url);
-          return urlObj.pathname;
-        } catch {
-          // If parsing fails, assume it's already relative
-          return url.startsWith("/") ? url : `/${url}`;
+        // If it's an external URL (http/https), keep it as-is
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+          return url;
         }
+        // Otherwise, treat as relative path
+        return url.startsWith("/") ? url : `/${url}`;
       };
 
       const formattedEntry = {

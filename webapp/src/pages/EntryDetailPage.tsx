@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { JournalEntry } from "@/components/JournalEntry";
 import { TrailMap } from "@/components/TrailMap";
-import { useEntry, useDeleteEntry } from "@/hooks/use-entries";
+import { useEntry, useDeleteEntry, useEntries } from "@/hooks/use-entries";
 import { useAuth } from "@/context/AuthContext";
 import { transformApiEntryToComponent } from "@/lib/transformEntries";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AlertCircle, ArrowLeft, Edit, Trash2, Loader2, MapPin, Cloud } from "lucide-react";
+import { AlertCircle, ArrowLeft, Edit, Trash2, Loader2, MapPin, Cloud, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCoordinates } from "@/hooks/use-geolocation";
 
@@ -31,10 +31,38 @@ export function EntryDetailPage() {
   const { data: apiEntry, isLoading: entryLoading, error: entryError } = useEntry(id || "", {
     enabled: !!id,
   });
+
+  // Fetch all entries to determine prev/next
+  const { data: allEntriesData } = useEntries(1, 1000, { enabled: true });
+
   const deleteMutation = useDeleteEntry();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const entry = apiEntry ? transformApiEntryToComponent(apiEntry) : null;
+
+  // Find previous and next entries based on day number
+  let prevEntry: { id: string; dayNumber: number; title: string } | null = null;
+  let nextEntry: { id: string; dayNumber: number; title: string } | null = null;
+
+  if (apiEntry && allEntriesData?.entries) {
+    const currentDayNumber = apiEntry.dayNumber;
+    const allEntries = allEntriesData.entries;
+
+    // Sort by day number
+    const sortedEntries = [...allEntries].sort((a, b) => a.dayNumber - b.dayNumber);
+
+    const currentIndex = sortedEntries.findIndex(e => e.id === id);
+
+    if (currentIndex > 0) {
+      const prev = sortedEntries[currentIndex - 1];
+      prevEntry = { id: prev.id, dayNumber: prev.dayNumber, title: prev.title };
+    }
+
+    if (currentIndex >= 0 && currentIndex < sortedEntries.length - 1) {
+      const next = sortedEntries[currentIndex + 1];
+      nextEntry = { id: next.id, dayNumber: next.dayNumber, title: next.title };
+    }
+  }
 
   // Scroll to top when entry loads (after create/edit navigation)
   useEffect(() => {
@@ -218,13 +246,57 @@ export function EntryDetailPage() {
           </div>
 
           {/* Navigation */}
-          <div className="mt-12 pt-8 border-t flex justify-between items-center">
-            <Link to="/timeline">
-              <Button size="lg">
-                <ArrowLeft className="mr-2 h-5 w-5" />
-                Back to Timeline
-              </Button>
-            </Link>
+          <div className="mt-12 pt-8 border-t">
+            <div className="flex justify-between items-center gap-4">
+              <Link to="/timeline">
+                <Button size="lg" variant="outline">
+                  <ArrowLeft className="mr-2 h-5 w-5" />
+                  Back to Timeline
+                </Button>
+              </Link>
+
+              <div className="flex gap-2">
+                {prevEntry ? (
+                  <Link to={`/entry/${prevEntry.id}`}>
+                    <Button size="lg" variant="outline" className="group">
+                      <ChevronLeft className="mr-2 h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                      <div className="text-left">
+                        <div className="text-xs text-muted-foreground">Previous</div>
+                        <div className="font-semibold">Day {prevEntry.dayNumber}</div>
+                      </div>
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button size="lg" variant="outline" disabled>
+                    <ChevronLeft className="mr-2 h-5 w-5" />
+                    <div className="text-left">
+                      <div className="text-xs text-muted-foreground">Previous</div>
+                      <div className="font-semibold">—</div>
+                    </div>
+                  </Button>
+                )}
+
+                {nextEntry ? (
+                  <Link to={`/entry/${nextEntry.id}`}>
+                    <Button size="lg" variant="outline" className="group">
+                      <div className="text-right">
+                        <div className="text-xs text-muted-foreground">Next</div>
+                        <div className="font-semibold">Day {nextEntry.dayNumber}</div>
+                      </div>
+                      <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button size="lg" variant="outline" disabled>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground">Next</div>
+                      <div className="font-semibold">—</div>
+                    </div>
+                    <ChevronRight className="ml-2 h-5 w-5" />
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
