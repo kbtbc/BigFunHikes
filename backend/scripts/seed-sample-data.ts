@@ -48,6 +48,36 @@ function getNextPhotos(count: number): string[] {
 
 const SAMPLE_ENTRIES = [
   {
+    day: -1,
+    date: '2026-03-10',
+    title: 'Pre-Trail Training Hike - Kennesaw Mountain',
+    location: 'Kennesaw Mountain, GA',
+    latitude: 33.9831,
+    longitude: -84.5781,
+    entryType: 'training' as const,
+    content: `Final shakedown hike before starting the AT! Hiked the full Kennesaw Mountain trail loop with my full pack to test gear and get my legs ready.
+
+Pack weight came in at 28 lbs with food and water. Still a bit heavy but I'm confident I can handle it. The hip belt is dialed in perfectly now.
+
+Tested out my new water filter and it works great. Also broke in my trail runners a bit more - no hot spots!
+
+Feeling nervous but excited. Five more days until Springer Mountain!`,
+    milesHiked: 8.5,
+    elevationGain: 1100,
+    weather: {
+      temperature: 58,
+      temperatureUnit: 'F' as const,
+      conditions: 'Sunny',
+      humidity: 55,
+      windSpeed: 8,
+      windUnit: 'mph',
+      recordedAt: '2026-03-10T15:00:00Z',
+    },
+    photoCaptions: [
+      'Testing my full pack setup',
+    ],
+  },
+  {
     day: 1,
     date: '2026-03-15',
     title: 'Springer Mountain to Hawk Mountain Shelter',
@@ -343,7 +373,10 @@ async function main() {
 
   // Create entries
   for (const entry of SAMPLE_ENTRIES) {
-    totalMiles += entry.milesHiked;
+    // Training entries don't count toward trail total
+    if (entry.entryType !== 'training') {
+      totalMiles += entry.milesHiked;
+    }
 
     console.log(`Creating Day ${entry.day}: ${entry.title}`);
 
@@ -361,6 +394,7 @@ async function main() {
         longitude: entry.longitude ?? null,
         locationName: entry.location ?? null,
         gpxData: null,
+        entryType: entry.entryType ?? 'trail',
       },
     });
 
