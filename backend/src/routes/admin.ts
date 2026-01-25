@@ -68,11 +68,13 @@ adminRouter.post("/login", async (c) => {
 
     // Determine if we're using HTTPS (for production) or HTTP (for local dev)
     const isSecure = c.req.url.startsWith("https://");
-    
+
     // Extract hostname from request URL
     const url = new URL(c.req.url);
     const hostname = url.hostname;
-    
+
+    console.log(`[Login] Request URL: ${c.req.url}, hostname: ${hostname}, isSecure: ${isSecure}`);
+
     // Determine cookie domain: set for domain names, but not for localhost/IP addresses
     // This allows cookies to work across different ports on the same domain
     const isDomainName = hostname !== "localhost" &&
@@ -112,16 +114,17 @@ adminRouter.post("/login", async (c) => {
 
     // Generate a token for Authorization header fallback (for cross-origin HTTP)
     // This allows authentication to work when cookies don't work across ports
-    // Always generate token for domain names (even if HTTPS, as backup)
+    // Always generate token for domain names OR when Vibecode mode is enabled (as backup)
+    const isVibecodeModeEnabled = process.env.DISABLE_VIBECODE !== "true";
     let authToken: string | undefined;
-    if (isDomainName) {
+    if (isDomainName || isVibecodeModeEnabled) {
       authToken = Buffer.from(`admin_${Date.now()}_${Math.random()}`).toString("base64");
       // Store token with expiration
       authTokens.set(authToken, Date.now() + SESSION_DURATION * 1000);
-      console.log(`[Login] Generated token for domain ${hostname}, cookie domain: ${cookieDomain}`);
+      console.log(`[Login] Generated token for domain ${hostname}, cookie domain: ${cookieDomain}, vibecode: ${isVibecodeModeEnabled}`);
     }
 
-    console.log(`[Login] Successful login - isSecure: ${isSecure}, isDomainName: ${isDomainName}, token: ${!!authToken}`);
+    console.log(`[Login] Successful login - isSecure: ${isSecure}, isDomainName: ${isDomainName}, token: ${!!authToken}, vibecodeModeEnabled: ${isVibecodeModeEnabled}`);
 
     return c.json({
       data: {
