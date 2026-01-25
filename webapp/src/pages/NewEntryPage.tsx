@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { entriesApi, type CreateJournalEntryInput, type WeatherData } from "@/lib/api";
+import { entriesApi, api, type CreateJournalEntryInput, type WeatherData } from "@/lib/api";
 import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGeolocation, formatCoordinates, formatAccuracy } from "@/hooks/use-geolocation";
@@ -194,13 +194,12 @@ export default function NewEntryPage() {
           formDataPhoto.append("order", i.toString());
 
           try {
-            // Use relative URL so it goes through Vite proxy (same-origin for cookies)
-            const response = await fetch(
+            // Use api.raw() to include auth token in headers
+            const response = await api.raw(
               `/api/entries/${newEntry.id}/photos/upload`,
               {
                 method: "POST",
                 body: formDataPhoto,
-                credentials: "include", // Include auth cookies
               }
             );
 

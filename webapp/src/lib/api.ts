@@ -40,9 +40,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   // Include auth token in headers if available (for cross-origin HTTP)
   const token = getAuthToken();
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -85,16 +85,16 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 // Raw request for non-JSON endpoints (uploads, downloads, streams)
 async function rawRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   // Include auth token in headers if available (for cross-origin HTTP)
   const token = getAuthToken();
-  const headers: HeadersInit = {
-    ...options.headers,
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  
+
   const config: RequestInit = {
     ...options,
     headers,
