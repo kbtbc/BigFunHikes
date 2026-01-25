@@ -38,7 +38,7 @@ export function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-background"></div>
         </div>
 
-        <div className="relative flex items-center justify-center text-center px-4 py-20 md:py-24">
+        <div className="relative flex items-center justify-center text-center px-4 py-8 md:py-10">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 text-shadow">
               BigFun Hikes!
