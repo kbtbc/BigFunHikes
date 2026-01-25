@@ -6,10 +6,11 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v2.8)
+## Current Features (v2.9)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
+- **Improved Entry Layout**: Title and content appear above photos for better readability
 - **Photo Uploads**: Add and caption multiple photos per entry with carousel display
 - **Photo Caption Editing**: Edit captions on existing photos directly from the edit page
 - **Entry Navigation**: Seamless previous/next navigation between entries with sticky header
@@ -18,6 +19,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 - **Day Numbering**: Track your hiking day count
 - **Elevation Tracking**: Record elevation gain per day
 - **Timeline View**: Beautiful chronological timeline of all your hiking days
+- **YouTube Integration**: Embedded intro video on home page with channel link
 - **Enhanced Statistics Dashboard**: Comprehensive analytics with collapsible detailed view
   - **Pace Analytics**: 7-day moving average and overall pace
   - **Personal Records**: Longest day, biggest climb, current streak tracking
@@ -30,6 +32,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 - **Full AT Trail Display**: Complete 2,190-mile Appalachian Trail on home page map
   - Optimized trail data (40KB) for fast loading
   - Current location marker showing latest journal entry position
+  - **Clickable marker popup**: Links directly to the latest journal entry
 - **Dynamic Route Segments**: Each entry shows its trail section automatically
   - Routes calculated dynamically from entry GPS coordinates
   - Finds closest points on AT and displays trail between entries
