@@ -36,9 +36,15 @@
 </structure>
 
 <key_features>
+  Entry Types:
+  - Trail entries: Regular AT hiking days (included in stats)
+  - Training entries: Pre-hike training (excluded from stats, amber styling)
+  - Toggle between types on NewEntryPage
+  - Training entries show single location marker on map (no trail path)
+
   Maps:
   - TrailMap: Full AT trail on home page with current location marker
-  - EntryMap: Dynamic route segment between entries
+  - EntryMap: Dynamic route segment between entries (trail) or single marker (training)
   - Uses at-trail-indexed.json for segment calculation
   - Haversine distance to find closest points on trail
 

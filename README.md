@@ -42,6 +42,9 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - Routes calculated dynamically from entry GPS coordinates
   - Finds closest points on AT and displays trail between entries
   - No manual configuration needed for new entries
+- **Training Location Maps**: Training entries show single location marker (no trail path)
+  - Orange marker to match training entry styling
+  - Popup shows training hike details
 - **OpenTopoMap Tiles**: Topographic detail for trail visualization
 - **Start/End Markers**: Green (start) and red (end) markers on each entry's route
 
@@ -333,33 +336,39 @@ See full deployment guide in the original README section.
 
 ## Future Improvements
 
-### Phase 3C: Import/Export (Next)
-- **GPX Import UI**: Upload GPX tracks from hiking apps (Gaia, AllTrails)
+### Suggested Next Steps
+
+#### Training Hikes Enhancements
+- **GPX Import for Training**: Upload GPX tracks from training hikes (Gaia, AllTrails, Strava)
+- **Training Stats Dashboard**: Separate statistics view for training progress
+- **Training Goals**: Set and track pre-hike training targets (miles, elevation)
+
+#### Phase 3C: Import/Export
+- **GPX Import UI**: Upload GPX tracks from hiking apps
 - **Export Features**: PDF journal export, JSON backup
 
-### Phase 3D: Offline & PWA
+#### Phase 3D: Offline & PWA
 - **PWA Support**: Offline mode for areas without service
 - **Background Sync**: Queue entries when offline, sync when connected
 
-### Suggested Refinements
+### Other Refinements
 
-#### Option A: Enhanced Map Interactivity
+#### Enhanced Map Interactivity
 - **Click-to-set location**: Click on map to set GPS coordinates
 - **Route preview**: Show estimated route before saving entry
 - **Elevation profile on entry maps**: Mini elevation chart for each day
 
-#### Option B: Social & Sharing Features
+#### Social & Sharing Features
 - **Public trail page**: Shareable link for friends/family to follow
 - **Entry sharing**: Share individual entries to social media
 - **Trail milestone badges**: Achievements for distances, states crossed
 
-#### Option C: Data & Analytics Improvements
+#### Data & Analytics Improvements
 - **Gear tracking**: Log gear used, track pack weight over time
 - **Resupply planning**: Mark town stops, track food/supplies
 - **Trail section completion**: Visual progress through 14 states
-- **Compare with previous hikers**: Pace comparison with historical data
 
-#### Option D: Mobile Experience
+#### Mobile Experience
 - **Native app wrapper**: Capacitor/Expo wrapper for app store
 - **Push notifications**: Reminders to log daily entries
 - **Camera integration**: Direct photo capture within app

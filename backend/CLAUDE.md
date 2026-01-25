@@ -27,10 +27,13 @@
   This file is the single source of truth — both backend and frontend import from here.
 
   Key schemas:
-  - createJournalEntrySchema: New entry with lat/lng, weather
-  - updateJournalEntrySchema: Partial updates including coordinates
+  - entryTypeSchema: z.enum(["trail", "training"])
+  - createJournalEntrySchema: New entry with lat/lng, weather, entryType
+  - updateJournalEntrySchema: Partial updates including coordinates, entryType
   - journalEntryResponseSchema: Full entry response with photos
   - updatePhotoSchema: Photo caption updates
+
+  Stats endpoint only includes entries where entryType = "trail".
 </shared_types>
 
 <database>
@@ -41,6 +44,8 @@
   - Photo: Photos attached to journal entries with captions and ordering
 
   Key fields on JournalEntry:
+  - entryType: "trail" | "training" (default: "trail") - Training entries excluded from stats
+  - dayNumber: Integer (0 or negative allowed for training entries)
   - latitude/longitude: GPS coordinates (nullable)
   - locationName: Human-readable location (e.g., "Springer Mountain, GA")
   - weather: JSON string with temperature, conditions, wind
