@@ -19,20 +19,32 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Sample stock photo URLs (using picsum.photos for reliable placeholder images)
-// These are nature/landscape themed images that work well for hiking
-const STOCK_PHOTOS = [
-  'https://picsum.photos/seed/mountain1/800/600',
-  'https://picsum.photos/seed/trail1/800/600',
-  'https://picsum.photos/seed/forest1/800/600',
-  'https://picsum.photos/seed/nature1/800/600',
-  'https://picsum.photos/seed/hiking1/800/600',
-  'https://picsum.photos/seed/vista1/800/600',
-  'https://picsum.photos/seed/peak1/800/600',
-  'https://picsum.photos/seed/sunset1/800/600',
-  'https://picsum.photos/seed/path1/800/600',
-  'https://picsum.photos/seed/climb1/800/600',
-];
+// Personal photos from /webapp/public/images/
+// These are optimized hiking photos (photo-01.jpg through photo-50.jpg)
+const PERSONAL_PHOTOS = Array.from({ length: 50 }, (_, i) =>
+  `/images/photo-${String(i + 1).padStart(2, '0')}.jpg`
+);
+
+// Shuffle array helper
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// Get random photos for entries
+const shuffledPhotos = shuffleArray(PERSONAL_PHOTOS);
+
+// Photo index tracker for assigning unique photos to each entry
+let photoIndex = 0;
+function getNextPhotos(count: number): string[] {
+  const photos = shuffledPhotos.slice(photoIndex, photoIndex + count);
+  photoIndex += count;
+  return photos;
+}
 
 const SAMPLE_ENTRIES = [
   {
@@ -58,9 +70,9 @@ The shelter is cozy but crowded. Hanging my food bag and settling in for my firs
       windUnit: 'mph',
       recordedAt: '2026-03-15T16:00:00Z',
     },
-    photos: [
-      { url: STOCK_PHOTOS[0], caption: 'Summit of Springer Mountain - Day 1!' },
-      { url: STOCK_PHOTOS[1], caption: 'First steps on the AT' },
+    photoCaptions: [
+      'Summit of Springer Mountain - Day 1!',
+      'First steps on the AT',
     ],
   },
   {
@@ -86,8 +98,8 @@ Took a longer break at Gooch Gap to soak my feet in the creek. Absolute heaven. 
       windUnit: 'mph',
       recordedAt: '2026-03-16T17:30:00Z',
     },
-    photos: [
-      { url: STOCK_PHOTOS[2], caption: 'Morning mist in the valleys' },
+    photoCaptions: [
+      'Morning mist in the valleys',
     ],
   },
   {
@@ -113,9 +125,9 @@ Met a trail angel named "Biscuit" who gave me fresh baked goods. Trail magic is 
       windUnit: 'mph',
       recordedAt: '2026-03-17T18:00:00Z',
     },
-    photos: [
-      { url: STOCK_PHOTOS[3], caption: 'Beautiful forest corridor' },
-      { url: STOCK_PHOTOS[4], caption: 'Trail magic biscuits!' },
+    photoCaptions: [
+      'Beautiful forest corridor',
+      'Trail magic!',
     ],
   },
   {
@@ -141,8 +153,8 @@ The sunset from Low Gap was spectacular - layers of blue mountains fading into t
       windUnit: 'mph',
       recordedAt: '2026-03-18T19:00:00Z',
     },
-    photos: [
-      { url: STOCK_PHOTOS[5], caption: 'Evening light on the trail' },
+    photoCaptions: [
+      'Evening light on the trail',
     ],
   },
   {
@@ -168,9 +180,9 @@ Met a SOBO (southbound) hiker who's finishing up. She gave me encouragement and 
       windUnit: 'mph',
       recordedAt: '2026-03-19T16:30:00Z',
     },
-    photos: [
-      { url: STOCK_PHOTOS[6], caption: 'Above the clouds on Blue Mountain' },
-      { url: STOCK_PHOTOS[7], caption: 'Clearing storm' },
+    photoCaptions: [
+      'Above the clouds on Blue Mountain',
+      'Clearing storm',
     ],
   },
   {
@@ -196,8 +208,8 @@ Camped with a great group tonight. We cooked dinner together and shared stories 
       windUnit: 'mph',
       recordedAt: '2026-03-20T18:30:00Z',
     },
-    photos: [
-      { url: STOCK_PHOTOS[8], caption: 'Ridge walking perfection' },
+    photoCaptions: [
+      'Ridge walking perfection',
     ],
   },
   {
@@ -223,9 +235,9 @@ The climb up Standing Indian Mountain was brutal - over 1,000 feet in less than 
       windUnit: 'mph',
       recordedAt: '2026-03-21T19:00:00Z',
     },
-    photos: [
-      { url: STOCK_PHOTOS[9], caption: 'Welcome to North Carolina!' },
-      { url: STOCK_PHOTOS[0], caption: 'Standing Indian summit' },
+    photoCaptions: [
+      'Welcome to North Carolina!',
+      'Standing Indian summit',
     ],
   },
   {
@@ -253,8 +265,8 @@ Town stop tomorrow for resupply. Already dreaming about real food!`,
       windUnit: 'mph',
       recordedAt: '2026-03-22T17:00:00Z',
     },
-    photos: [
-      { url: STOCK_PHOTOS[1], caption: 'Peaceful forest walking' },
+    photoCaptions: [
+      'Peaceful forest walking',
     ],
   },
   {
@@ -280,9 +292,9 @@ Back on trail feeling refreshed and motivated. The shower and laundry made me fe
       windUnit: 'mph',
       recordedAt: '2026-03-23T18:30:00Z',
     },
-    photos: [
-      { url: STOCK_PHOTOS[2], caption: 'Back on the trail after town' },
-      { url: STOCK_PHOTOS[3], caption: 'Fresh legs, full pack' },
+    photoCaptions: [
+      'Back on the trail after town',
+      'Fresh legs, full pack',
     ],
   },
   {
@@ -310,9 +322,9 @@ Starting to think less about the destination and more about enjoying each day. T
       windUnit: 'mph',
       recordedAt: '2026-03-24T19:00:00Z',
     },
-    photos: [
-      { url: STOCK_PHOTOS[4], caption: 'View from Wayah Bald tower' },
-      { url: STOCK_PHOTOS[5], caption: 'Smokies on the horizon' },
+    photoCaptions: [
+      'View from Wayah Bald tower',
+      'Smokies on the horizon',
     ],
   },
 ];
@@ -327,6 +339,7 @@ async function main() {
   console.log('✓ Cleared existing entries\n');
 
   let totalMiles = 0;
+  let photoIndex = 0;
 
   // Create entries
   for (const entry of SAMPLE_ENTRIES) {
@@ -351,19 +364,22 @@ async function main() {
       },
     });
 
-    // Add photos
-    for (let i = 0; i < entry.photos.length; i++) {
+    // Add photos using shuffled personal photos
+    for (let i = 0; i < entry.photoCaptions.length; i++) {
+      const photoUrl = shuffledPhotos[photoIndex % shuffledPhotos.length];
+      photoIndex++;
+
       await prisma.photo.create({
         data: {
           journalEntryId: journalEntry.id,
-          url: entry.photos[i].url,
-          caption: entry.photos[i].caption,
+          url: photoUrl,
+          caption: entry.photoCaptions[i],
           order: i,
         },
       });
     }
 
-    console.log(`  ✓ Added ${entry.photos.length} photo(s)`);
+    console.log(`  ✓ Added ${entry.photoCaptions.length} photo(s)`);
   }
 
   console.log(`\n✅ Successfully created ${SAMPLE_ENTRIES.length} journal entries!`);
