@@ -23,6 +23,93 @@ import { AlertCircle, ArrowLeft, Edit, Trash2, Loader2, MapPin, Cloud, ChevronLe
 import { useToast } from "@/hooks/use-toast";
 import { formatCoordinates } from "@/hooks/use-geolocation";
 
+// Reusable Entry Navigation Component
+function EntryNavigation({
+  prevEntry,
+  nextEntry,
+  variant = "full",
+}: {
+  prevEntry: { id: string; dayNumber: number; title: string } | null;
+  nextEntry: { id: string; dayNumber: number; title: string } | null;
+  variant?: "full" | "compact";
+}) {
+  if (variant === "compact") {
+    return (
+      <div className="flex items-center justify-between gap-4">
+        {prevEntry ? (
+          <Link to={`/entry/${prevEntry.id}`} className="flex-1">
+            <Button variant="ghost" size="sm" className="w-full justify-start group">
+              <ChevronLeft className="mr-1 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+              <span className="text-muted-foreground">Day {prevEntry.dayNumber}</span>
+            </Button>
+          </Link>
+        ) : (
+          <div className="flex-1" />
+        )}
+
+        <Link to="/timeline">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Timeline
+          </Button>
+        </Link>
+
+        {nextEntry ? (
+          <Link to={`/entry/${nextEntry.id}`} className="flex-1">
+            <Button variant="ghost" size="sm" className="w-full justify-end group">
+              <span className="text-muted-foreground">Day {nextEntry.dayNumber}</span>
+              <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+        ) : (
+          <div className="flex-1" />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-between items-center gap-4">
+      {prevEntry ? (
+        <Link to={`/entry/${prevEntry.id}`} className="flex-1 max-w-xs">
+          <Button variant="outline" className="w-full h-auto py-3 px-4 group">
+            <ChevronLeft className="mr-3 h-5 w-5 text-muted-foreground group-hover:-translate-x-1 transition-transform" />
+            <div className="text-left flex-1 min-w-0">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">Previous</div>
+              <div className="font-semibold">Day {prevEntry.dayNumber}</div>
+              <div className="text-xs text-muted-foreground truncate">{prevEntry.title}</div>
+            </div>
+          </Button>
+        </Link>
+      ) : (
+        <div className="flex-1 max-w-xs" />
+      )}
+
+      <Link to="/timeline">
+        <Button variant="outline" size="lg">
+          <ArrowLeft className="mr-2 h-5 w-5" />
+          Timeline
+        </Button>
+      </Link>
+
+      {nextEntry ? (
+        <Link to={`/entry/${nextEntry.id}`} className="flex-1 max-w-xs">
+          <Button variant="outline" className="w-full h-auto py-3 px-4 group">
+            <div className="text-right flex-1 min-w-0">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">Next</div>
+              <div className="font-semibold">Day {nextEntry.dayNumber}</div>
+              <div className="text-xs text-muted-foreground truncate">{nextEntry.title}</div>
+            </div>
+            <ChevronRight className="ml-3 h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </Link>
+      ) : (
+        <div className="flex-1 max-w-xs" />
+      )}
+    </div>
+  );
+}
+
 export function EntryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -45,7 +132,6 @@ export function EntryDetailPage() {
   let nextEntry: { id: string; dayNumber: number; title: string } | null = null;
 
   if (apiEntry && allEntriesData?.entries) {
-    const currentDayNumber = apiEntry.dayNumber;
     const allEntries = allEntriesData.entries;
 
     // Sort by day number
@@ -95,12 +181,12 @@ export function EntryDetailPage() {
   // Handle loading state
   if (authLoading || entryLoading) {
     return (
-      <div className="min-h-screen py-8 md:py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <Skeleton className="h-12 w-32 mb-6" />
-            <Skeleton className="h-64 w-full mb-6" />
-            <Skeleton className="h-96 w-full" />
+      <div className="min-h-screen bg-muted/30">
+        <div className="container mx-auto px-4 py-8 md:py-12">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-64 w-full rounded-lg" />
+            <Skeleton className="h-96 w-full rounded-lg" />
           </div>
         </div>
       </div>
@@ -110,7 +196,7 @@ export function EntryDetailPage() {
   // Handle error state
   if (entryError) {
     return (
-      <div className="min-h-screen py-20">
+      <div className="min-h-screen bg-muted/30 py-20">
         <div className="container mx-auto px-4 text-center">
           <Alert variant="destructive" className="max-w-md mx-auto mb-8">
             <AlertCircle className="h-4 w-4" />
@@ -132,9 +218,9 @@ export function EntryDetailPage() {
   // Handle not found state
   if (!entry) {
     return (
-      <div className="min-h-screen py-20">
+      <div className="min-h-screen bg-muted/30 py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold mb-4">Entry Not Found</h1>
+          <h1 className="text-4xl font-bold font-outfit mb-4">Entry Not Found</h1>
           <p className="text-muted-foreground mb-8">
             The journal entry you're looking for doesn't exist.
           </p>
@@ -149,65 +235,63 @@ export function EntryDetailPage() {
     );
   }
 
-  // Format the creation timestamp with both date and time
-  const formattedDateTime = entry?.createdAt
-    ? format(new Date(entry.createdAt), "MMMM d, yyyy 'at' h:mm a")
-    : entry
-    ? format(new Date(entry.date), "MMMM d, yyyy")
-    : "";
-
   return (
-    <div className="min-h-screen py-8 md:py-12">
-      <div className="container mx-auto px-4">
-        {/* Main content */}
-        <div className="max-w-4xl mx-auto">
-          {/* Date and time heading */}
-          <div className="mb-6">
-            <h2 className="text-sm italic text-muted-foreground">{formattedDateTime}</h2>
+    <div className="min-h-screen bg-muted/30">
+      {/* Top Navigation Bar */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto py-3">
+            <EntryNavigation prevEntry={prevEntry} nextEntry={nextEntry} variant="compact" />
           </div>
+        </div>
+      </div>
 
-          {/* Admin Actions */}
+      <div className="container mx-auto px-4 py-8 md:py-12">
+        <div className="max-w-4xl mx-auto">
+          {/* Admin Actions - Floating */}
           {isAuthenticated && (
-            <div className="mb-6 flex gap-2 justify-end">
+            <div className="flex gap-2 justify-end mb-4">
               <Link to={`/entry/${id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Edit className="mr-2 h-4 w-4" />
-                  Edit Entry
+                  Edit
                 </Button>
               </Link>
               <Button
-                variant="destructive"
+                variant="outline"
                 size="sm"
                 onClick={() => setShowDeleteDialog(true)}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete Entry
+                Delete
               </Button>
             </div>
           )}
 
+          {/* Main Journal Entry Card */}
           <JournalEntry entry={entry} showFullContent={true} />
 
           {/* Location & Weather Section */}
           {(entry.locationName || entry.weather || (entry.coordinates.start[0] !== 34.6266)) && (
-            <div className="mt-8 p-6 bg-muted/50 rounded-lg">
+            <div className="mt-8 p-6 bg-background rounded-lg border-2 shadow-md">
               <div className="flex items-center gap-2 mb-4">
                 <MapPin className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-semibold font-outfit">Location & Weather</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Location Info */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {entry.locationName && (
                     <div>
-                      <span className="text-sm text-muted-foreground">Location</span>
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Location</span>
                       <p className="font-medium">{entry.locationName}</p>
                     </div>
                   )}
                   {entry.coordinates.start[0] !== 34.6266 && (
                     <div>
-                      <span className="text-sm text-muted-foreground">GPS Coordinates</span>
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">GPS Coordinates</span>
                       <p className="font-mono text-sm">
                         {formatCoordinates(entry.coordinates.start[0], entry.coordinates.start[1])}
                       </p>
@@ -218,16 +302,16 @@ export function EntryDetailPage() {
                 {/* Weather Info */}
                 {entry.weather && (
                   <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">Weather When Recorded</span>
+                    <span className="text-xs uppercase tracking-wide text-muted-foreground">Weather</span>
                     <div className="flex items-center gap-3">
-                      <Cloud className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-2xl font-bold">
-                        {entry.weather.temperature}°{entry.weather.temperatureUnit}
-                      </span>
-                      <div className="text-sm">
-                        <p className="font-medium">{entry.weather.conditions}</p>
+                      <Cloud className="h-6 w-6 text-primary" />
+                      <div>
+                        <span className="text-2xl font-bold">
+                          {entry.weather.temperature}°{entry.weather.temperatureUnit}
+                        </span>
+                        <p className="text-sm text-muted-foreground">{entry.weather.conditions}</p>
                         {entry.weather.windSpeed !== undefined && (
-                          <p className="text-muted-foreground">
+                          <p className="text-xs text-muted-foreground">
                             Wind: {entry.weather.windSpeed} {entry.weather.windUnit}
                           </p>
                         )}
@@ -239,64 +323,20 @@ export function EntryDetailPage() {
             </div>
           )}
 
-          {/* Map section */}
-          <div className="mt-12">
-            <h3 className="text-2xl font-bold mb-4">Today's Route</h3>
-            <TrailMap entries={[entry]} selectedEntry={entry} height="400px" />
+          {/* Map Section */}
+          <div className="mt-8">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold font-outfit">Today's Route</h3>
+            </div>
+            <div className="rounded-lg overflow-hidden border-2 shadow-md">
+              <TrailMap entries={[entry]} selectedEntry={entry} height="400px" />
+            </div>
           </div>
 
-          {/* Navigation */}
+          {/* Bottom Navigation */}
           <div className="mt-12 pt-8 border-t">
-            <div className="flex justify-between items-center gap-4">
-              <Link to="/timeline">
-                <Button size="lg" variant="outline">
-                  <ArrowLeft className="mr-2 h-5 w-5" />
-                  Back to Timeline
-                </Button>
-              </Link>
-
-              <div className="flex gap-2">
-                {prevEntry ? (
-                  <Link to={`/entry/${prevEntry.id}`}>
-                    <Button size="lg" variant="outline" className="group">
-                      <ChevronLeft className="mr-2 h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-                      <div className="text-left">
-                        <div className="text-xs text-muted-foreground">Previous</div>
-                        <div className="font-semibold">Day {prevEntry.dayNumber}</div>
-                      </div>
-                    </Button>
-                  </Link>
-                ) : (
-                  <Button size="lg" variant="outline" disabled>
-                    <ChevronLeft className="mr-2 h-5 w-5" />
-                    <div className="text-left">
-                      <div className="text-xs text-muted-foreground">Previous</div>
-                      <div className="font-semibold">—</div>
-                    </div>
-                  </Button>
-                )}
-
-                {nextEntry ? (
-                  <Link to={`/entry/${nextEntry.id}`}>
-                    <Button size="lg" variant="outline" className="group">
-                      <div className="text-right">
-                        <div className="text-xs text-muted-foreground">Next</div>
-                        <div className="font-semibold">Day {nextEntry.dayNumber}</div>
-                      </div>
-                      <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                ) : (
-                  <Button size="lg" variant="outline" disabled>
-                    <div className="text-right">
-                      <div className="text-xs text-muted-foreground">Next</div>
-                      <div className="font-semibold">—</div>
-                    </div>
-                    <ChevronRight className="ml-2 h-5 w-5" />
-                  </Button>
-                )}
-              </div>
-            </div>
+            <EntryNavigation prevEntry={prevEntry} nextEntry={nextEntry} variant="full" />
           </div>
         </div>
 
@@ -304,10 +344,9 @@ export function EntryDetailPage() {
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogTitle>Delete Journal Entry?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the journal
-                entry "{entry?.title}" and all associated photos.
+                This will permanently delete "<span className="font-medium">{entry?.title}</span>" and all associated photos. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -325,7 +364,7 @@ export function EntryDetailPage() {
                     Deleting...
                   </>
                 ) : (
-                  "Delete"
+                  "Delete Entry"
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>
