@@ -1,0 +1,339 @@
+#!/usr/bin/env bun
+/**
+ * Seed script to populate the database with sample journal entries
+ * Run with: bun run scripts/seed-sample-data.ts
+ */
+
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+// Sample stock photo URLs (using placeholder images)
+const STOCK_PHOTOS = [
+  'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', // Mountain trail
+  'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=800&q=80', // Forest path
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', // Mountain vista
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80', // Forest scene
+  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=80', // Mountain lake
+  'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80', // Hiking trail
+  'https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=800&q=80', // Mountain peak
+  'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80', // Sunset vista
+  'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=800&q=80', // Trail marker
+  'https://images.unsplash.com/photo-1571863533956-01c88e79957e?w=800&q=80', // Mountain climb
+];
+
+const SAMPLE_ENTRIES = [
+  {
+    day: 1,
+    date: '2026-03-15',
+    title: 'Springer Mountain to Hawk Mountain Shelter',
+    content: `Started my Appalachian Trail journey at Springer Mountain! The weather was perfect - crisp morning air with sunshine breaking through the trees. The first climb was tougher than expected with a full pack, but the views from the summit made it worthwhile.
+
+Met several other thru-hikers at the shelter tonight. Everyone is excited and a bit nervous. Trail names are already starting to emerge. Someone called me "Basecamp" because of my oversized pack. Might need to mail some gear home!
+
+The shelter is cozy but crowded. Hanging my food bag and settling in for my first night on trail. Can't believe this adventure is finally happening!`,
+    milesHiked: 8.3,
+    elevationGain: 2100,
+    weather: {
+      temperature: 52,
+      temperatureUnit: 'F' as const,
+      conditions: 'Sunny',
+      humidity: 65,
+      windSpeed: 5,
+      windUnit: 'mph',
+      recordedAt: '2026-03-15T16:00:00Z',
+    },
+    photos: [
+      { url: STOCK_PHOTOS[0], caption: 'Summit of Springer Mountain - Day 1!' },
+      { url: STOCK_PHOTOS[1], caption: 'First steps on the AT' },
+    ],
+  },
+  {
+    day: 2,
+    date: '2026-03-16',
+    title: 'Hawk Mountain to Gooch Gap',
+    content: `Second day and my feet are already feeling it! Broke camp early and made good time despite some challenging climbs. The Georgia mountains don't mess around.
+
+Passed through some beautiful hardwood forests. The trees are just starting to show signs of spring. Saw my first wildflowers of the trip - tiny white blossoms along the trail.
+
+Took a longer break at Gooch Gap to soak my feet in the creek. Absolute heaven. Met a section hiker who gave me beta on the next few days. Water sources are good right now.`,
+    milesHiked: 12.1,
+    elevationGain: 2850,
+    weather: {
+      temperature: 58,
+      temperatureUnit: 'F' as const,
+      conditions: 'Partly Cloudy',
+      humidity: 70,
+      windSpeed: 8,
+      windUnit: 'mph',
+      recordedAt: '2026-03-16T17:30:00Z',
+    },
+    photos: [
+      { url: STOCK_PHOTOS[2], caption: 'Morning mist in the valleys' },
+    ],
+  },
+  {
+    day: 3,
+    date: '2026-03-17',
+    title: 'Gooch Gap to Woody Gap',
+    content: `Legs are getting stronger! Today felt much better than yesterday. The trail follows ridgelines with constant ups and downs, but I'm finding my rhythm.
+
+Stopped at Neel Gap to resupply. The outfitter there is legendary - they have a "hiker box" full of gear people have mailed home. I contributed my camp chair and grabbed some freeze-dried meals.
+
+Met a trail angel named "Biscuit" who gave me fresh baked goods. Trail magic is real! These small kindnesses mean everything out here.`,
+    milesHiked: 11.7,
+    elevationGain: 2400,
+    weather: {
+      temperature: 61,
+      temperatureUnit: 'F' as const,
+      conditions: 'Sunny',
+      humidity: 55,
+      windSpeed: 6,
+      windUnit: 'mph',
+      recordedAt: '2026-03-17T18:00:00Z',
+    },
+    photos: [
+      { url: STOCK_PHOTOS[3], caption: 'Beautiful forest corridor' },
+      { url: STOCK_PHOTOS[4], caption: 'Trail magic biscuits!' },
+    ],
+  },
+  {
+    day: 4,
+    date: '2026-03-18',
+    title: 'Woody Gap to Low Gap Shelter',
+    content: `Big mile day today! Feeling strong and the weather cooperated perfectly. The trail was well-maintained through this section with gentle grades.
+
+Saw my first bear! It was a black bear cub, which meant mama was nearby. I made noise and backed away slowly. My heart was racing but it was incredible to see wildlife up close.
+
+The sunset from Low Gap was spectacular - layers of blue mountains fading into the distance. This is why I'm out here.`,
+    milesHiked: 15.2,
+    elevationGain: 3100,
+    weather: {
+      temperature: 64,
+      temperatureUnit: 'F' as const,
+      conditions: 'Clear',
+      humidity: 50,
+      windSpeed: 4,
+      windUnit: 'mph',
+      recordedAt: '2026-03-18T19:00:00Z',
+    },
+    photos: [
+      { url: STOCK_PHOTOS[5], caption: 'Evening light on the trail' },
+    ],
+  },
+  {
+    day: 5,
+    date: '2026-03-19',
+    title: 'Low Gap to Blue Mountain Shelter',
+    content: `Tougher day mentally. Woke up to rain and hiked in drizzle most of the morning. Everything is wet and staying motivated was hard.
+
+But the afternoon cleared up and I pushed through. The climb up to Blue Mountain was steep but the views at the top were worth every step. Could see for miles in every direction.
+
+Met a SOBO (southbound) hiker who's finishing up. She gave me encouragement and said the trail only gets better. Looking forward to what's ahead!`,
+    milesHiked: 13.4,
+    elevationGain: 2900,
+    weather: {
+      temperature: 55,
+      temperatureUnit: 'F' as const,
+      conditions: 'Rain',
+      humidity: 85,
+      windSpeed: 12,
+      windUnit: 'mph',
+      recordedAt: '2026-03-19T16:30:00Z',
+    },
+    photos: [
+      { url: STOCK_PHOTOS[6], caption: 'Above the clouds on Blue Mountain' },
+      { url: STOCK_PHOTOS[7], caption: 'Clearing storm' },
+    ],
+  },
+  {
+    day: 6,
+    date: '2026-03-20',
+    title: 'Blue Mountain to Deep Gap Shelter',
+    content: `Incredible day! The trail followed a ridge with 360-degree views for miles. Spring is arriving in the lowlands but up here it still feels like winter in spots.
+
+Found a great rhythm today. My pack feels lighter (or I'm getting stronger). Either way, hiking is becoming more enjoyable and less of a grind.
+
+Camped with a great group tonight. We cooked dinner together and shared stories around the shelter. The trail community is amazing - already feel like I've known these people for years.`,
+    milesHiked: 14.8,
+    elevationGain: 2600,
+    weather: {
+      temperature: 59,
+      temperatureUnit: 'F' as const,
+      conditions: 'Sunny',
+      humidity: 60,
+      windSpeed: 7,
+      windUnit: 'mph',
+      recordedAt: '2026-03-20T18:30:00Z',
+    },
+    photos: [
+      { url: STOCK_PHOTOS[8], caption: 'Ridge walking perfection' },
+    ],
+  },
+  {
+    day: 7,
+    date: '2026-03-21',
+    title: 'Deep Gap to Standing Indian Shelter',
+    content: `Week one complete! Can't believe I've been out here for a full week. My body is adapting but my feet are still angry at me.
+
+Today's highlight was crossing into North Carolina! State #2 of 14. The border was marked with a simple sign but it felt like a huge milestone.
+
+The climb up Standing Indian Mountain was brutal - over 1,000 feet in less than a mile. But the summit views made it worthwhile. Could see layers of mountains in every direction.`,
+    milesHiked: 16.1,
+    elevationGain: 3400,
+    weather: {
+      temperature: 62,
+      temperatureUnit: 'F' as const,
+      conditions: 'Partly Cloudy',
+      humidity: 65,
+      windSpeed: 10,
+      windUnit: 'mph',
+      recordedAt: '2026-03-21T19:00:00Z',
+    },
+    photos: [
+      { url: STOCK_PHOTOS[9], caption: 'Welcome to North Carolina!' },
+      { url: STOCK_PHOTOS[0], caption: 'Standing Indian summit' },
+    ],
+  },
+  {
+    day: 8,
+    date: '2026-03-22',
+    title: 'Standing Indian to Carter Gap Shelter',
+    content: `Recovery day - took it easy with lower mileage. My body needed the break. Lots of rolling terrain through beautiful forest.
+
+Saw wild turkeys this morning! A whole flock of them crossed the trail in front of me. They're surprisingly large up close.
+
+Stream crossings are getting easier. I've learned to just embrace wet feet - they'll dry eventually. Trying not to overthink every rock hop.
+
+Town stop tomorrow for resupply. Already dreaming about real food!`,
+    milesHiked: 10.5,
+    elevationGain: 1800,
+    weather: {
+      temperature: 60,
+      temperatureUnit: 'F' as const,
+      conditions: 'Overcast',
+      humidity: 75,
+      windSpeed: 5,
+      windUnit: 'mph',
+      recordedAt: '2026-03-22T17:00:00Z',
+    },
+    photos: [
+      { url: STOCK_PHOTOS[1], caption: 'Peaceful forest walking' },
+    ],
+  },
+  {
+    day: 9,
+    date: '2026-03-23',
+    title: 'Carter Gap to Rock Gap Shelter',
+    content: `Town day! Hiked down to Franklin, NC for resupply. Got a burger, fries, and ice cream. Pretty sure I ate my body weight in calories.
+
+Resupplied at the outfitter and grabbed some blister supplies. My feet are slowly toughening up but still have some hot spots.
+
+Back on trail feeling refreshed and motivated. The shower and laundry made me feel human again. Funny how the small things become so important out here.`,
+    milesHiked: 12.8,
+    elevationGain: 2200,
+    weather: {
+      temperature: 66,
+      temperatureUnit: 'F' as const,
+      conditions: 'Sunny',
+      humidity: 58,
+      windSpeed: 6,
+      windUnit: 'mph',
+      recordedAt: '2026-03-23T18:30:00Z',
+    },
+    photos: [
+      { url: STOCK_PHOTOS[2], caption: 'Back on the trail after town' },
+      { url: STOCK_PHOTOS[3], caption: 'Fresh legs, full pack' },
+    ],
+  },
+  {
+    day: 10,
+    date: '2026-03-24',
+    title: 'Rock Gap to Wayah Shelter',
+    content: `Double-digit day number! Feels like a real milestone. The trail is becoming my new normal.
+
+Today was all about climbing - gained over 3,000 feet. The ascent to Wayah Bald was steep but the 360-degree views from the stone tower at the top were unbelievable. Could see the Smokies in the distance!
+
+My hiking pace is improving. I'm covering ground faster and feeling stronger. The initial soreness is fading and being replaced by trail legs.
+
+Starting to think less about the destination and more about enjoying each day. This is the headspace I was hoping to find out here.`,
+    milesHiked: 14.3,
+    elevationGain: 3200,
+    weather: {
+      temperature: 63,
+      temperatureUnit: 'F' as const,
+      conditions: 'Clear',
+      humidity: 52,
+      windSpeed: 8,
+      windUnit: 'mph',
+      recordedAt: '2026-03-24T19:00:00Z',
+    },
+    photos: [
+      { url: STOCK_PHOTOS[4], caption: 'View from Wayah Bald tower' },
+      { url: STOCK_PHOTOS[5], caption: 'Smokies on the horizon' },
+    ],
+  },
+];
+
+async function main() {
+  console.log('🌲 Starting to seed sample journal entries...\n');
+
+  // Clear existing data
+  console.log('Clearing existing data...');
+  await prisma.photo.deleteMany();
+  await prisma.journalEntry.deleteMany();
+  console.log('✓ Cleared existing entries\n');
+
+  let totalMiles = 0;
+
+  // Create entries
+  for (const entry of SAMPLE_ENTRIES) {
+    totalMiles += entry.milesHiked;
+
+    console.log(`Creating Day ${entry.day}: ${entry.title}`);
+
+    const journalEntry = await prisma.journalEntry.create({
+      data: {
+        date: new Date(entry.date + 'T12:00:00Z'),
+        dayNumber: entry.day,
+        title: entry.title,
+        content: entry.content,
+        milesHiked: entry.milesHiked,
+        elevationGain: entry.elevationGain,
+        totalMilesCompleted: totalMiles,
+        weather: JSON.stringify(entry.weather),
+        latitude: null,
+        longitude: null,
+        locationName: null,
+        gpxData: null,
+      },
+    });
+
+    // Add photos
+    for (let i = 0; i < entry.photos.length; i++) {
+      await prisma.photo.create({
+        data: {
+          journalEntryId: journalEntry.id,
+          url: entry.photos[i].url,
+          caption: entry.photos[i].caption,
+          order: i,
+        },
+      });
+    }
+
+    console.log(`  ✓ Added ${entry.photos.length} photo(s)`);
+  }
+
+  console.log(`\n✅ Successfully created ${SAMPLE_ENTRIES.length} journal entries!`);
+  console.log(`📊 Total miles: ${totalMiles.toFixed(1)}`);
+  console.log(`⛰️  Total elevation gain: ${SAMPLE_ENTRIES.reduce((sum, e) => sum + e.elevationGain, 0).toLocaleString()} ft\n`);
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ Error seeding data:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

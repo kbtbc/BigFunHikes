@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { TrailMap } from "@/components/TrailMap";
-import { Stats } from "@/components/Stats";
+import { EnhancedStats } from "@/components/EnhancedStats";
 import { JournalEntry } from "@/components/JournalEntry";
 import { useEntries, useStats } from "@/hooks/use-entries";
 import { useAuth } from "@/context/AuthContext";
-import { transformApiEntryToComponent, transformApiStatsToComponent } from "@/lib/transformEntries";
+import { transformApiEntryToComponent } from "@/lib/transformEntries";
 import { ArrowRight, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,7 +23,6 @@ export function HomePage() {
     ? transformApiEntryToComponent(entriesData.entries[0])
     : null;
   const allEntries = entriesData?.entries.map(transformApiEntryToComponent) || [];
-  const stats = statsData ? transformApiStatsToComponent(statsData) : null;
 
   return (
     <div className="min-h-screen">
@@ -86,14 +85,8 @@ export function HomePage() {
                 Failed to load statistics. Please try again later.
               </AlertDescription>
             </Alert>
-          ) : stats ? (
-            <Stats
-              totalMiles={stats.totalMiles}
-              milesCompleted={stats.milesCompleted}
-              daysOnTrail={stats.daysOnTrail}
-              averageDailyMiles={stats.averageDailyMiles}
-              totalElevationGain={stats.totalElevationGain}
-            />
+          ) : statsData ? (
+            <EnhancedStats stats={statsData} />
           ) : null}
         </div>
       </section>

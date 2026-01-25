@@ -6,41 +6,42 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v2.0)
+## Current Features (v2.5)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
 - **Photo Uploads**: Add and caption multiple photos per entry with carousel display
+- **Photo Caption Editing**: Edit captions on existing photos directly from the edit page
 - **Mile Tracking**: Daily miles hiked with automatic running total calculation
 - **Progress Tracking**: Total miles completed automatically calculated from all entries
 - **Day Numbering**: Track your hiking day count
 - **Elevation Tracking**: Record elevation gain per day
 - **Timeline View**: Beautiful chronological timeline of all your hiking days
-- **Statistics Dashboard**: Track total miles, entries, elevation, and average pace
+- **Enhanced Statistics Dashboard**: Comprehensive analytics with collapsible detailed view
+  - **Pace Analytics**: 7-day moving average and overall pace
+  - **Personal Records**: Longest day, biggest climb, current streak tracking
+  - **Projections**: Estimated completion date based on current pace
+  - **Elevation Profile Chart**: Visual bar chart of daily elevation gain
+  - **Daily Miles Trend**: Line chart showing miles hiked per day
+  - **Progress Metrics**: Percentage complete, days remaining, miles to go
 - **Interactive Map**: Leaflet map displaying trail routes and GPX tracks
+- **Location & Weather**: Auto-capture GPS coordinates and weather conditions
 - **Mobile Responsive**: Optimized for on-trail updates from your phone
-- **Admin Authentication**: Secure password-based login to manage your journal
+- **Admin Authentication**: Secure password-based login with dual-mode support (cookie + token)
 
 ### Technical Features
 - Full CRUD operations (Create, Read, Update, Delete)
-- Photo management with file uploads
+- Photo management with file uploads and caption editing
 - React Query for efficient data fetching/caching
 - GPX track display on maps
 - OpenTopoMap tiles for topographic visualization
+- Recharts for data visualization and charting
 - 7-day session persistence
+- Cross-domain authentication support for Vibecode and local development
 
 ## Coming Soon
 
-### Phase 3A: Location & Weather (Next)
-- **Auto GPS Location**: Automatically populate coordinates on new entries
-- **Auto Weather Recording**: Fetch and save current weather conditions
-- **Location Display**: Show coordinates and weather in entry views
-
-### Phase 3B: Enhancements
-- **Enhanced Statistics**: Pace calculations, projected completion
-- **Elevation Profiles**: Chart elevation gain over time
-
-### Phase 3C: Import/Export (Future)
+### Phase 3C: Import/Export (Next)
 - **GPX Import UI**: Upload GPX tracks from hiking apps
 - **Export Features**: PDF export, JSON backup
 

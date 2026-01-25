@@ -231,11 +231,34 @@ export interface JournalEntriesList {
 }
 
 export interface Stats {
+  // Basic stats
   totalMiles: number;
   totalDays: number;
   totalElevationGain: number;
   averageMilesPerDay: number;
   lastEntryDate: string | null;
+  // Enhanced stats
+  longestDay: {
+    miles: number;
+    date: string;
+    title: string;
+  } | null;
+  biggestClimb: {
+    elevation: number;
+    date: string;
+    title: string;
+  } | null;
+  currentStreak: number;
+  percentComplete: number;
+  projectedCompletionDate: string | null;
+  daysRemaining: number | null;
+  recentPace: number;
+  elevationProfile: Array<{
+    date: string;
+    dayNumber: number;
+    elevation: number;
+    miles: number;
+  }>;
 }
 
 // ============================================================

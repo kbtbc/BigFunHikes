@@ -156,11 +156,34 @@ export type UpdatePhotoInput = z.infer<typeof updatePhotoSchema>;
  * Schema for overall hiking statistics
  */
 export const statsSchema = z.object({
+  // Basic stats
   totalMiles: z.number().nonnegative(),
   totalDays: z.number().int().nonnegative(),
   totalElevationGain: z.number().int().nonnegative(),
   averageMilesPerDay: z.number().nonnegative(),
   lastEntryDate: z.string().datetime().nullable(),
+  // Enhanced stats
+  longestDay: z.object({
+    miles: z.number(),
+    date: z.string().datetime(),
+    title: z.string(),
+  }).nullable(),
+  biggestClimb: z.object({
+    elevation: z.number(),
+    date: z.string().datetime(),
+    title: z.string(),
+  }).nullable(),
+  currentStreak: z.number().int().nonnegative(),
+  percentComplete: z.number().nonnegative(),
+  projectedCompletionDate: z.string().datetime().nullable(),
+  daysRemaining: z.number().int().nullable(),
+  recentPace: z.number().nonnegative(),
+  elevationProfile: z.array(z.object({
+    date: z.string().datetime(),
+    dayNumber: z.number().int(),
+    elevation: z.number(),
+    miles: z.number(),
+  })),
 });
 
 export type Stats = z.infer<typeof statsSchema>;
