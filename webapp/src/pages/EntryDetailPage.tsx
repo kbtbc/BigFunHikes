@@ -49,7 +49,6 @@ function EntryNavigation({
 
         <Link to="/timeline">
           <Button variant="ghost" size="sm">
-            <ArrowLeft className="mr-1 h-4 w-4" />
             Timeline
           </Button>
         </Link>
@@ -75,7 +74,6 @@ function EntryNavigation({
           <Button variant="outline" className="w-full h-auto py-3 px-4 group">
             <ChevronLeft className="mr-3 h-5 w-5 text-muted-foreground group-hover:-translate-x-1 transition-transform" />
             <div className="text-left flex-1 min-w-0">
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">Previous</div>
               <div className="font-semibold">Day {prevEntry.dayNumber}</div>
               <div className="text-xs text-muted-foreground truncate">{prevEntry.title}</div>
             </div>
@@ -87,7 +85,6 @@ function EntryNavigation({
 
       <Link to="/timeline">
         <Button variant="outline" size="lg">
-          <ArrowLeft className="mr-2 h-5 w-5" />
           Timeline
         </Button>
       </Link>
@@ -96,7 +93,6 @@ function EntryNavigation({
         <Link to={`/entry/${nextEntry.id}`} className="flex-1 max-w-xs">
           <Button variant="outline" className="w-full h-auto py-3 px-4 group">
             <div className="text-right flex-1 min-w-0">
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">Next</div>
               <div className="font-semibold">Day {nextEntry.dayNumber}</div>
               <div className="text-xs text-muted-foreground truncate">{nextEntry.title}</div>
             </div>
