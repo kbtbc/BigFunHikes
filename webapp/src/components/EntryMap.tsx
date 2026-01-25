@@ -150,9 +150,9 @@ export function EntryMap({
 
     // If we have GPX track data, display the actual recorded route
     if (hasGpxTrack && gpxTrack) {
-      // Draw the GPX track (use different color to distinguish from AT trail)
+      // Draw the GPX track (bright red for visibility)
       const gpxLine = L.polyline(gpxTrack, {
-        color: isTraining ? "#b45309" : "#991b1b", // Dark amber for training, dark red for trail
+        color: isTraining ? "#b45309" : "#dc2626", // Dark amber for training, bright red for trail
         weight: 5,
         opacity: 0.95,
       }).addTo(map);
