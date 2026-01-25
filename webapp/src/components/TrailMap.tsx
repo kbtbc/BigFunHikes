@@ -50,6 +50,7 @@ interface TrailMapProps {
     lng: number;
     title: string;
     day: number;
+    id: string;
   } | null;
   className?: string;
 }
@@ -160,8 +161,10 @@ export function TrailMap({
           `
           <div class="text-sm">
             <div class="font-semibold text-orange-600">Current Location</div>
-            <div class="font-medium">Day ${latestEntryMarker.day}</div>
-            <div>${latestEntryMarker.title}</div>
+            <a href="/entry/${latestEntryMarker.id}" class="block hover:underline">
+              <div class="font-medium">Day ${latestEntryMarker.day}</div>
+              <div>${latestEntryMarker.title}</div>
+            </a>
           </div>
         `
         )

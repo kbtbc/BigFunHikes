@@ -163,6 +163,7 @@ export function HomePage() {
                       lng: latestEntry.coordinates.start[1],
                       title: latestEntry.title,
                       day: latestEntry.day,
+                      id: latestEntry.id,
                     }
                   : null
               }
