@@ -27,7 +27,7 @@ export function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[60vh] md:h-[70vh] overflow-hidden">
+      <section className="relative min-h-[50vh] overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -38,7 +38,7 @@ export function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-background"></div>
         </div>
 
-        <div className="relative h-full flex items-center justify-center text-center px-4">
+        <div className="relative flex items-center justify-center text-center px-4 py-24 md:py-32">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 text-shadow">
               BigFun Hikes!
@@ -62,30 +62,34 @@ export function HomePage() {
                 </AlertDescription>
               </Alert>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* YouTube Intro Video */}
-            <div className="mt-6 max-w-md mx-auto">
-              <div className="rounded-lg overflow-hidden shadow-lg border-2 border-white/20">
-                <div className="aspect-video">
-                  <iframe
-                    src="https://www.youtube.com/embed/kgKnqN4yDGU"
-                    title="BigFun Hikes Intro"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="w-full h-full"
-                  />
-                </div>
+      {/* YouTube Intro Video Section */}
+      <section className="py-10 md:py-12 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-sm mx-auto text-center">
+            <div className="rounded-lg overflow-hidden shadow-lg border-2 border-border">
+              <div className="aspect-video">
+                <iframe
+                  src="https://www.youtube.com/embed/kgKnqN4yDGU"
+                  title="BigFun Hikes Intro"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
               </div>
-              <a
-                href="https://www.youtube.com/@BigFunHikes"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors text-sm font-medium"
-              >
-                <Youtube className="h-4 w-4" />
-                Subscribe on YouTube
-              </a>
             </div>
+            <a
+              href="https://www.youtube.com/@BigFunHikes"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 mt-4 text-muted-foreground hover:text-primary transition-colors text-sm"
+            >
+              <Youtube className="h-4 w-4" />
+              Subscribe on YouTube
+            </a>
           </div>
         </div>
       </section>
