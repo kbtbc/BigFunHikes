@@ -69,20 +69,7 @@ export function Navbar() {
               </Link>
             )}
 
-            {/* Admin Button - always visible */}
-            {!isLoading && !isAuthenticated && (
-              <Link to="/admin" title="Admin Login">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="ml-2"
-                >
-                  <Shield className="h-4 w-4" />
-                </Button>
-              </Link>
-            )}
-
-            {/* Admin Logout - just icons */}
+            {/* Admin Logout Button - only when authenticated */}
             {!isLoading && isAuthenticated && (
               <Button
                 variant="ghost"
@@ -91,8 +78,7 @@ export function Navbar() {
                 className="ml-2"
                 title="Logout"
               >
-                <Shield className="h-4 w-4" />
-                <LogOut className="h-3.5 w-3.5" />
+                <LogOut className="h-4 w-4" />
               </Button>
             )}
           </div>
