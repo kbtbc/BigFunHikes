@@ -47,7 +47,7 @@ function TimelineEntryCard({ entry, index }: TimelineEntryCardProps) {
       style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Timeline dot with enhanced styling */}
-      <div className="absolute left-[23px] top-6 w-7 h-7 rounded-full bg-primary border-4 border-background shadow-lg shadow-primary/50 z-10 hidden md:flex items-center justify-center">
+      <div className="absolute left-[19px] top-6 w-7 h-7 rounded-full bg-primary border-4 border-background shadow-lg shadow-primary/50 z-10 hidden md:flex items-center justify-center">
         <div className="w-3 h-3 rounded-full bg-background" />
       </div>
 
