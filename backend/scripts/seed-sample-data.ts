@@ -1,25 +1,37 @@
 #!/usr/bin/env bun
 /**
  * Seed script to populate the database with sample journal entries
- * Run with: bun run scripts/seed-sample-data.ts
+ *
+ * This creates 10 days of realistic Appalachian Trail journal entries
+ * with photos, weather data, and varied hiking statistics.
+ *
+ * Usage:
+ *   cd backend
+ *   bun run seed
+ *
+ * Or directly:
+ *   bun run scripts/seed-sample-data.ts
+ *
+ * Note: This will DELETE all existing journal entries and photos!
  */
 
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Sample stock photo URLs (using placeholder images)
+// Sample stock photo URLs (using picsum.photos for reliable placeholder images)
+// These are nature/landscape themed images that work well for hiking
 const STOCK_PHOTOS = [
-  'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80', // Mountain trail
-  'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=800&q=80', // Forest path
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', // Mountain vista
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80', // Forest scene
-  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=80', // Mountain lake
-  'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80', // Hiking trail
-  'https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=800&q=80', // Mountain peak
-  'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80', // Sunset vista
-  'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=800&q=80', // Trail marker
-  'https://images.unsplash.com/photo-1571863533956-01c88e79957e?w=800&q=80', // Mountain climb
+  'https://picsum.photos/seed/mountain1/800/600',
+  'https://picsum.photos/seed/trail1/800/600',
+  'https://picsum.photos/seed/forest1/800/600',
+  'https://picsum.photos/seed/nature1/800/600',
+  'https://picsum.photos/seed/hiking1/800/600',
+  'https://picsum.photos/seed/vista1/800/600',
+  'https://picsum.photos/seed/peak1/800/600',
+  'https://picsum.photos/seed/sunset1/800/600',
+  'https://picsum.photos/seed/path1/800/600',
+  'https://picsum.photos/seed/climb1/800/600',
 ];
 
 const SAMPLE_ENTRIES = [

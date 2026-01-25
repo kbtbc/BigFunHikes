@@ -162,6 +162,7 @@ All endpoints follow the `{ data: ... }` envelope pattern.
 - `POST /api/entries/:id/photos/upload` - Upload photo file (multipart/form-data)
   - Accepts: JPEG, PNG, WebP, GIF (max 10MB)
   - Returns: Photo object with URL
+- `PATCH /api/entries/:id/photos/:photoId` - Update photo caption (admin)
 - `DELETE /api/entries/:id/photos/:photoId` - Delete photo (admin)
 
 **Statistics**:
@@ -202,6 +203,16 @@ bunx prisma db push
 bunx prisma generate
 bun run dev  # Runs on http://localhost:3000
 ```
+
+**Optional: Seed Sample Data**
+
+To populate the database with 10 days of sample journal entries (great for testing):
+```bash
+cd backend
+bun run seed
+```
+
+This creates realistic trail entries with photos, weather data, and varied statistics. **Warning:** This will delete all existing entries!
 
 **Step 2: Frontend Setup** (new terminal)
 
