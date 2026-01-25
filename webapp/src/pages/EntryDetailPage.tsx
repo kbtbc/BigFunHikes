@@ -213,7 +213,7 @@ export function EntryDetailPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 md:py-12">
+      <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="max-w-4xl mx-auto">
           {/* Admin Actions - Floating */}
           {isAuthenticated && (
