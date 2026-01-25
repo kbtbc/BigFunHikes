@@ -40,6 +40,8 @@ export default function EditEntryPage() {
   const updateMutation = useUpdateEntry();
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
+  const [editingCaptionPhotoId, setEditingCaptionPhotoId] = useState<string | null>(null);
+  const [editedCaptions, setEditedCaptions] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     date: "",
@@ -131,6 +133,33 @@ export default function EditEntryPage() {
       });
     } finally {
       setDeletingPhotoId(null);
+    }
+  };
+
+  // Update existing photo caption
+  const handleUpdatePhotoCaption = async (photoId: string, caption: string) => {
+    if (!id) return;
+
+    try {
+      await photosApi.update(id, photoId, { caption: caption || null });
+      queryClient.invalidateQueries({ queryKey: ["entries", id] });
+      queryClient.invalidateQueries({ queryKey: ["entries"] });
+      setEditingCaptionPhotoId(null);
+      setEditedCaptions(prev => {
+        const updated = { ...prev };
+        delete updated[photoId];
+        return updated;
+      });
+      toast({
+        title: "Caption updated",
+        description: "The photo caption has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update caption.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -468,7 +497,7 @@ export default function EditEntryPage() {
                     </h3>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {existingPhotos.map((photo: Photo) => (
                       <div
                         key={photo.id}
@@ -477,29 +506,82 @@ export default function EditEntryPage() {
                         <img
                           src={photo.url}
                           alt={photo.caption || "Photo"}
-                          className="w-full h-32 object-cover"
+                          className="w-full h-48 object-cover"
                         />
                         <Button
                           type="button"
                           variant="destructive"
                           size="icon"
-                          className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleDeletePhoto(photo.id)}
                           disabled={deletingPhotoId === photo.id}
                         >
                           {deletingPhotoId === photo.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-4 w-4" />
                           )}
                         </Button>
-                        {photo.caption && (
-                          <div className="p-2 bg-background/80">
-                            <p className="text-xs text-muted-foreground truncate">
-                              {photo.caption}
+                        <div className="p-3 bg-background">
+                          {editingCaptionPhotoId === photo.id ? (
+                            <div className="flex gap-2">
+                              <Input
+                                value={editedCaptions[photo.id] ?? photo.caption ?? ""}
+                                onChange={(e) =>
+                                  setEditedCaptions(prev => ({
+                                    ...prev,
+                                    [photo.id]: e.target.value
+                                  }))
+                                }
+                                placeholder="Add a caption..."
+                                className="h-8 text-sm"
+                                maxLength={500}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() =>
+                                  handleUpdatePhotoCaption(
+                                    photo.id,
+                                    editedCaptions[photo.id] ?? photo.caption ?? ""
+                                  )
+                                }
+                                className="h-8"
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingCaptionPhotoId(null);
+                                  setEditedCaptions(prev => {
+                                    const updated = { ...prev };
+                                    delete updated[photo.id];
+                                    return updated;
+                                  });
+                                }}
+                                className="h-8"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <p
+                              className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                              onClick={() => {
+                                setEditingCaptionPhotoId(photo.id);
+                                setEditedCaptions(prev => ({
+                                  ...prev,
+                                  [photo.id]: photo.caption ?? ""
+                                }));
+                              }}
+                            >
+                              {photo.caption || "Click to add caption..."}
                             </p>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

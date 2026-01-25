@@ -265,6 +265,9 @@ export const photosApi = {
   add: (entryId: string, data: { url: string; caption?: string; order: number }) =>
     api.post<Photo>(`/api/entries/${entryId}/photos`, data),
 
+  update: (entryId: string, photoId: string, data: { caption?: string | null }) =>
+    api.patch<Photo>(`/api/entries/${entryId}/photos/${photoId}`, data),
+
   delete: (entryId: string, photoId: string) =>
     api.delete<void>(`/api/entries/${entryId}/photos/${photoId}`),
 };

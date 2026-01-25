@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { prisma } from "../prisma";
-import { createPhotoSchema, uploadPhotoSchema } from "../types";
+import { createPhotoSchema, uploadPhotoSchema, updatePhotoSchema } from "../types";
 import type { Context } from "hono";
 import { requireAdminAuth } from "../middleware/adminAuth";
 import * as fs from "fs/promises";
@@ -267,6 +267,81 @@ photosRouter.post("/:id/photos/upload", async (c) => {
     );
   }
 });
+
+/**
+ * PATCH /api/entries/:id/photos/:photoId
+ * Update a photo's caption
+ */
+photosRouter.patch(
+  "/:id/photos/:photoId",
+  zValidator("json", updatePhotoSchema),
+  async (c) => {
+    const authError = requireAdminAuth(c);
+    if (authError) return authError;
+
+    const entryId = c.req.param("id");
+    const photoId = c.req.param("photoId");
+    const data = c.req.valid("json");
+
+    try {
+      // Find the photo
+      const photo = await prisma.photo.findUnique({
+        where: { id: photoId },
+      });
+
+      if (!photo) {
+        return c.json(
+          {
+            error: {
+              message: "Photo not found",
+              code: "NOT_FOUND",
+            },
+          },
+          404
+        );
+      }
+
+      // Verify the photo belongs to this entry
+      if (photo.journalEntryId !== entryId) {
+        return c.json(
+          {
+            error: {
+              message: "Photo does not belong to this journal entry",
+              code: "INVALID_RELATIONSHIP",
+            },
+          },
+          400
+        );
+      }
+
+      // Update the photo
+      const updatedPhoto = await prisma.photo.update({
+        where: { id: photoId },
+        data: {
+          caption: data.caption,
+        },
+      });
+
+      const formattedPhoto = {
+        ...updatedPhoto,
+        createdAt: updatedPhoto.createdAt.toISOString(),
+      };
+
+      return c.json({ data: formattedPhoto });
+    } catch (error) {
+      console.error("Error updating photo:", error);
+      return c.json(
+        {
+          error: {
+            message: "Failed to update photo",
+            code: "UPDATE_ERROR",
+          },
+        },
+        500
+      );
+    }
+  }
+);
 
 /**
  * DELETE /api/entries/:id/photos/:photoId

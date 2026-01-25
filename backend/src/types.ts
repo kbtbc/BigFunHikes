@@ -139,6 +139,15 @@ export const uploadPhotoSchema = z.object({
 
 export type UploadPhotoInput = z.infer<typeof uploadPhotoSchema>;
 
+/**
+ * Schema for updating a photo's caption
+ */
+export const updatePhotoSchema = z.object({
+  caption: z.string().max(500).nullable().optional(),
+});
+
+export type UpdatePhotoInput = z.infer<typeof updatePhotoSchema>;
+
 // ============================================================
 // STATS SCHEMAS
 // ============================================================
