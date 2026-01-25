@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.0)
+## Current Features (v3.1)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -15,6 +15,12 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - Training entries use amber/orange styling for visual distinction
   - Training hikes can use day 0 or negative day numbers
   - Stats (total miles, elevation, projections) only include trail entries
+- **GPX Import**: Import GPS tracks from your fitness watch (Suunto, Garmin, etc.)
+  - Upload GPX files directly from your Suunto Vertical 2, Garmin, or other fitness watch
+  - Automatically extracts distance, elevation gain, and route coordinates
+  - Auto-fills miles hiked and GPS coordinates from your track data
+  - Displays your actual recorded route on the entry map (blue line for trail entries, amber for training)
+  - Replaces the estimated AT segment with your actual GPS track when present
 - **Improved Entry Layout**: Title and content appear above photos for better readability
 - **Photo Uploads**: Add and caption multiple photos per entry with carousel display
 - **Photo Caption Editing**: Edit captions on existing photos directly from the edit page
@@ -42,6 +48,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - Routes calculated dynamically from entry GPS coordinates
   - Finds closest points on AT and displays trail between entries
   - No manual configuration needed for new entries
+  - **GPX Override**: When an entry has imported GPX data, displays your actual recorded route instead of the estimated AT segment
 - **Training Location Maps**: Training entries show single location marker (no trail path)
   - Orange marker to match training entry styling
   - Popup shows training hike details
@@ -96,6 +103,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 │   │   │   ├── Navbar.tsx
 │   │   │   ├── TrailMap.tsx           # Full AT trail map (home page)
 │   │   │   ├── EntryMap.tsx           # Dynamic route segment map (entry pages)
+│   │   │   ├── GpxFileUpload.tsx      # GPX file upload component
 │   │   │   ├── EditableCoordinates.tsx # Inline GPS coordinate editor
 │   │   │   ├── EnhancedStats.tsx      # Statistics dashboard
 │   │   │   ├── JournalEntry.tsx       # Entry display component
@@ -115,6 +123,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 │   │   │   └── AuthContext.tsx        # Auth state management
 │   │   ├── lib/
 │   │   │   ├── api.ts                 # API client
+│   │   │   ├── gpx-parser.ts          # GPX file parsing and distance calculations
 │   │   │   └── transformEntries.ts    # Data transformation
 │   │   ├── index.css                  # Design system & Tailwind
 │   │   └── App.tsx                    # Main app with routing
@@ -339,12 +348,10 @@ See full deployment guide in the original README section.
 ### Suggested Next Steps
 
 #### Training Hikes Enhancements
-- **GPX Import for Training**: Upload GPX tracks from training hikes (Gaia, AllTrails, Strava)
 - **Training Stats Dashboard**: Separate statistics view for training progress
 - **Training Goals**: Set and track pre-hike training targets (miles, elevation)
 
 #### Phase 3C: Import/Export
-- **GPX Import UI**: Upload GPX tracks from hiking apps
 - **Export Features**: PDF journal export, JSON backup
 
 #### Phase 3D: Offline & PWA

@@ -54,6 +54,8 @@ interface EntryMapProps {
   className?: string;
   // Entry type - training entries show single marker, no trail segment
   entryType?: "trail" | "training";
+  // GPX track data - when present, displays actual recorded route instead of AT segment
+  gpxTrack?: Array<[number, number]>;
 }
 
 export function EntryMap({
@@ -69,20 +71,22 @@ export function EntryMap({
   height = "300px",
   className = "",
   entryType = "trail",
+  gpxTrack,
 }: EntryMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   const isTraining = entryType === "training";
+  const hasGpxTrack = gpxTrack && gpxTrack.length > 0;
 
   // Use dynamic trail segment based on actual coordinates
-  // Skip trail segment calculation for training entries - just show single marker
+  // Skip trail segment calculation for training entries or when GPX track is present
   const { coordinates, bounds, loading, error } = useTrailSegmentForEntry(
-    isTraining ? null : (latitude ?? null),
-    isTraining ? null : (longitude ?? null),
-    isTraining ? null : prevLatitude,
-    isTraining ? null : prevLongitude
+    isTraining || hasGpxTrack ? null : (latitude ?? null),
+    isTraining || hasGpxTrack ? null : (longitude ?? null),
+    isTraining || hasGpxTrack ? null : prevLatitude,
+    isTraining || hasGpxTrack ? null : prevLongitude
   );
 
   // Initialize map
@@ -127,8 +131,8 @@ export function EntryMap({
       }
     });
 
-    // For training entries, just show a single marker at the location
-    if (isTraining && latitude && longitude) {
+    // For training entries WITHOUT GPX data, show a single marker at the location
+    if (isTraining && !hasGpxTrack && latitude && longitude) {
       L.marker([latitude, longitude], { icon: trainingIcon })
         .bindPopup(
           `<div class="text-sm">
@@ -144,7 +148,46 @@ export function EntryMap({
       return;
     }
 
-    // If we have coordinates from the trail, draw them
+    // If we have GPX track data, display the actual recorded route
+    if (hasGpxTrack && gpxTrack) {
+      // Draw the GPX track (use different color to distinguish from AT trail)
+      const gpxLine = L.polyline(gpxTrack, {
+        color: isTraining ? "#d97706" : "#2563eb", // Amber for training, blue for trail
+        weight: 4,
+        opacity: 0.9,
+      }).addTo(map);
+
+      // Add start marker
+      const gpxStartPoint = gpxTrack[0];
+      L.marker(gpxStartPoint, { icon: startIcon })
+        .bindPopup(
+          `<div class="text-sm">
+            <div class="font-semibold text-green-600">Start</div>
+            <div>${startLocation || (isTraining ? "Training Start" : "Day " + dayNumber + " Start")}</div>
+            <div class="text-xs text-blue-600 mt-1">GPS Track</div>
+          </div>`
+        )
+        .addTo(map);
+
+      // Add end marker
+      const gpxEndPoint = gpxTrack[gpxTrack.length - 1];
+      L.marker(gpxEndPoint, { icon: isTraining ? trainingIcon : endIcon })
+        .bindPopup(
+          `<div class="text-sm">
+            <div class="font-semibold ${isTraining ? "text-amber-600" : "text-red-600"}">End</div>
+            <div>${endLocation || title}</div>
+            ${milesHiked ? `<div class="text-xs mt-1">${milesHiked} miles hiked</div>` : ""}
+            <div class="text-xs text-blue-600 mt-1">GPS Track</div>
+          </div>`
+        )
+        .addTo(map);
+
+      // Fit bounds to GPX track
+      map.fitBounds(gpxLine.getBounds(), { padding: [30, 30] });
+      return;
+    }
+
+    // If we have coordinates from the AT trail segment, draw them
     if (coordinates.length > 0) {
       // Draw the trail segment
       const trailLine = L.polyline(coordinates, {
@@ -214,10 +257,12 @@ export function EntryMap({
     endLocation,
     milesHiked,
     isTraining,
+    hasGpxTrack,
+    gpxTrack,
   ]);
 
-  // Show placeholder if no coordinates at all
-  if (!latitude && !longitude && !loading) {
+  // Show placeholder if no coordinates at all (unless we have GPX track)
+  if (!latitude && !longitude && !hasGpxTrack && !loading) {
     return (
       <div
         className={`flex items-center justify-center bg-muted rounded-lg ${className}`}
@@ -228,7 +273,7 @@ export function EntryMap({
     );
   }
 
-  if (error && !coordinates.length) {
+  if (error && !coordinates.length && !hasGpxTrack) {
     return (
       <div
         className={`flex items-center justify-center bg-muted rounded-lg ${className}`}

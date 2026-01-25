@@ -15,9 +15,10 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { entriesApi, photosApi, api, type UpdateJournalEntryInput, type Photo, type WeatherData } from "@/lib/api";
 import { useEntry, useUpdateEntry } from "@/hooks/use-entries";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud } from "lucide-react";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCoordinates } from "@/hooks/use-geolocation";
+import { GpxFileUpload, type GpxUploadResult } from "@/components/GpxFileUpload";
 
 // Photo state interface for new uploads
 interface PhotoUpload {
@@ -54,6 +55,26 @@ export default function EditEntryPage() {
   });
 
   const [newPhotos, setNewPhotos] = useState<PhotoUpload[]>([]);
+
+  // GPX data state
+  const [gpxData, setGpxData] = useState<GpxUploadResult | null>(null);
+  const [gpxRemoved, setGpxRemoved] = useState(false);
+
+  // Handle GPX parsed callback
+  const handleGpxParsed = (result: GpxUploadResult | null) => {
+    if (result) {
+      setGpxData(result);
+      setGpxRemoved(false);
+      // Auto-populate miles hiked from GPX data
+      setFormData((prev) => ({
+        ...prev,
+        milesHiked: result.distanceMiles.toString(),
+      }));
+    } else {
+      setGpxData(null);
+      setGpxRemoved(true);
+    }
+  };
 
   // Parse weather data if it exists
   const existingWeather: WeatherData | null = entry?.weather
@@ -195,6 +216,14 @@ export default function EditEntryPage() {
       milesHiked,
       totalMilesCompleted,
       locationName: formData.locationName.trim() || null,
+      // Include GPX data if new GPX was uploaded, or null if removed
+      ...(gpxData && {
+        gpxData: gpxData.gpxData,
+        elevationGain: gpxData.elevationGainFeet,
+        latitude: gpxData.startCoords[0],
+        longitude: gpxData.startCoords[1],
+      }),
+      ...(gpxRemoved && !gpxData && { gpxData: null }),
     };
 
     try {
@@ -444,6 +473,23 @@ export default function EditEntryPage() {
                     maxLength={500}
                   />
                 </div>
+              </div>
+
+              {/* GPX Import Section */}
+              <div className="space-y-4 pt-4 border-t">
+                <GpxFileUpload
+                  onGpxParsed={handleGpxParsed}
+                  existingGpx={!gpxRemoved ? entry.gpxData : null}
+                  disabled={isPending}
+                />
+                {gpxData && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">
+                      New GPX track imported! Miles have been updated. Your route will be displayed on the entry map.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Location & Weather Display (read-only from original entry) */}

@@ -17,6 +17,7 @@ import { entriesApi, api, type CreateJournalEntryInput, type WeatherData } from 
 import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw, Pencil, Check, Dumbbell, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGeolocation, formatCoordinates, formatAccuracy } from "@/hooks/use-geolocation";
+import { GpxFileUpload, type GpxUploadResult } from "@/components/GpxFileUpload";
 
 // Photo state interface
 interface PhotoUpload {
@@ -96,6 +97,28 @@ export default function NewEntryPage() {
 
   const [photos, setPhotos] = useState<PhotoUpload[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+
+  // GPX data state
+  const [gpxData, setGpxData] = useState<GpxUploadResult | null>(null);
+
+  // Handle GPX parsed callback
+  const handleGpxParsed = (result: GpxUploadResult | null) => {
+    setGpxData(result);
+    if (result) {
+      // Auto-populate miles hiked from GPX data
+      setFormData((prev) => ({
+        ...prev,
+        milesHiked: result.distanceMiles.toString(),
+      }));
+      // Set coordinates from GPX track start point
+      setManualCoords({
+        lat: result.startCoords[0],
+        lng: result.startCoords[1],
+      });
+      // Clear weather so it refetches for the GPX location
+      setWeatherData(null);
+    }
+  };
 
   // Fetch weather when we have GPS coordinates
   useEffect(() => {
@@ -286,13 +309,13 @@ export default function NewEntryPage() {
       title: formData.title.trim(),
       content: formData.content.trim(),
       milesHiked,
-      elevationGain: null,
+      elevationGain: gpxData ? gpxData.elevationGainFeet : null,
       totalMilesCompleted,
       latitude: effectiveLat,
       longitude: effectiveLng,
       locationName: formData.locationName.trim() || null,
       weather: weatherData ? JSON.stringify(weatherData) : null,
-      gpxData: null,
+      gpxData: gpxData ? gpxData.gpxData : null,
       entryType,
     });
   };
@@ -534,6 +557,23 @@ export default function NewEntryPage() {
                     maxLength={500}
                   />
                 </div>
+              </div>
+
+              {/* GPX Import Section */}
+              <div className="space-y-4 pt-4 border-t">
+                <GpxFileUpload
+                  onGpxParsed={handleGpxParsed}
+                  disabled={isPending}
+                />
+                {gpxData && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">
+                      GPX track imported! Miles and coordinates have been auto-filled from your GPS data.
+                      Your actual route will be displayed on the entry map.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Location & Weather Section */}

@@ -339,6 +339,7 @@ export function EntryDetailPage() {
               milesHiked={entry.miles}
               height="350px"
               entryType={entry.entryType}
+              gpxTrack={entry.gpxTrack}
             />
           </div>
 
