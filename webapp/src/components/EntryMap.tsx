@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useTrailSegment } from "@/hooks/use-trail-segment";
+import { useTrailSegmentForEntry } from "@/hooks/use-dynamic-trail-segment";
 
 const shadowUrl =
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
@@ -30,6 +30,12 @@ const endIcon = L.icon({
 interface EntryMapProps {
   dayNumber: number;
   title: string;
+  // Current entry coordinates
+  latitude?: number | null;
+  longitude?: number | null;
+  // Previous entry coordinates (for route calculation)
+  prevLatitude?: number | null;
+  prevLongitude?: number | null;
   startLocation?: string;
   endLocation?: string;
   milesHiked?: number;
@@ -40,6 +46,10 @@ interface EntryMapProps {
 export function EntryMap({
   dayNumber,
   title,
+  latitude,
+  longitude,
+  prevLatitude,
+  prevLongitude,
   startLocation,
   endLocation,
   milesHiked,
@@ -50,7 +60,13 @@ export function EntryMap({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
-  const { coordinates, bounds, loading, error } = useTrailSegment(dayNumber);
+  // Use dynamic trail segment based on actual coordinates
+  const { coordinates, bounds, loading, error } = useTrailSegmentForEntry(
+    latitude ?? null,
+    longitude ?? null,
+    prevLatitude,
+    prevLongitude
+  );
 
   // Initialize map
   useEffect(() => {
@@ -85,7 +101,7 @@ export function EntryMap({
   // Draw trail segment and markers
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !mapReady || coordinates.length === 0) return;
+    if (!map || !mapReady) return;
 
     // Clear existing layers (except tile layer)
     map.eachLayer((layer) => {
@@ -94,47 +110,63 @@ export function EntryMap({
       }
     });
 
-    // Draw the trail segment
-    const trailLine = L.polyline(coordinates, {
-      color: "#4a7c59",
-      weight: 4,
-      opacity: 0.9,
-    }).addTo(map);
+    // If we have coordinates from the trail, draw them
+    if (coordinates.length > 0) {
+      // Draw the trail segment
+      const trailLine = L.polyline(coordinates, {
+        color: "#4a7c59",
+        weight: 4,
+        opacity: 0.9,
+      }).addTo(map);
 
-    // Add start marker
-    const startPoint = coordinates[0];
-    L.marker(startPoint, { icon: startIcon })
-      .bindPopup(
-        `<div class="text-sm">
-          <div class="font-semibold text-green-600">Start</div>
-          <div>${startLocation || "Day " + dayNumber + " Start"}</div>
-        </div>`
-      )
-      .addTo(map);
+      // Add start marker
+      const startPoint = coordinates[0];
+      L.marker(startPoint, { icon: startIcon })
+        .bindPopup(
+          `<div class="text-sm">
+            <div class="font-semibold text-green-600">Start</div>
+            <div>${startLocation || "Day " + dayNumber + " Start"}</div>
+          </div>`
+        )
+        .addTo(map);
 
-    // Add end marker
-    const endPoint = coordinates[coordinates.length - 1];
-    L.marker(endPoint, { icon: endIcon })
-      .bindPopup(
-        `<div class="text-sm">
-          <div class="font-semibold text-red-600">End</div>
-          <div>${endLocation || title}</div>
-          ${milesHiked ? `<div class="text-xs mt-1">${milesHiked} miles hiked</div>` : ""}
-        </div>`
-      )
-      .addTo(map);
+      // Add end marker
+      const endPoint = coordinates[coordinates.length - 1];
+      L.marker(endPoint, { icon: endIcon })
+        .bindPopup(
+          `<div class="text-sm">
+            <div class="font-semibold text-red-600">End</div>
+            <div>${endLocation || title}</div>
+            ${milesHiked ? `<div class="text-xs mt-1">${milesHiked} miles hiked</div>` : ""}
+          </div>`
+        )
+        .addTo(map);
 
-    // Fit bounds with padding
-    if (bounds) {
-      map.fitBounds(
-        [
-          [bounds.south, bounds.west],
-          [bounds.north, bounds.east],
-        ],
-        { padding: [30, 30] }
-      );
-    } else {
-      map.fitBounds(trailLine.getBounds(), { padding: [30, 30] });
+      // Fit bounds with padding
+      if (bounds) {
+        map.fitBounds(
+          [
+            [bounds.south, bounds.west],
+            [bounds.north, bounds.east],
+          ],
+          { padding: [30, 30] }
+        );
+      } else {
+        map.fitBounds(trailLine.getBounds(), { padding: [30, 30] });
+      }
+    } else if (latitude && longitude) {
+      // Fallback: just show marker at entry location if no trail segment
+      L.marker([latitude, longitude], { icon: endIcon })
+        .bindPopup(
+          `<div class="text-sm">
+            <div class="font-semibold">Day ${dayNumber}</div>
+            <div>${title}</div>
+            ${milesHiked ? `<div class="text-xs mt-1">${milesHiked} miles hiked</div>` : ""}
+          </div>`
+        )
+        .addTo(map);
+
+      map.setView([latitude, longitude], 12);
     }
   }, [
     mapReady,
@@ -142,12 +174,26 @@ export function EntryMap({
     bounds,
     dayNumber,
     title,
+    latitude,
+    longitude,
     startLocation,
     endLocation,
     milesHiked,
   ]);
 
-  if (error) {
+  // Show placeholder if no coordinates at all
+  if (!latitude && !longitude && !loading) {
+    return (
+      <div
+        className={`flex items-center justify-center bg-muted rounded-lg ${className}`}
+        style={{ height }}
+      >
+        <p className="text-muted-foreground text-sm">No location data available</p>
+      </div>
+    );
+  }
+
+  if (error && !coordinates.length) {
     return (
       <div
         className={`flex items-center justify-center bg-muted rounded-lg ${className}`}

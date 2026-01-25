@@ -89,7 +89,7 @@ export function EntryDetailPage() {
   const entry = apiEntry ? transformApiEntryToComponent(apiEntry) : null;
 
   // Find previous and next entries based on day number
-  let prevEntry: { id: string; dayNumber: number; title: string } | null = null;
+  let prevEntry: { id: string; dayNumber: number; title: string; latitude?: number | null; longitude?: number | null } | null = null;
   let nextEntry: { id: string; dayNumber: number; title: string } | null = null;
 
   if (apiEntry && allEntriesData?.entries) {
@@ -102,7 +102,13 @@ export function EntryDetailPage() {
 
     if (currentIndex > 0) {
       const prev = sortedEntries[currentIndex - 1];
-      prevEntry = { id: prev.id, dayNumber: prev.dayNumber, title: prev.title };
+      prevEntry = {
+        id: prev.id,
+        dayNumber: prev.dayNumber,
+        title: prev.title,
+        latitude: prev.latitude,
+        longitude: prev.longitude,
+      };
     }
 
     if (currentIndex >= 0 && currentIndex < sortedEntries.length - 1) {
@@ -305,6 +311,10 @@ export function EntryDetailPage() {
             <EntryMap
               dayNumber={entry.day}
               title={entry.title}
+              latitude={entry.coordinates.start[0]}
+              longitude={entry.coordinates.start[1]}
+              prevLatitude={prevEntry?.latitude}
+              prevLongitude={prevEntry?.longitude}
               startLocation={entry.location.start}
               endLocation={entry.location.end}
               milesHiked={entry.miles}
