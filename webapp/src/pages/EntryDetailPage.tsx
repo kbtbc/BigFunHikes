@@ -27,80 +27,44 @@ import { formatCoordinates } from "@/hooks/use-geolocation";
 function EntryNavigation({
   prevEntry,
   nextEntry,
-  variant = "full",
 }: {
   prevEntry: { id: string; dayNumber: number; title: string } | null;
   nextEntry: { id: string; dayNumber: number; title: string } | null;
-  variant?: "full" | "compact";
 }) {
-  if (variant === "compact") {
-    return (
-      <div className="flex items-center justify-between gap-4">
-        {prevEntry ? (
-          <Link to={`/entry/${prevEntry.id}`} className="flex-1">
-            <Button variant="ghost" size="sm" className="w-full justify-start group">
-              <ChevronLeft className="mr-1 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-muted-foreground">Day {prevEntry.dayNumber}</span>
-            </Button>
-          </Link>
-        ) : (
-          <div className="flex-1" />
-        )}
-
-        <Link to="/timeline">
-          <Button variant="ghost" size="sm">
-            Timeline
-          </Button>
-        </Link>
-
-        {nextEntry ? (
-          <Link to={`/entry/${nextEntry.id}`} className="flex-1">
-            <Button variant="ghost" size="sm" className="w-full justify-end group">
-              <span className="text-muted-foreground">Day {nextEntry.dayNumber}</span>
-              <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
-        ) : (
-          <div className="flex-1" />
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div className="flex justify-between items-center gap-4">
+    <div className="flex items-center justify-between gap-4">
       {prevEntry ? (
-        <Link to={`/entry/${prevEntry.id}`} className="flex-1 max-w-xs">
-          <Button variant="outline" className="w-full h-auto py-3 px-4 group">
-            <ChevronLeft className="mr-3 h-5 w-5 text-muted-foreground group-hover:-translate-x-1 transition-transform" />
-            <div className="text-left flex-1 min-w-0">
-              <div className="font-semibold">Day {prevEntry.dayNumber}</div>
-              <div className="text-xs text-muted-foreground truncate">{prevEntry.title}</div>
+        <Link to={`/entry/${prevEntry.id}`} className="flex-1">
+          <Button variant="ghost" size="sm" className="w-full justify-start group">
+            <ChevronLeft className="mr-1 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            <div className="text-left">
+              <span className="text-muted-foreground">Day {prevEntry.dayNumber}</span>
+              <span className="hidden sm:inline text-muted-foreground ml-1">· {prevEntry.title.length > 30 ? prevEntry.title.slice(0, 30) + '...' : prevEntry.title}</span>
             </div>
           </Button>
         </Link>
       ) : (
-        <div className="flex-1 max-w-xs" />
+        <div className="flex-1" />
       )}
 
       <Link to="/timeline">
-        <Button variant="outline" size="lg">
+        <Button variant="ghost" size="sm">
           Timeline
         </Button>
       </Link>
 
       {nextEntry ? (
-        <Link to={`/entry/${nextEntry.id}`} className="flex-1 max-w-xs">
-          <Button variant="outline" className="w-full h-auto py-3 px-4 group">
-            <div className="text-right flex-1 min-w-0">
-              <div className="font-semibold">Day {nextEntry.dayNumber}</div>
-              <div className="text-xs text-muted-foreground truncate">{nextEntry.title}</div>
+        <Link to={`/entry/${nextEntry.id}`} className="flex-1">
+          <Button variant="ghost" size="sm" className="w-full justify-end group">
+            <div className="text-right">
+              <span className="hidden sm:inline text-muted-foreground mr-1">{nextEntry.title.length > 30 ? nextEntry.title.slice(0, 30) + '...' : nextEntry.title} ·</span>
+              <span className="text-muted-foreground">Day {nextEntry.dayNumber}</span>
             </div>
-            <ChevronRight className="ml-3 h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Button>
         </Link>
       ) : (
-        <div className="flex-1 max-w-xs" />
+        <div className="flex-1" />
       )}
     </div>
   );
@@ -237,7 +201,7 @@ export function EntryDetailPage() {
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto py-3">
-            <EntryNavigation prevEntry={prevEntry} nextEntry={nextEntry} variant="compact" />
+            <EntryNavigation prevEntry={prevEntry} nextEntry={nextEntry} />
           </div>
         </div>
       </div>
@@ -332,7 +296,7 @@ export function EntryDetailPage() {
 
           {/* Bottom Navigation */}
           <div className="mt-12 pt-8 border-t">
-            <EntryNavigation prevEntry={prevEntry} nextEntry={nextEntry} variant="full" />
+            <EntryNavigation prevEntry={prevEntry} nextEntry={nextEntry} />
           </div>
         </div>
 
