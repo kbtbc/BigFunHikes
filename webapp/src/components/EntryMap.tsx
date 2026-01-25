@@ -152,9 +152,9 @@ export function EntryMap({
     if (hasGpxTrack && gpxTrack) {
       // Draw the GPX track (use different color to distinguish from AT trail)
       const gpxLine = L.polyline(gpxTrack, {
-        color: isTraining ? "#d97706" : "#2563eb", // Amber for training, blue for trail
-        weight: 4,
-        opacity: 0.9,
+        color: isTraining ? "#b45309" : "#991b1b", // Dark amber for training, dark red for trail
+        weight: 5,
+        opacity: 0.95,
       }).addTo(map);
 
       // Add start marker
