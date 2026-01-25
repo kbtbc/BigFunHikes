@@ -13,8 +13,8 @@ interface TimelineProps {
 export function Timeline({ entries, className = "" }: TimelineProps) {
   return (
     <div className={`relative ${className}`}>
-      {/* Timeline line with gradient */}
-      <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-transparent hidden md:block"></div>
+      {/* Timeline line with gradient - centered at left-[33px] (32px + 1px for center of 2px line) */}
+      <div className="absolute left-[33px] top-0 bottom-0 w-0.5 -translate-x-1/2 bg-gradient-to-b from-primary via-primary/50 to-transparent hidden md:block"></div>
 
       {/* Timeline entries */}
       <div className="space-y-12">
@@ -46,8 +46,8 @@ function TimelineEntryCard({ entry, index }: TimelineEntryCardProps) {
       className="relative animate-in fade-in slide-in-from-bottom-4"
       style={{ animationDelay: `${index * 100}ms` }}
     >
-      {/* Timeline dot with enhanced styling */}
-      <div className="absolute left-[20px] top-6 w-7 h-7 rounded-full bg-primary border-4 border-background shadow-lg shadow-primary/50 z-10 hidden md:flex items-center justify-center">
+      {/* Timeline dot with enhanced styling - centered at same point as line (left-[33px]) */}
+      <div className="absolute left-[33px] top-6 w-7 h-7 -translate-x-1/2 rounded-full bg-primary border-4 border-background shadow-lg shadow-primary/50 z-10 hidden md:flex items-center justify-center">
         <div className="w-3 h-3 rounded-full bg-background" />
       </div>
 
