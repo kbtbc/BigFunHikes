@@ -21,12 +21,14 @@ model JournalEntry {
   locationName         String?
   weather              String?
   gpxData              String?
+  entryType            String   @default("trail") // "trail" | "training"
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   photos               Photo[]
 
   @@index([date])
   @@index([dayNumber])
+  @@index([entryType])
 }
 
 model Photo {

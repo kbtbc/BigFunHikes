@@ -185,6 +185,7 @@ export interface JournalEntry {
   locationName: string | null;
   weather: string | null; // JSON string of WeatherData
   gpxData: string | null;
+  entryType: "trail" | "training";
   createdAt: string;
   updatedAt: string;
   photos?: Photo[];
@@ -203,6 +204,7 @@ export interface CreateJournalEntryInput {
   locationName?: string | null;
   weather?: string | null;
   gpxData?: string | null;
+  entryType?: "trail" | "training";
 }
 
 export interface UpdateJournalEntryInput {
@@ -218,6 +220,7 @@ export interface UpdateJournalEntryInput {
   locationName?: string | null;
   weather?: string | null;
   gpxData?: string | null;
+  entryType?: "trail" | "training";
 }
 
 export interface JournalEntriesList {

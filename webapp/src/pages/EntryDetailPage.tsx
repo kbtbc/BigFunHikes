@@ -9,6 +9,7 @@ import { useEntry, useDeleteEntry, useEntries, useUpdateEntry } from "@/hooks/us
 import { useAuth } from "@/context/AuthContext";
 import { transformApiEntryToComponent } from "@/lib/transformEntries";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -20,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AlertCircle, ArrowLeft, Edit, Trash2, Loader2, MapPin, Cloud, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertCircle, ArrowLeft, Edit, Trash2, Loader2, MapPin, Cloud, ChevronLeft, ChevronRight, Dumbbell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Reusable Entry Navigation Component
@@ -233,6 +234,22 @@ export function EntryDetailPage() {
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </Button>
+            </div>
+          )}
+
+          {/* Training Entry Badge */}
+          {entry.entryType === "training" && (
+            <div className="mb-4 flex items-center gap-2">
+              <Badge
+                variant="secondary"
+                className="bg-amber-500 text-white hover:bg-amber-600 px-4 py-1.5 text-sm font-medium"
+              >
+                <Dumbbell className="h-4 w-4 mr-2" />
+                Training Hike
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                Not counted in trail statistics
+              </span>
             </div>
           )}
 

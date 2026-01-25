@@ -34,6 +34,7 @@ export interface JournalEntry {
   gpxTrack?: Array<[number, number]>; // Array of [lat, lng] coordinates
   weather?: WeatherInfo; // Weather at time of entry
   locationName?: string; // Human-readable location name
+  entryType?: "trail" | "training"; // Type of entry (default: trail)
 }
 
 export const TOTAL_AT_MILES = 2190;

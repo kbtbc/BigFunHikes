@@ -13,8 +13,9 @@ const statsRouter = new Hono();
 statsRouter.get("/", async (c) => {
 
   try {
-    // Get all journal entries
+    // Get all journal entries - only include "trail" entries for stats (exclude training)
     const entries = await prisma.journalEntry.findMany({
+      where: { entryType: "trail" },
       orderBy: { date: "asc" }, // Changed to ascending for time-series calculations
     });
 

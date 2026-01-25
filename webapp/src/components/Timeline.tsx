@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, TrendingUp, Calendar } from "lucide-react";
+import { MapPin, TrendingUp, Calendar, Dumbbell } from "lucide-react";
 import { type JournalEntry } from "@/data/journalEntries";
 
 interface TimelineProps {
@@ -33,6 +33,7 @@ interface TimelineEntryCardProps {
 
 function TimelineEntryCard({ entry, index }: TimelineEntryCardProps) {
   const formattedDate = format(new Date(entry.date), "MMMM d, yyyy");
+  const isTraining = entry.entryType === "training";
 
   // Get preview text - skip markdown headers and get first real paragraph
   const getPreview = () => {
@@ -47,13 +48,21 @@ function TimelineEntryCard({ entry, index }: TimelineEntryCardProps) {
       style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Timeline dot with enhanced styling - centered at same point as line (left-[33px]) */}
-      <div className="absolute left-[33px] top-6 w-7 h-7 -translate-x-1/2 rounded-full bg-primary border-4 border-background shadow-lg shadow-primary/50 z-10 hidden md:flex items-center justify-center">
-        <div className="w-3 h-3 rounded-full bg-background" />
+      <div className={`absolute left-[33px] top-6 w-7 h-7 -translate-x-1/2 rounded-full border-4 border-background shadow-lg z-10 hidden md:flex items-center justify-center ${
+        isTraining ? "bg-amber-500 shadow-amber-500/50" : "bg-primary shadow-primary/50"
+      }`}>
+        {isTraining ? (
+          <Dumbbell className="w-3 h-3 text-white" />
+        ) : (
+          <div className="w-3 h-3 rounded-full bg-background" />
+        )}
       </div>
 
       {/* Content */}
       <Link to={`/entry/${entry.id}`} className="block md:ml-20">
-        <Card className="border-2 shadow-md hover:shadow-2xl transition-all duration-300 hover:border-primary cursor-pointer group overflow-hidden bg-card">
+        <Card className={`border-2 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer group overflow-hidden bg-card ${
+          isTraining ? "hover:border-amber-500" : "hover:border-primary"
+        }`}>
           <CardContent className="p-0">
             <div className="flex flex-col md:flex-row">
               {/* Thumbnail with overlay */}
@@ -71,9 +80,20 @@ function TimelineEntryCard({ entry, index }: TimelineEntryCardProps) {
                   <div className="absolute top-3 left-3">
                     <Badge
                       variant="secondary"
-                      className="font-outfit font-bold bg-primary text-primary-foreground border-0 px-3 py-1 shadow-lg"
+                      className={`font-outfit font-bold border-0 px-3 py-1 shadow-lg ${
+                        isTraining
+                          ? "bg-amber-500 text-white"
+                          : "bg-primary text-primary-foreground"
+                      }`}
                     >
-                      Day {entry.day}
+                      {isTraining ? (
+                        <span className="flex items-center gap-1.5">
+                          <Dumbbell className="h-3.5 w-3.5" />
+                          Training
+                        </span>
+                      ) : (
+                        `Day ${entry.day}`
+                      )}
                     </Badge>
                   </div>
 
@@ -86,13 +106,26 @@ function TimelineEntryCard({ entry, index }: TimelineEntryCardProps) {
                   </div>
                 </div>
               ) : (
-                <div className="relative w-full md:w-64 h-56 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                <div className={`relative w-full md:w-64 h-56 flex items-center justify-center ${
+                  isTraining
+                    ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20"
+                    : "bg-gradient-to-br from-primary/20 to-secondary/20"
+                }`}>
                   <div className="text-center p-4">
                     <Badge
                       variant="secondary"
-                      className="font-outfit font-bold mb-2"
+                      className={`font-outfit font-bold mb-2 ${
+                        isTraining ? "bg-amber-500 text-white" : ""
+                      }`}
                     >
-                      Day {entry.day}
+                      {isTraining ? (
+                        <span className="flex items-center gap-1.5">
+                          <Dumbbell className="h-3.5 w-3.5" />
+                          Training
+                        </span>
+                      ) : (
+                        `Day ${entry.day}`
+                      )}
                     </Badge>
                     <p className="text-sm text-muted-foreground">{formattedDate}</p>
                   </div>
@@ -101,14 +134,16 @@ function TimelineEntryCard({ entry, index }: TimelineEntryCardProps) {
 
               {/* Content */}
               <div className="flex-1 p-6 md:p-8">
-                <h3 className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors font-outfit">
+                <h3 className={`text-2xl font-bold mb-3 transition-colors font-outfit ${
+                  isTraining ? "group-hover:text-amber-600" : "group-hover:text-primary"
+                }`}>
                   {entry.title}
                 </h3>
 
                 {/* Stats row */}
                 <div className="flex flex-wrap gap-4 mb-4">
                   <div className="flex items-center gap-1.5 text-sm">
-                    <MapPin className="h-4 w-4 text-primary" />
+                    <MapPin className={`h-4 w-4 ${isTraining ? "text-amber-500" : "text-primary"}`} />
                     <span className="font-semibold">{entry.miles} mi</span>
                   </div>
                   {entry.elevationGain > 0 && (
@@ -117,9 +152,11 @@ function TimelineEntryCard({ entry, index }: TimelineEntryCardProps) {
                       <span className="font-semibold">{entry.elevationGain.toLocaleString()} ft</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <span>Total: {entry.totalMiles.toFixed(1)} mi</span>
-                  </div>
+                  {!isTraining && (
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <span>Total: {entry.totalMiles.toFixed(1)} mi</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Preview text */}

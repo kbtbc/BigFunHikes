@@ -101,6 +101,7 @@ export function transformApiEntryToComponent(
     gpxTrack,
     weather,
     locationName: apiEntry.locationName || undefined,
+    entryType: apiEntry.entryType,
   };
 }
 

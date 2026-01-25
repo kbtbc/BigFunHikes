@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { entriesApi, api, type CreateJournalEntryInput, type WeatherData } from "@/lib/api";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw, Pencil, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw, Pencil, Check, Dumbbell, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGeolocation, formatCoordinates, formatAccuracy } from "@/hooks/use-geolocation";
 
@@ -61,6 +61,9 @@ export default function NewEntryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Entry type state
+  const [entryType, setEntryType] = useState<"trail" | "training">("trail");
 
   // GPS location
   const geo = useGeolocation({ autoFetch: true });
@@ -146,14 +149,21 @@ export default function NewEntryPage() {
 
   // Set the next day number and calculate running total based on last entry
   useEffect(() => {
-    if (lastEntryData?.entries[0]) {
+    if (entryType === "training") {
+      // Training entries default to day 0
+      setFormData((prev) => ({
+        ...prev,
+        dayNumber: 0,
+      }));
+    } else if (lastEntryData?.entries[0]) {
+      // Trail entries auto-increment from last entry
       const lastEntry = lastEntryData.entries[0];
       setFormData((prev) => ({
         ...prev,
         dayNumber: lastEntry.dayNumber + 1,
       }));
     }
-  }, [lastEntryData]);
+  }, [lastEntryData, entryType]);
 
   // Handle photo upload
   const handlePhotoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -263,8 +273,12 @@ export default function NewEntryPage() {
     const milesHiked = formData.milesHiked ? parseFloat(formData.milesHiked) : 0;
 
     // Calculate total miles completed
-    const lastEntry = lastEntryData?.entries[0];
-    const totalMilesCompleted = (lastEntry?.totalMilesCompleted || 0) + milesHiked;
+    // Training entries don't contribute to trail total
+    let totalMilesCompleted = 0;
+    if (entryType === "trail") {
+      const lastEntry = lastEntryData?.entries[0];
+      totalMilesCompleted = (lastEntry?.totalMilesCompleted || 0) + milesHiked;
+    }
 
     createMutation.mutate({
       date: dateString,
@@ -279,6 +293,7 @@ export default function NewEntryPage() {
       locationName: formData.locationName.trim() || null,
       weather: weatherData ? JSON.stringify(weatherData) : null,
       gpxData: null,
+      entryType,
     });
   };
 
@@ -356,22 +371,67 @@ export default function NewEntryPage() {
         <Card className="border-2 shadow-xl">
           <CardHeader>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Mountain className="h-6 w-6 text-primary" />
+              <div className={`p-2 rounded-lg ${entryType === "training" ? "bg-amber-500/10" : "bg-primary/10"}`}>
+                {entryType === "training" ? (
+                  <Dumbbell className="h-6 w-6 text-amber-600" />
+                ) : (
+                  <Mountain className="h-6 w-6 text-primary" />
+                )}
               </div>
               <div>
                 <CardTitle className="text-3xl font-outfit">
-                  New Journal Entry
+                  {entryType === "training" ? "New Training Entry" : "New Journal Entry"}
                 </CardTitle>
               </div>
             </div>
             <CardDescription className="text-base">
-              Document your day on the trail
+              {entryType === "training"
+                ? "Log your pre-hike training session"
+                : "Document your day on the trail"}
             </CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Entry Type Toggle */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Entry Type</Label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEntryType("trail")}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                      entryType === "trail"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Mountain className="h-5 w-5" />
+                    <span className="font-medium">Trail Entry</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEntryType("training")}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
+                      entryType === "training"
+                        ? "border-amber-500 bg-amber-500/5 text-amber-600"
+                        : "border-border hover:border-amber-500/50 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Dumbbell className="h-5 w-5" />
+                    <span className="font-medium">Training</span>
+                  </button>
+                </div>
+                {entryType === "training" && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">
+                      Training hikes are not counted in your trail statistics.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Entry Details */}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -391,19 +451,24 @@ export default function NewEntryPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="dayNumber" className="text-sm font-medium">
-                      Day Number <span className="text-destructive">*</span>
+                      {entryType === "training" ? "Training Day" : "Day Number"} <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="dayNumber"
                       type="number"
-                      min="1"
+                      min={entryType === "training" ? undefined : "1"}
                       value={formData.dayNumber}
                       onChange={(e) =>
-                        handleChange("dayNumber", parseInt(e.target.value) || 1)
+                        handleChange("dayNumber", parseInt(e.target.value) || 0)
                       }
                       required
                       className="h-10"
                     />
+                    {entryType === "training" && (
+                      <p className="text-xs text-muted-foreground">
+                        Use 0 or negative numbers for pre-trail training
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -714,7 +779,7 @@ export default function NewEntryPage() {
                   type="submit"
                   size="lg"
                   disabled={isPending}
-                  className="flex-1"
+                  className={`flex-1 ${entryType === "training" ? "bg-amber-600 hover:bg-amber-700" : ""}`}
                 >
                   {isPending ? (
                     <>
@@ -723,8 +788,12 @@ export default function NewEntryPage() {
                     </>
                   ) : (
                     <>
-                      <Mountain className="h-4 w-4 mr-2" />
-                      Save Entry
+                      {entryType === "training" ? (
+                        <Dumbbell className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Mountain className="h-4 w-4 mr-2" />
+                      )}
+                      Save {entryType === "training" ? "Training" : "Entry"}
                     </>
                   )}
                 </Button>
