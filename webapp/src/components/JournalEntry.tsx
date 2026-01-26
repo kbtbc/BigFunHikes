@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight, Dumbbell } from "lucide-react";
 import { type JournalEntry as JournalEntryType } from "@/data/journalEntries";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useState } from "react";
@@ -22,6 +22,7 @@ export function JournalEntry({
 }: JournalEntryProps) {
   const formattedDate = format(new Date(entry.date), "MMMM d, yyyy");
   const previewContent = entry.content.split("\n").slice(0, 3).join("\n");
+  const isTraining = entry.entryType === "training";
 
   // Carousel setup for multiple photos
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
@@ -52,13 +53,23 @@ export function JournalEntry({
   const hasMultiplePhotos = entry.photos.length > 1;
 
   return (
-    <Card className={`border-2 shadow-lg hover:shadow-xl transition-shadow ${className}`}>
+    <Card className={`border-2 shadow-lg hover:shadow-xl transition-shadow ${isTraining ? "hover:border-amber-500" : "hover:border-primary"} ${className}`}>
       <CardContent className="p-0">
         {/* Header - at the top */}
         <div className="p-6 pb-4">
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="secondary" className="font-outfit">
-              Day {entry.day}
+            <Badge
+              variant="secondary"
+              className={`font-outfit ${isTraining ? "bg-amber-500 text-white" : ""}`}
+            >
+              {isTraining ? (
+                <span className="flex items-center gap-1.5">
+                  <Dumbbell className="h-3.5 w-3.5" />
+                  Training
+                </span>
+              ) : (
+                `Day ${entry.day}`
+              )}
             </Badge>
             <span className="text-sm text-muted-foreground flex items-center gap-1">
               <Calendar className="h-3 w-3" />

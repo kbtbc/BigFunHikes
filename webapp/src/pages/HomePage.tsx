@@ -6,7 +6,7 @@ import { JournalEntry } from "@/components/JournalEntry";
 import { useEntries, useStats } from "@/hooks/use-entries";
 import { useAuth } from "@/context/AuthContext";
 import { transformApiEntryToComponent } from "@/lib/transformEntries";
-import { ArrowRight, AlertCircle, Youtube } from "lucide-react";
+import { ArrowRight, AlertCircle, Youtube, Dumbbell } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -121,9 +121,16 @@ export function HomePage() {
       <section className="py-12 md:py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold mb-2">Latest Entry</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-2 flex items-center gap-3">
+              {latestEntry?.entryType === "training" && (
+                <Dumbbell className="h-8 w-8 text-amber-500" />
+              )}
+              {latestEntry?.entryType === "training" ? "Latest Training" : "Latest Entry"}
+            </h2>
             <p className="text-muted-foreground">
-              The most recent update from the trail
+              {latestEntry?.entryType === "training"
+                ? "The most recent training hike"
+                : "The most recent update from the trail"}
             </p>
           </div>
           {entriesLoading ? (
