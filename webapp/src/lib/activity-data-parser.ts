@@ -258,10 +258,46 @@ function parseSuuntoActivity(suuntoData: SuuntoParseResult): ActivityData {
     sampleMap.set(Math.floor((sampleTime - startTime) / 1000), sample);
   }
 
-  // Create a map of HR values by time (seconds from start)
-  const hrMap = new Map<number, number>();
-  for (const hr of hrOverTime) {
-    hrMap.set(hr.time, hr.hr);
+  // Sort hrOverTime by time for binary search / interpolation
+  const sortedHr = [...hrOverTime].sort((a, b) => a.time - b.time);
+
+  // Find closest HR value using binary search for better matching
+  function findClosestHr(secondsFromStart: number): number | undefined {
+    if (sortedHr.length === 0) return undefined;
+
+    // Binary search to find closest HR reading
+    let low = 0;
+    let high = sortedHr.length - 1;
+
+    while (low < high) {
+      const mid = Math.floor((low + high) / 2);
+      if (sortedHr[mid].time < secondsFromStart) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+
+    // Check both low and low-1 to find the closest
+    const candidates = [sortedHr[low]];
+    if (low > 0) candidates.push(sortedHr[low - 1]);
+
+    let closest = candidates[0];
+    let minDiff = Math.abs(closest.time - secondsFromStart);
+
+    for (const c of candidates) {
+      const diff = Math.abs(c.time - secondsFromStart);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = c;
+      }
+    }
+
+    // Only return if within reasonable time window (60 seconds)
+    if (minDiff <= 60) {
+      return closest.hr;
+    }
+    return undefined;
   }
 
   // Process GPS points
@@ -271,21 +307,17 @@ function parseSuuntoActivity(suuntoData: SuuntoParseResult): ActivityData {
     const gps = gpsTrack[i];
     const gpsTime = new Date(gps.timestamp).getTime();
     const timestamp = gpsTime - startTime;
-    const secondsFromStart = Math.floor(timestamp / 1000);
+    const secondsFromStart = timestamp / 1000; // Keep as float for better matching
 
     // Try to find matching time sample (within 5 seconds)
     let matchedSample: typeof timeSamples[0] | undefined;
     for (let offset = -5; offset <= 5; offset++) {
-      matchedSample = sampleMap.get(secondsFromStart + offset);
+      matchedSample = sampleMap.get(Math.floor(secondsFromStart) + offset);
       if (matchedSample) break;
     }
 
-    // Try to find matching HR value (within 30 seconds)
-    let matchedHr: number | undefined;
-    for (let offset = -30; offset <= 30; offset++) {
-      matchedHr = hrMap.get(secondsFromStart + offset);
-      if (matchedHr !== undefined) break;
-    }
+    // Find closest HR value using binary search
+    const matchedHr = findClosestHr(secondsFromStart);
 
     const point: ActivityDataPoint = {
       timestamp,
@@ -297,6 +329,16 @@ function parseSuuntoActivity(suuntoData: SuuntoParseResult): ActivityData {
       cadence: matchedSample?.cadence,
       distance: distances[i],
     };
+
+    // Calculate speed from distance/time if not available from sample
+    if (point.speed === undefined && i > 0) {
+      const prevPoint = dataPoints[i - 1];
+      const timeDiff = (timestamp - prevPoint.timestamp) / 1000;
+      if (timeDiff > 0) {
+        const distDiff = distances[i] - distances[i - 1];
+        point.speed = distDiff / timeDiff;
+      }
+    }
 
     // Calculate grade from previous point
     if (i > 0 && dataPoints[i - 1].elevation !== undefined && point.elevation !== undefined) {

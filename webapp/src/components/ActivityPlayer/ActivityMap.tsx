@@ -88,19 +88,51 @@ export function ActivityMap({
   useEffect(() => {
     if (!map.current || !mapLoaded || dataPoints.length < 2) return;
 
-    // Remove existing layers and sources
-    if (map.current.getLayer("route-segments")) {
-      map.current.removeLayer("route-segments");
-    }
-    if (map.current.getSource("route-segments")) {
-      map.current.removeSource("route-segments");
-    }
-    if (map.current.getLayer("route-progress")) {
-      map.current.removeLayer("route-progress");
-    }
-    if (map.current.getSource("route-progress")) {
-      map.current.removeSource("route-progress");
-    }
+    // Remove existing layers and sources (in reverse order of addition)
+    const layersToRemove = ["route-progress", "route-segments", "route-base"];
+    const sourcesToRemove = ["route-progress", "route-segments", "route-base"];
+
+    layersToRemove.forEach((layer) => {
+      if (map.current?.getLayer(layer)) {
+        map.current.removeLayer(layer);
+      }
+    });
+    sourcesToRemove.forEach((source) => {
+      if (map.current?.getSource(source)) {
+        map.current.removeSource(source);
+      }
+    });
+
+    // Create a continuous line for the entire route (prevents gaps)
+    const allCoordinates = dataPoints.map((p) => [p.lon, p.lat]);
+
+    // Add base route layer (continuous, no gaps)
+    map.current.addSource("route-base", {
+      type: "geojson",
+      data: {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: allCoordinates,
+        },
+      },
+    });
+
+    map.current.addLayer({
+      id: "route-base",
+      type: "line",
+      source: "route-base",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round",
+      },
+      paint: {
+        "line-color": "#888888",
+        "line-width": 5,
+        "line-opacity": 0.3,
+      },
+    });
 
     // Calculate min/max for color scaling
     let values: number[] = [];
@@ -121,7 +153,7 @@ export function ActivityMap({
     const minVal = values.length > 0 ? Math.min(...values) : 0;
     const maxVal = values.length > 0 ? Math.max(...values) : 1;
 
-    // Create line segments with colors
+    // Create line segments with colors (overlaid on base)
     const features: GeoJSON.Feature[] = [];
 
     for (let i = 0; i < dataPoints.length - 1; i++) {
@@ -152,7 +184,7 @@ export function ActivityMap({
       });
     }
 
-    // Add route segments source
+    // Add colored route segments source
     map.current.addSource("route-segments", {
       type: "geojson",
       data: {
@@ -161,7 +193,7 @@ export function ActivityMap({
       },
     });
 
-    // Add layer for each segment
+    // Add colored segments layer
     map.current.addLayer({
       id: "route-segments",
       type: "line",
@@ -173,7 +205,7 @@ export function ActivityMap({
       paint: {
         "line-color": ["get", "color"],
         "line-width": 4,
-        "line-opacity": 0.4,
+        "line-opacity": 0.6,
       },
     });
 
