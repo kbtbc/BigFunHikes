@@ -163,7 +163,12 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 │   │   │   ├── OfflineIndicator.tsx   # Connection status indicator
 │   │   │   ├── PendingEntriesPanel.tsx # Offline entries management
 │   │   │   ├── JournalEntry.tsx       # Entry display component
-│   │   │   └── Timeline.tsx           # Timeline view
+│   │   │   ├── Timeline.tsx           # Timeline view
+│   │   │   └── ActivityPlayer/        # Relive-style playback (NEW v3.8)
+│   │   │       ├── index.tsx          # Main component with playback state
+│   │   │       ├── ActivityMap.tsx    # Mapbox GL map with animated marker
+│   │   │       ├── ActivityCharts.tsx # Synchronized HR/elevation/speed charts
+│   │   │       └── PlaybackControls.tsx # Play/pause, speed, scrub controls
 │   │   ├── pages/
 │   │   │   ├── HomePage.tsx           # Map + stats overview
 │   │   │   ├── TimelinePage.tsx       # All entries timeline
@@ -182,6 +187,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 │   │   │   ├── api.ts                 # API client
 │   │   │   ├── gpx-parser.ts          # GPX file parsing and distance calculations
 │   │   │   ├── suunto-parser.ts       # Suunto JSON watch data parser
+│   │   │   ├── activity-data-parser.ts # Unified parser for Activity Player (NEW v3.8)
 │   │   │   ├── offline-storage.ts     # IndexedDB storage for offline entries
 │   │   │   ├── sync-service.ts        # Online/offline sync logic
 │   │   │   └── transformEntries.ts    # Data transformation
