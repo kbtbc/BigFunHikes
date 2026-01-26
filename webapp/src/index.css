@@ -150,3 +150,9 @@ All colors are HSL format
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 }
+
+/* Journal prose overrides - Tailwind prose has high specificity */
+.prose p {
+  margin-bottom: 1.5em;
+  line-height: 1.75;
+}
