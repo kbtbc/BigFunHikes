@@ -217,18 +217,28 @@ export function ActivityPlayer({
 
   // Map photos to activity timeline with GPS matching
   const activityPhotos: ActivityPhoto[] = useMemo(() => {
-    if (!activityData || !photos.length) return [];
+    if (!activityData || !photos.length) {
+      console.log("[ActivityPlayer] No photos to map:", { hasActivityData: !!activityData, photosCount: photos.length });
+      return [];
+    }
 
     const activityStartTime = activityData.dataPoints[0]?.timestamp || 0;
     const activityEndTime = activityData.dataPoints[activityData.dataPoints.length - 1]?.timestamp || 0;
 
-    return photos.map((photo) => {
+    console.log("[ActivityPlayer] Mapping photos:", {
+      photosCount: photos.length,
+      activityStartTime,
+      activityEndTime,
+      photos: photos.map(p => ({ id: p.id, lat: p.latitude, lon: p.longitude }))
+    });
+
+    const mapped = photos.map((photo) => {
       let photoTimestamp: number | undefined;
       let photoLat: number | undefined;
       let photoLon: number | undefined;
 
       // If photo has GPS coordinates, use them directly
-      if (photo.latitude && photo.longitude) {
+      if (photo.latitude != null && photo.longitude != null) {
         photoLat = photo.latitude;
         photoLon = photo.longitude;
 
@@ -249,6 +259,14 @@ export function ActivityPlayer({
         if (closestPoint) {
           photoTimestamp = closestPoint.timestamp;
         }
+
+        console.log("[ActivityPlayer] Photo with GPS:", {
+          id: photo.id,
+          photoLat,
+          photoLon,
+          closestDist,
+          photoTimestamp
+        });
       }
 
       // If photo has a timestamp, try to match it to activity timeline
@@ -287,6 +305,9 @@ export function ActivityPlayer({
         lon: photoLon,
       };
     });
+
+    console.log("[ActivityPlayer] Mapped activity photos:", mapped.filter(p => p.lat && p.lon));
+    return mapped;
   }, [activityData, photos, entryDate]);
 
   if (!hasData) {

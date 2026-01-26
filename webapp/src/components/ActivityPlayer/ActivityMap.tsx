@@ -533,63 +533,84 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
       marker.current.setLngLat([currentPoint.lon, currentPoint.lat]);
     }
 
-    // Camera behavior based on mode
+    // Camera behavior based on mode - use requestAnimationFrame for smoother updates
+    if (cameraMode === "overview") return; // No camera movement in overview
+
     const now = Date.now();
     const timeSinceLastUpdate = now - lastCameraUpdate.current;
 
-    // Only update camera periodically to avoid jerky movement
-    // Increase threshold for smoother movement
-    if (timeSinceLastUpdate < 300 && cameraMode !== "overview") return;
+    // Throttle camera updates but not too aggressively
+    if (timeSinceLastUpdate < 150) return;
     lastCameraUpdate.current = now;
 
     if (cameraMode === "follow") {
-      // Follow mode: smooth pan to keep marker centered with consistent zoom
-      const targetZoom = 14.5; // Fixed zoom level for follow mode
+      // Follow mode: pan smoothly without changing zoom
+      // Only update if position has changed significantly
+      const currentCenter = map.current.getCenter();
+      const distanceToPoint = Math.sqrt(
+        Math.pow(currentCenter.lng - currentPoint.lon, 2) +
+        Math.pow(currentCenter.lat - currentPoint.lat, 2)
+      );
 
-      map.current.easeTo({
-        center: [currentPoint.lon, currentPoint.lat],
-        zoom: targetZoom,
-        pitch: terrain3D ? 60 : 45,
-        duration: 500, // Longer duration for smoother transition
-        easing: (t) => t * (2 - t), // Ease-out quad for smooth deceleration
-      });
+      // Only move if we've drifted more than a small threshold
+      if (distanceToPoint > 0.0001) {
+        map.current.panTo([currentPoint.lon, currentPoint.lat], {
+          duration: 200,
+          easing: (t) => t, // Linear for smooth continuous motion
+        });
+      }
     } else if (cameraMode === "firstPerson") {
       // First-person mode: look ahead in direction of travel with smoothed bearing
-      // Look further ahead for smoother direction changes
       const lookAheadIndex = Math.min(currentIndex + 15, dataPoints.length - 1);
       const lookAheadPoint = dataPoints[lookAheadIndex];
 
       if (lookAheadPoint && lookAheadPoint !== currentPoint) {
         const targetBearing = calculateBearing(currentPoint, lookAheadPoint);
 
-        // Smooth bearing transition to avoid jerky rotation
-        // Calculate shortest rotation direction
+        // Smooth bearing transition
         let bearingDiff = targetBearing - lastBearing.current;
         if (bearingDiff > 180) bearingDiff -= 360;
         if (bearingDiff < -180) bearingDiff += 360;
 
-        // Ease toward target bearing (lerp factor 0.1 for smoother transition)
-        const smoothedBearing = lastBearing.current + bearingDiff * 0.1;
+        // Ease toward target bearing
+        const smoothedBearing = lastBearing.current + bearingDiff * 0.08;
         lastBearing.current = ((smoothedBearing % 360) + 360) % 360;
 
-        const targetZoom = 15.5; // Fixed zoom for first-person
+        // Use flyTo only occasionally for major adjustments, otherwise just pan
+        const currentZoom = map.current.getZoom();
+        const targetZoom = 15.5;
+        const needsZoomAdjust = Math.abs(currentZoom - targetZoom) > 0.3;
 
-        map.current.easeTo({
-          center: [currentPoint.lon, currentPoint.lat],
-          bearing: lastBearing.current,
-          pitch: terrain3D ? 70 : 55,
-          zoom: targetZoom,
-          duration: 400, // Longer duration for smoother transition
-          easing: (t) => t * (2 - t), // Ease-out quad
-        });
+        if (needsZoomAdjust) {
+          map.current.easeTo({
+            center: [currentPoint.lon, currentPoint.lat],
+            bearing: lastBearing.current,
+            pitch: terrain3D ? 70 : 55,
+            zoom: targetZoom,
+            duration: 300,
+            easing: (t) => t,
+          });
+        } else {
+          // Just update position and bearing smoothly
+          map.current.easeTo({
+            center: [currentPoint.lon, currentPoint.lat],
+            bearing: lastBearing.current,
+            duration: 200,
+            easing: (t) => t,
+          });
+        }
       }
     }
-    // Overview mode: no camera movement (user controls)
   }, [currentIndex, mapLoaded, dataPoints, cameraMode, terrain3D, calculateBearing]);
 
   // Add photo markers with timestamps
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
+
+    console.log("[ActivityMap] Photo markers effect:", {
+      photosCount: photos.length,
+      photos: photos.map(p => ({ id: p.id, lat: p.lat, lon: p.lon }))
+    });
 
     // Remove existing photo markers
     photoMarkers.current.forEach((m) => m.remove());
@@ -597,7 +618,12 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
 
     // Add new photo markers
     photos.forEach((photo) => {
-      if (photo.lat === undefined || photo.lon === undefined) return;
+      if (photo.lat === undefined || photo.lon === undefined) {
+        console.log("[ActivityMap] Skipping photo without GPS:", photo.id);
+        return;
+      }
+
+      console.log("[ActivityMap] Adding photo marker:", { id: photo.id, lat: photo.lat, lon: photo.lon });
 
       const el = document.createElement("div");
       el.className = "photo-marker";

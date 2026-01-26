@@ -80,36 +80,36 @@ My legs feel strong and ready. Just need to keep up the training until Springer 
       windUnit: 'mph',
       recordedAt: '2026-01-23T12:00:00Z',
     },
-    // Photos with GPS coordinates sampled from the Suunto route
-    // These coordinates correspond to different parts of the hike
+    // Photos with GPS coordinates sampled from the actual Suunto route
+    // These coordinates correspond to different parts of the hike (34.23-34.26 lat range)
     photosWithGps: [
       {
         caption: 'Testing my full pack setup on the greenway',
-        // Start of hike - first GPS point area
-        latitude: 34.0395,
-        longitude: -84.1173,
-        takenAt: '2026-01-23T09:15:00Z', // ~15min into hike
+        // Start of hike - near first GPS point
+        latitude: 34.2551,
+        longitude: -84.1389,
+        takenAt: '2026-01-23T08:15:00Z', // ~10min into hike
       },
       {
         caption: 'Beautiful creek crossing',
-        // Mid-point GPS coordinates
-        latitude: 34.0412,
-        longitude: -84.1089,
-        takenAt: '2026-01-23T10:30:00Z', // ~1.5hr into hike
+        // About 25% through the hike
+        latitude: 34.2446,
+        longitude: -84.1397,
+        takenAt: '2026-01-23T09:10:00Z', // ~1hr into hike
       },
       {
         caption: 'Trail winds through the forest',
-        // Later in the hike
-        latitude: 34.0378,
-        longitude: -84.1042,
-        takenAt: '2026-01-23T11:45:00Z', // ~2.75hr into hike
+        // About 50% through the hike
+        latitude: 34.2314,
+        longitude: -84.1642,
+        takenAt: '2026-01-23T10:25:00Z', // ~2.25hr into hike
       },
       {
         caption: 'Almost done - feeling strong!',
-        // Near the end
-        latitude: 34.0356,
-        longitude: -84.1155,
-        takenAt: '2026-01-23T12:30:00Z', // ~3.5hr into hike
+        // About 75% through the hike
+        latitude: 34.2422,
+        longitude: -84.1548,
+        takenAt: '2026-01-23T11:30:00Z', // ~3.5hr into hike
       },
     ],
   },
