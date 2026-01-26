@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Mountain, BookOpen, LogOut, Shield, Plus } from "lucide-react";
+import { Mountain, BookOpen, LogOut, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,11 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-foreground group-hover:scale-110 transition-transform">
-              <Mountain className="h-6 w-6" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="BigFun Hikes"
+              className="w-10 h-10 rounded-full group-hover:scale-110 transition-transform"
+            />
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold font-outfit">BigFun Hikes!</h1>
               <p className="text-xs text-muted-foreground">
