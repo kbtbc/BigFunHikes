@@ -659,7 +659,14 @@ export function getGradientColor(
   max: number,
   colorScale: "speed" | "hr" | "elevation" = "speed"
 ): string {
-  const ratio = max === min ? 0.5 : (value - min) / (max - min);
+  // Handle invalid values - return a default gray
+  if (value === undefined || value === null || isNaN(value)) {
+    return "rgb(128, 128, 128)";
+  }
+
+  // Clamp ratio between 0 and 1
+  let ratio = max === min ? 0.5 : (value - min) / (max - min);
+  ratio = Math.max(0, Math.min(1, ratio));
 
   // Color scales
   const scales = {
