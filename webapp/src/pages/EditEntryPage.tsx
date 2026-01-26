@@ -15,7 +15,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { entriesApi, photosApi, api, type UpdateJournalEntryInput, type Photo, type WeatherData } from "@/lib/api";
 import { useEntry, useUpdateEntry } from "@/hooks/use-entries";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud, Info, Watch } from "lucide-react";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud, Info, Watch, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCoordinates } from "@/hooks/use-geolocation";
 import { GpxFileUpload, type GpxUploadResult } from "@/components/GpxFileUpload";
@@ -44,6 +44,7 @@ export default function EditEntryPage() {
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
   const [editingCaptionPhotoId, setEditingCaptionPhotoId] = useState<string | null>(null);
   const [editedCaptions, setEditedCaptions] = useState<Record<string, string>>({});
+  const [locationLoading, setLocationLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     date: "",
@@ -335,6 +336,94 @@ export default function EditEntryPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Reverse geocode to lookup location name from coordinates
+  const handleLookupLocation = async () => {
+    if (!entry?.latitude || !entry?.longitude) return;
+
+    setLocationLoading(true);
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${entry.latitude}&lon=${entry.longitude}&zoom=14`,
+        {
+          headers: {
+            "User-Agent": "TrailJournalApp/1.0",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch location name");
+      }
+
+      const data = await response.json();
+      const address = data.address || {};
+      const parts: string[] = [];
+
+      const placeName =
+        address.natural ||
+        address.tourism ||
+        address.leisure ||
+        address.amenity ||
+        address.hamlet ||
+        address.village ||
+        address.town ||
+        address.city ||
+        address.municipality;
+
+      if (placeName) {
+        parts.push(placeName);
+      }
+
+      if (address.county && !parts.includes(address.county)) {
+        parts.push(address.county);
+      }
+
+      if (address.state) {
+        const stateAbbreviations: Record<string, string> = {
+          Alabama: "AL", Alaska: "AK", Arizona: "AZ", Arkansas: "AR", California: "CA",
+          Colorado: "CO", Connecticut: "CT", Delaware: "DE", Florida: "FL", Georgia: "GA",
+          Hawaii: "HI", Idaho: "ID", Illinois: "IL", Indiana: "IN", Iowa: "IA",
+          Kansas: "KS", Kentucky: "KY", Louisiana: "LA", Maine: "ME", Maryland: "MD",
+          Massachusetts: "MA", Michigan: "MI", Minnesota: "MN", Mississippi: "MS", Missouri: "MO",
+          Montana: "MT", Nebraska: "NE", Nevada: "NV", "New Hampshire": "NH", "New Jersey": "NJ",
+          "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", Ohio: "OH",
+          Oklahoma: "OK", Oregon: "OR", Pennsylvania: "PA", "Rhode Island": "RI", "South Carolina": "SC",
+          "South Dakota": "SD", Tennessee: "TN", Texas: "TX", Utah: "UT", Vermont: "VT",
+          Virginia: "VA", Washington: "WA", "West Virginia": "WV", Wisconsin: "WI", Wyoming: "WY",
+        };
+        const abbrev = stateAbbreviations[address.state] || address.state;
+        parts.push(abbrev);
+      }
+
+      if (parts.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          locationName: parts.join(", "),
+        }));
+        toast({
+          title: "Location found",
+          description: parts.join(", "),
+        });
+      } else {
+        toast({
+          title: "No location found",
+          description: "Could not determine a location name for these coordinates.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Reverse geocoding error:", error);
+      toast({
+        title: "Lookup failed",
+        description: "Could not fetch location name. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
   if (entryLoading) {
     return (
       <div className="min-h-screen bg-muted/30 py-8 md:py-12">
@@ -509,15 +598,42 @@ export default function EditEntryPage() {
                   <Label htmlFor="locationName" className="text-sm font-medium">
                     Location Name (optional)
                   </Label>
-                  <Input
-                    id="locationName"
-                    type="text"
-                    placeholder="e.g., Springer Mountain, GA"
-                    value={formData.locationName}
-                    onChange={(e) => handleChange("locationName", e.target.value)}
-                    className="h-10"
-                    maxLength={500}
-                  />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="locationName"
+                        type="text"
+                        placeholder={locationLoading ? "Looking up location..." : "e.g., Springer Mountain, GA"}
+                        value={formData.locationName}
+                        onChange={(e) => handleChange("locationName", e.target.value)}
+                        className="h-10"
+                        maxLength={500}
+                      />
+                      {locationLoading && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    {entry?.latitude !== null && entry?.longitude !== null && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleLookupLocation}
+                        disabled={locationLoading}
+                        title="Look up location from GPS coordinates"
+                        className="h-10 w-10"
+                      >
+                        <Search className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {entry?.latitude !== null && entry?.longitude !== null && (
+                    <p className="text-xs text-muted-foreground">
+                      Click the search icon to auto-fill from GPS coordinates
+                    </p>
+                  )}
                 </div>
               </div>
 

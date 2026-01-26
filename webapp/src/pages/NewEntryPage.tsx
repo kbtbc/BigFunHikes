@@ -79,6 +79,7 @@ export default function NewEntryPage() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   // Get effective coordinates (manual overrides auto)
   const effectiveLat = manualCoords?.lat ?? geo.latitude;
@@ -211,6 +212,93 @@ export default function NewEntryPage() {
 
     fetchWeather();
   }, [effectiveLat, effectiveLng, weatherData]);
+
+  // Reverse geocode to get location name when coordinates change
+  useEffect(() => {
+    async function reverseGeocode() {
+      if (effectiveLat === null || effectiveLng === null) return;
+      // Don't overwrite if user already entered a location name
+      if (formData.locationName.trim()) return;
+
+      setLocationLoading(true);
+
+      try {
+        // Use Nominatim (OpenStreetMap) for free reverse geocoding
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${effectiveLat}&lon=${effectiveLng}&zoom=14`,
+          {
+            headers: {
+              "User-Agent": "TrailJournalApp/1.0",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch location name");
+        }
+
+        const data = await response.json();
+
+        // Build a readable location name from the response
+        const address = data.address || {};
+        const parts: string[] = [];
+
+        // Priority: natural feature > tourism > leisure > amenity > hamlet > village > town > city
+        const placeName =
+          address.natural ||
+          address.tourism ||
+          address.leisure ||
+          address.amenity ||
+          address.hamlet ||
+          address.village ||
+          address.town ||
+          address.city ||
+          address.municipality;
+
+        if (placeName) {
+          parts.push(placeName);
+        }
+
+        // Add county or region for context
+        if (address.county && !parts.includes(address.county)) {
+          parts.push(address.county);
+        }
+
+        // Add state abbreviation
+        if (address.state) {
+          // Common US state abbreviations
+          const stateAbbreviations: Record<string, string> = {
+            Alabama: "AL", Alaska: "AK", Arizona: "AZ", Arkansas: "AR", California: "CA",
+            Colorado: "CO", Connecticut: "CT", Delaware: "DE", Florida: "FL", Georgia: "GA",
+            Hawaii: "HI", Idaho: "ID", Illinois: "IL", Indiana: "IN", Iowa: "IA",
+            Kansas: "KS", Kentucky: "KY", Louisiana: "LA", Maine: "ME", Maryland: "MD",
+            Massachusetts: "MA", Michigan: "MI", Minnesota: "MN", Mississippi: "MS", Missouri: "MO",
+            Montana: "MT", Nebraska: "NE", Nevada: "NV", "New Hampshire": "NH", "New Jersey": "NJ",
+            "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", Ohio: "OH",
+            Oklahoma: "OK", Oregon: "OR", Pennsylvania: "PA", "Rhode Island": "RI", "South Carolina": "SC",
+            "South Dakota": "SD", Tennessee: "TN", Texas: "TX", Utah: "UT", Vermont: "VT",
+            Virginia: "VA", Washington: "WA", "West Virginia": "WV", Wisconsin: "WI", Wyoming: "WY",
+          };
+          const abbrev = stateAbbreviations[address.state] || address.state;
+          parts.push(abbrev);
+        }
+
+        if (parts.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            locationName: parts.join(", "),
+          }));
+        }
+      } catch (error) {
+        console.error("Reverse geocoding error:", error);
+        // Silently fail - location name is optional
+      } finally {
+        setLocationLoading(false);
+      }
+    }
+
+    reverseGeocode();
+  }, [effectiveLat, effectiveLng]); // Note: intentionally not including formData.locationName to avoid re-fetching
 
   // Fetch the last entry to calculate running total and next day number
   const { data: lastEntryData } = useQuery({
@@ -635,15 +723,25 @@ export default function NewEntryPage() {
                   <Label htmlFor="locationName" className="text-sm font-medium">
                     Location Name (optional)
                   </Label>
-                  <Input
-                    id="locationName"
-                    type="text"
-                    placeholder="e.g., Springer Mountain, GA"
-                    value={formData.locationName}
-                    onChange={(e) => handleChange("locationName", e.target.value)}
-                    className="h-10"
-                    maxLength={500}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="locationName"
+                      type="text"
+                      placeholder={locationLoading ? "Looking up location..." : "e.g., Springer Mountain, GA"}
+                      value={formData.locationName}
+                      onChange={(e) => handleChange("locationName", e.target.value)}
+                      className="h-10"
+                      maxLength={500}
+                    />
+                    {locationLoading && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Auto-filled from GPS coordinates. Feel free to edit.
+                  </p>
                 </div>
               </div>
 
