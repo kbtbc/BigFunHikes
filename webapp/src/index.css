@@ -153,6 +153,6 @@ All colors are HSL format
 
 /* Journal prose overrides - Tailwind prose has high specificity */
 .prose p {
-  margin-bottom: 1em;
-  line-height: 1.65;
+  margin-bottom: 0.85em;
+  line-height: 1.6;
 }
