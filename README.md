@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.5)
+## Current Features (v3.6)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -22,16 +22,17 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - Training entries use amber/orange styling for visual distinction
   - Training hikes can use day 0 or negative day numbers
   - Stats (total miles, elevation, projections) only include trail entries
+  - **NEW: Training entries appear at top of Timeline** for easy access
 - **GPX Import**: Import GPS tracks from your fitness watch (Suunto, Garmin, etc.)
   - Upload GPX files directly from your Suunto Vertical 2, Garmin, or other fitness watch
   - Automatically extracts distance, elevation gain, and route coordinates
   - Auto-fills miles hiked and GPS coordinates from your track data
   - Displays your actual recorded route on the entry map (red line for trail entries, amber for training)
   - Replaces the estimated AT segment with your actual GPS track when present
-- **Suunto Watch Data Import** (UPDATED in v3.5): Full fitness watch data analysis
-  - **NEW: Upload UI on entry forms** - Import Suunto JSON directly when creating or editing entries
-  - **NEW: Auto-populate fields** - Miles, elevation, date automatically filled from watch data
-  - **NEW: Combined GPX + Suunto** - Use GPX for route display and Suunto for fitness metrics together
+- **Suunto Watch Data Import**: Full fitness watch data analysis
+  - Upload UI on entry forms - Import Suunto JSON directly when creating or editing entries
+  - Auto-populate fields - Miles, elevation, date automatically filled from watch data
+  - Combined GPX + Suunto - Use GPX for route display and Suunto for fitness metrics together
   - Import native Suunto JSON export files with comprehensive fitness metrics
   - **Heart Rate Analytics**: Average, min, max HR with time-in-zone distribution
     - Visual HR zone bar chart (Recovery, Easy, Aerobic, Threshold, Maximum)
@@ -62,6 +63,33 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Daily Miles Trend**: Line chart showing miles hiked per day
   - **Progress Metrics**: Percentage complete, days remaining, miles to go
 
+### GPS & Location (UPDATED in v3.6)
+- **Auto GPS Capture**: Automatic location detection when creating entries
+- **Manual Coordinate Entry**: Click coordinates to edit manually (lat, lng format)
+- **Editable Coordinates**: Update GPS on existing entries by tapping the display
+- **Weather Auto-Fetch**: Current weather fetched automatically based on location
+- **NEW: Reverse Geocoding**: Location name auto-populated from GPS coordinates
+  - Uses OpenStreetMap Nominatim for free reverse geocoding
+  - Automatically fills "Location Name" field when creating new entries
+  - Shows loading indicator while looking up location
+  - Edit page has a search button to look up location from existing coordinates
+  - Prioritizes natural features, parks, trails over city names
+  - US state abbreviations for cleaner display (e.g., "Suwanee Creek Greenway, Forsyth County, GA")
+- **Full AT Trail Display**: Complete 2,190-mile Appalachian Trail on home page map
+  - Optimized trail data (40KB) for fast loading
+  - Current location marker showing latest journal entry position
+  - **Clickable marker popup**: Links directly to the latest journal entry
+- **Dynamic Route Segments**: Each entry shows its trail section automatically
+  - Routes calculated dynamically from entry GPS coordinates
+  - Finds closest points on AT and displays trail between entries
+  - No manual configuration needed for new entries
+  - **GPX Override**: When an entry has imported GPX data, displays your actual recorded route instead of the estimated AT segment
+- **Training Location Maps**: Training entries show single location marker (no trail path)
+  - Orange marker to match training entry styling
+  - Popup shows training hike details
+- **OpenTopoMap Tiles**: Topographic detail for trail visualization
+- **Start/End Markers**: Green (start) and red (end) markers on each entry's route
+
 ### Map Features
 - **Full AT Trail Display**: Complete 2,190-mile Appalachian Trail on home page map
   - Optimized trail data (40KB) for fast loading
@@ -78,18 +106,10 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 - **OpenTopoMap Tiles**: Topographic detail for trail visualization
 - **Start/End Markers**: Green (start) and red (end) markers on each entry's route
 
-### GPS & Location
-- **Auto GPS Capture**: Automatic location detection when creating entries
-- **Manual Coordinate Entry**: Click coordinates to edit manually (lat, lng format)
-- **Editable Coordinates**: Update GPS on existing entries by tapping the display
-- **Weather Auto-Fetch**: Current weather fetched automatically based on location
-
 ### Authentication
 - **Admin Authentication**: Secure password-based login
 - **Dual-Mode Support**: Cookie + token authentication for cross-domain deployment
 - **7-Day Sessions**: Persistent login sessions
-
-### Technical Features
 - Full CRUD operations (Create, Read, Update, Delete)
 - Photo management with file uploads and caption editing
 - React Query for efficient data fetching/caching
