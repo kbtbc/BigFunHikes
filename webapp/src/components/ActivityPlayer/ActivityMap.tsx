@@ -60,9 +60,11 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
   const marker = useRef<mapboxgl.Marker | null>(null);
   const photoMarkers = useRef<mapboxgl.Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [styleReady, setStyleReady] = useState(false); // Track when style is fully loaded
   const [terrainLoaded, setTerrainLoaded] = useState(false);
   const lastCameraUpdate = useRef<number>(0);
   const lastBearing = useRef<number>(0); // For smoothing first-person camera
+  const lastZoom = useRef<number>(14); // Track zoom to prevent jitter
 
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
@@ -110,7 +112,9 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/outdoors-v12",
+      style: mapStyle === "satellite"
+        ? "mapbox://styles/mapbox/satellite-streets-v12"
+        : "mapbox://styles/mapbox/outdoors-v12",
       center: [
         (bounds.east + bounds.west) / 2,
         (bounds.north + bounds.south) / 2,
@@ -124,6 +128,7 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
 
     map.current.on("load", () => {
       setMapLoaded(true);
+      setStyleReady(true);
 
       // Fit to bounds
       map.current?.fitBounds(
@@ -136,6 +141,9 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
           maxZoom: 15,
         }
       );
+
+      // Store initial zoom
+      lastZoom.current = map.current?.getZoom() ?? 14;
     });
 
     return () => {
@@ -148,22 +156,31 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
+    const currentStyle = map.current.getStyle()?.sprite;
+    const isSatellite = currentStyle?.includes("satellite");
+    const wantsSatellite = mapStyle === "satellite";
+
+    // Only change if different
+    if (isSatellite === wantsSatellite) return;
+
     const styleUrl = mapStyle === "satellite"
       ? "mapbox://styles/mapbox/satellite-streets-v12"
       : "mapbox://styles/mapbox/outdoors-v12";
+
+    // Mark style as not ready
+    setStyleReady(false);
 
     map.current.setStyle(styleUrl);
 
     // Re-add layers after style change
     map.current.once("style.load", () => {
-      // Terrain will be re-added by its effect
-      // Route layers will be re-added by their effect
+      setStyleReady(true);
     });
   }, [mapStyle, mapLoaded]);
 
   // Add/remove 3D terrain
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    if (!map.current || !mapLoaded || !styleReady) return;
 
     if (terrain3D) {
       // Add terrain source if not exists
@@ -201,11 +218,11 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
       }
       setTerrainLoaded(false);
     }
-  }, [terrain3D, mapLoaded]);
+  }, [terrain3D, mapLoaded, styleReady]);
 
   // Add route layer with heatmap coloring
   useEffect(() => {
-    if (!map.current || !mapLoaded || dataPoints.length < 2) return;
+    if (!map.current || !mapLoaded || !styleReady || dataPoints.length < 2) return;
 
     // Remove existing layers and sources (in reverse order of addition)
     const layersToRemove = [
@@ -390,7 +407,7 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
         "line-opacity": 0.8,
       },
     });
-  }, [mapLoaded, dataPoints, colorMode, hasHeartRate]);
+  }, [mapLoaded, styleReady, dataPoints, colorMode, hasHeartRate]);
 
   // Update highlighted segment (from chart click)
   useEffect(() => {
@@ -521,20 +538,25 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
     const timeSinceLastUpdate = now - lastCameraUpdate.current;
 
     // Only update camera periodically to avoid jerky movement
-    if (timeSinceLastUpdate < 200 && cameraMode !== "overview") return;
+    // Increase threshold for smoother movement
+    if (timeSinceLastUpdate < 300 && cameraMode !== "overview") return;
     lastCameraUpdate.current = now;
 
     if (cameraMode === "follow") {
-      // Follow mode: smooth pan to keep marker centered
+      // Follow mode: smooth pan to keep marker centered with consistent zoom
+      const targetZoom = 14.5; // Fixed zoom level for follow mode
+
       map.current.easeTo({
         center: [currentPoint.lon, currentPoint.lat],
+        zoom: targetZoom,
         pitch: terrain3D ? 60 : 45,
-        duration: 300,
+        duration: 500, // Longer duration for smoother transition
+        easing: (t) => t * (2 - t), // Ease-out quad for smooth deceleration
       });
     } else if (cameraMode === "firstPerson") {
       // First-person mode: look ahead in direction of travel with smoothed bearing
       // Look further ahead for smoother direction changes
-      const lookAheadIndex = Math.min(currentIndex + 10, dataPoints.length - 1);
+      const lookAheadIndex = Math.min(currentIndex + 15, dataPoints.length - 1);
       const lookAheadPoint = dataPoints[lookAheadIndex];
 
       if (lookAheadPoint && lookAheadPoint !== currentPoint) {
@@ -546,16 +568,19 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
         if (bearingDiff > 180) bearingDiff -= 360;
         if (bearingDiff < -180) bearingDiff += 360;
 
-        // Ease toward target bearing (lerp factor 0.15 for smooth transition)
-        const smoothedBearing = lastBearing.current + bearingDiff * 0.15;
+        // Ease toward target bearing (lerp factor 0.1 for smoother transition)
+        const smoothedBearing = lastBearing.current + bearingDiff * 0.1;
         lastBearing.current = ((smoothedBearing % 360) + 360) % 360;
+
+        const targetZoom = 15.5; // Fixed zoom for first-person
 
         map.current.easeTo({
           center: [currentPoint.lon, currentPoint.lat],
           bearing: lastBearing.current,
           pitch: terrain3D ? 70 : 55,
-          zoom: 15.5,
-          duration: 250,
+          zoom: targetZoom,
+          duration: 400, // Longer duration for smoother transition
+          easing: (t) => t * (2 - t), // Ease-out quad
         });
       }
     }

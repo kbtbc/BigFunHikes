@@ -156,6 +156,9 @@ export interface Photo {
   url: string;
   caption: string | null;
   order: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  takenAt?: string | null;
   createdAt: string;
 }
 
