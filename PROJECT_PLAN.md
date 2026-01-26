@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.3 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.4 COMPLETE)
 
 ### Overview
 
@@ -18,6 +18,7 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - **Photo Management**: Upload, caption editing, deletion
 - **Entry Types**: Support for "trail" and "training" entry types
 - **GPS/Weather Fields**: latitude, longitude, locationName, weather in schema
+- **Suunto Data**: Full fitness watch data storage and retrieval
 - **Zod Schemas**: Full type safety for all API contracts
 
 ### Frontend (100% Complete)
@@ -29,7 +30,7 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - **Pages**
   - HomePage: Stats dashboard, full AT trail map, YouTube integration
   - TimelinePage: Chronological entry list with training/trail distinction
-  - EntryDetailPage: Full entry view, photo carousel, entry navigation
+  - EntryDetailPage: Full entry view, photo carousel, entry navigation, Suunto stats
   - NewEntryPage: Create entries with GPS auto-capture, weather fetch, GPX import
   - EditEntryPage: Modify entries, edit photo captions, update coordinates
   - LoginPage: Admin authentication
@@ -45,6 +46,7 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
   - PendingEntriesPanel: Manage offline entries
   - Timeline: Entry list with training entry styling
   - JournalEntry: Entry cards with photo display
+  - **SuuntoStatsDisplay**: Comprehensive fitness watch data visualization (NEW v3.4)
 
 - **Design System**
   - Tailwind CSS + shadcn/ui components
@@ -57,6 +59,7 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - OpenTopoMap topographic tiles
 - Dynamic route segments from GPS coordinates
 - GPX track override (shows actual recorded route)
+- **Suunto GPS track display** (NEW v3.4) - routes from watch JSON data
 - Training location markers (amber, single point)
 - Trail entry routes (red polylines with start/end markers)
 - Clickable markers linking to entries
@@ -92,6 +95,24 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - Display actual recorded route on maps
 - Support for Suunto, Garmin, and other fitness watches
 
+### Suunto Watch Data Import (NEW v3.4 - 100% Complete)
+- **Native JSON import**: Parse Suunto watch export files directly
+- **Heart Rate Analytics**:
+  - Average, min, max BPM display
+  - Time-in-zone distribution (Recovery, Easy, Aerobic, Threshold, Maximum)
+  - Visual HR zone bar chart
+  - HR over time chart
+- **Pace & Speed**: Average pace (min/mile), average/max speed
+- **Step Count**: Total steps with steps-per-mile calculation
+- **Calories Burned**: Energy expenditure from watch sensors
+- **Temperature**: Actual trail temperature recorded (min, avg, max) in F and C
+- **Elevation Profile**: Detailed altitude chart from barometric/GPS data
+- **Lap Splits Table**: Per-lap breakdown with duration, pace, HR, elevation, temperature
+- **Effort Score**: Calculated training intensity based on HR zones + elevation
+- **GPS Track Extraction**: Route displayed on map from watch GPS data
+- **Beautiful Tabbed Display**: Heart Rate, Elevation, and Lap Splits tabs
+- Works for both training and trail entries
+
 ### Enhanced Statistics (100% Complete)
 - 7-day moving average pace
 - Personal records (longest day, biggest climb, streak)
@@ -119,6 +140,7 @@ model JournalEntry {
   locationName         String?
   weather              String?      // JSON weather data
   gpxData              String?      // GPX track data
+  suuntoData           String?      // Parsed Suunto watch data (JSON string) - NEW v3.4
   entryType            String   @default("trail") // "trail" | "training"
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
@@ -149,7 +171,7 @@ model Photo {
 ### Journal Entries
 ```
 GET    /api/entries              List all entries (paginated)
-GET    /api/entries/:id          Get single entry with photos
+GET    /api/entries/:id          Get single entry with photos + suuntoData
 POST   /api/entries              Create entry (admin)
 PUT    /api/entries/:id          Update entry (admin)
 DELETE /api/entries/:id          Delete entry (admin)
@@ -180,7 +202,7 @@ webapp/src/
 ├── pages/
 │   ├── HomePage.tsx           # Map + stats + YouTube
 │   ├── TimelinePage.tsx       # All entries list
-│   ├── EntryDetailPage.tsx    # Single entry view
+│   ├── EntryDetailPage.tsx    # Single entry view + Suunto stats
 │   ├── NewEntryPage.tsx       # Create with GPS/weather/GPX
 │   ├── EditEntryPage.tsx      # Edit entry + captions
 │   └── LoginPage.tsx          # Admin authentication
@@ -190,6 +212,7 @@ webapp/src/
 │   ├── TrailMap.tsx           # Full AT map (home)
 │   ├── EntryMap.tsx           # Dynamic route segments
 │   ├── GpxFileUpload.tsx      # GPX import
+│   ├── SuuntoStatsDisplay.tsx # Suunto watch data display (NEW v3.4)
 │   ├── EditableCoordinates.tsx
 │   ├── OfflineIndicator.tsx
 │   ├── PendingEntriesPanel.tsx
@@ -204,6 +227,7 @@ webapp/src/
 ├── lib/
 │   ├── api.ts                 # API client
 │   ├── gpx-parser.ts          # GPX parsing
+│   ├── suunto-parser.ts       # Suunto JSON parsing (NEW v3.4)
 │   ├── offline-storage.ts     # IndexedDB
 │   ├── sync-service.ts        # Online/offline sync
 │   └── transformEntries.ts
@@ -218,6 +242,7 @@ backend/src/
 ├── prisma.ts             # Database client
 ├── types.ts              # Zod schemas (shared contracts)
 ├── tokenStore.ts         # Session tokens
+├── suunto-parser.ts      # Suunto JSON parsing for seed (NEW v3.4)
 ├── middleware/
 │   └── adminAuth.ts      # Auth middleware
 └── routes/
@@ -237,39 +262,38 @@ webapp/public/data/
 
 ---
 
-## FUTURE IMPROVEMENTS (Proposed)
+## NEXT STEPS (Suggested Priorities)
 
-### Training Enhancements
-- [ ] Separate training stats dashboard
-- [ ] Training goals and targets
+### Phase 1: Suunto Integration Enhancements (High Priority)
+- [ ] **Suunto JSON Upload UI**: Add file upload component in NewEntryPage and EditEntryPage for Suunto JSON files (similar to GPX upload)
+- [ ] **Auto-populate from Suunto**: When Suunto JSON is uploaded, auto-fill miles, elevation, date, duration from watch data
+- [ ] **Garmin FIT Support**: Extend parser to support Garmin FIT files (similar data structure)
+- [ ] **Combined GPX+Suunto**: Allow both GPX route data AND Suunto metrics on same entry
 
-### Export Features
-- [ ] PDF journal export
-- [ ] JSON backup/restore
+### Phase 2: Training Analytics Dashboard (Medium Priority)
+- [ ] Separate training stats page with cumulative training metrics
+- [ ] Training volume charts (weekly/monthly miles, elevation)
+- [ ] Training goals and progress tracking
+- [ ] Compare training vs trail performance
 
-### Enhanced PWA
-- [ ] Service worker for app shell caching
-- [ ] Add to home screen prompt
+### Phase 3: Enhanced Visualizations (Medium Priority)
+- [ ] Interactive elevation profile on entry detail (click to see HR/pace at that point)
+- [ ] Speed/pace heatmap on GPS route (color-coded by pace)
+- [ ] Combined HR + elevation chart overlay
+- [ ] Weekly summary cards with aggregated watch data
 
-### Map Interactivity
-- [ ] Click-to-set GPS coordinates
-- [ ] Route preview before saving
-- [ ] Mini elevation chart per entry
+### Phase 4: Export & Backup (Lower Priority)
+- [ ] PDF journal export with stats and photos
+- [ ] JSON backup/restore for all entries
+- [ ] CSV export of statistics
+- [ ] Share entry as image for social media
 
-### Social Features
-- [ ] Public trail page for followers
-- [ ] Social media sharing
-- [ ] Trail milestone badges
-
-### Data & Analytics
-- [ ] Gear tracking
-- [ ] Resupply planning
+### Phase 5: Advanced Features (Future)
+- [ ] Gear tracking per entry
+- [ ] Resupply planning and town stops
 - [ ] Trail section completion by state
-
-### Mobile Experience
-- [ ] Native app wrapper (Capacitor/Expo)
-- [ ] Push notifications
-- [ ] Direct camera integration
+- [ ] Public trail page for followers
+- [ ] Push notifications for daily logging reminders
 
 ---
 
@@ -317,7 +341,7 @@ VITE_DISABLE_VIBECODE=true
 ### Sample Data
 ```bash
 cd backend
-bun run seed  # Creates 10 sample entries (WARNING: deletes existing!)
+bun run seed  # Creates 11 sample entries including training hike with Suunto data (WARNING: deletes existing!)
 ```
 
 ---
@@ -338,6 +362,10 @@ bun run seed  # Creates 10 sample entries (WARNING: deletes existing!)
 - [x] Training hike support
 - [x] Offline mode with sync
 - [x] Photo caption editing
+- [x] **Suunto watch data import and display** (NEW v3.4)
+- [x] **GPS route from Suunto data** (NEW v3.4)
+- [x] **HR zones, pace, steps, calories, temperature display** (NEW v3.4)
+- [x] **Lap splits table** (NEW v3.4)
 
 ---
 
