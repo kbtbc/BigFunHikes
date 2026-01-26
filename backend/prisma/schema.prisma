@@ -38,6 +38,9 @@ model Photo {
   url            String
   caption        String?
   order          Int
+  latitude       Float?
+  longitude      Float?
+  takenAt        DateTime?
   createdAt      DateTime     @default(now())
   journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
 

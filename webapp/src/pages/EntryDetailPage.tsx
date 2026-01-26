@@ -337,6 +337,9 @@ export function EntryDetailPage() {
                 id: p.id,
                 url: p.url,
                 caption: p.caption,
+                latitude: p.latitude,
+                longitude: p.longitude,
+                timestamp: p.takenAt,
               }))}
               entryDate={entry.date}
             />

@@ -37,7 +37,7 @@ import {
   Eye,
   Navigation,
 } from "lucide-react";
-import { ActivityMap, type ColorMode, type CameraMode, type ActivityMapRef } from "./ActivityMap";
+import { ActivityMap, type ColorMode, type CameraMode, type MapStyle, type ActivityMapRef } from "./ActivityMap";
 import { ActivityCharts } from "./ActivityCharts";
 import { PlaybackControls } from "./PlaybackControls";
 import {
@@ -84,6 +84,7 @@ export function ActivityPlayer({
   // Phase 1 Enhancement states
   const [terrain3D, setTerrain3D] = useState(false);
   const [cameraMode, setCameraMode] = useState<CameraMode>("follow");
+  const [mapStyle, setMapStyle] = useState<MapStyle>("outdoors");
   const [highlightedSegment, setHighlightedSegment] = useState<{ start: number; end: number } | null>(null);
 
   const animationRef = useRef<number | null>(null);
@@ -409,6 +410,16 @@ export function ActivityPlayer({
                       onCheckedChange={setTerrain3D}
                     />
                   </div>
+
+                  {/* Satellite Toggle */}
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="satellite-toggle" className="text-sm">Satellite</Label>
+                    <Switch
+                      id="satellite-toggle"
+                      checked={mapStyle === "satellite"}
+                      onCheckedChange={(checked) => setMapStyle(checked ? "satellite" : "outdoors")}
+                    />
+                  </div>
                 </div>
 
                 {/* Map */}
@@ -420,6 +431,7 @@ export function ActivityPlayer({
                     bounds={activityData.bounds}
                     colorMode={colorMode}
                     cameraMode={cameraMode}
+                    mapStyle={mapStyle}
                     terrain3D={terrain3D}
                     hasHeartRate={activityData.hasHeartRate}
                     photos={activityPhotos}

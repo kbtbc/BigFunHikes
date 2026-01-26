@@ -14,6 +14,7 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || "";
 
 export type ColorMode = "speed" | "hr" | "elevation";
 export type CameraMode = "follow" | "overview" | "firstPerson";
+export type MapStyle = "outdoors" | "satellite";
 
 interface ActivityMapProps {
   dataPoints: ActivityDataPoint[];
@@ -26,6 +27,7 @@ interface ActivityMapProps {
   };
   colorMode: ColorMode;
   cameraMode: CameraMode;
+  mapStyle: MapStyle;
   terrain3D: boolean;
   hasHeartRate: boolean;
   photos?: ActivityPhoto[];
@@ -44,6 +46,7 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
     bounds,
     colorMode,
     cameraMode,
+    mapStyle,
     terrain3D,
     hasHeartRate,
     photos = [],
@@ -59,6 +62,7 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
   const [mapLoaded, setMapLoaded] = useState(false);
   const [terrainLoaded, setTerrainLoaded] = useState(false);
   const lastCameraUpdate = useRef<number>(0);
+  const lastBearing = useRef<number>(0); // For smoothing first-person camera
 
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
@@ -140,6 +144,23 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
     };
   }, [bounds]);
 
+  // Handle map style changes
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    const styleUrl = mapStyle === "satellite"
+      ? "mapbox://styles/mapbox/satellite-streets-v12"
+      : "mapbox://styles/mapbox/outdoors-v12";
+
+    map.current.setStyle(styleUrl);
+
+    // Re-add layers after style change
+    map.current.once("style.load", () => {
+      // Terrain will be re-added by its effect
+      // Route layers will be re-added by their effect
+    });
+  }, [mapStyle, mapLoaded]);
+
   // Add/remove 3D terrain
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
@@ -155,7 +176,8 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
         });
       }
 
-      map.current.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
+      // Increased exaggeration for more dramatic terrain
+      map.current.setTerrain({ source: "mapbox-dem", exaggeration: 2.5 });
 
       // Add sky layer for better 3D effect
       if (!map.current.getLayer("sky")) {
@@ -510,19 +532,30 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
         duration: 300,
       });
     } else if (cameraMode === "firstPerson") {
-      // First-person mode: look ahead in direction of travel
-      const nextIndex = Math.min(currentIndex + 3, dataPoints.length - 1);
-      const nextPoint = dataPoints[nextIndex];
+      // First-person mode: look ahead in direction of travel with smoothed bearing
+      // Look further ahead for smoother direction changes
+      const lookAheadIndex = Math.min(currentIndex + 10, dataPoints.length - 1);
+      const lookAheadPoint = dataPoints[lookAheadIndex];
 
-      if (nextPoint && nextPoint !== currentPoint) {
-        const bearing = calculateBearing(currentPoint, nextPoint);
+      if (lookAheadPoint && lookAheadPoint !== currentPoint) {
+        const targetBearing = calculateBearing(currentPoint, lookAheadPoint);
+
+        // Smooth bearing transition to avoid jerky rotation
+        // Calculate shortest rotation direction
+        let bearingDiff = targetBearing - lastBearing.current;
+        if (bearingDiff > 180) bearingDiff -= 360;
+        if (bearingDiff < -180) bearingDiff += 360;
+
+        // Ease toward target bearing (lerp factor 0.15 for smooth transition)
+        const smoothedBearing = lastBearing.current + bearingDiff * 0.15;
+        lastBearing.current = ((smoothedBearing % 360) + 360) % 360;
 
         map.current.easeTo({
           center: [currentPoint.lon, currentPoint.lat],
-          bearing,
-          pitch: terrain3D ? 75 : 60,
-          zoom: 16,
-          duration: 300,
+          bearing: lastBearing.current,
+          pitch: terrain3D ? 70 : 55,
+          zoom: 15.5,
+          duration: 250,
         });
       }
     }

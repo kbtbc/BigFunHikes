@@ -64,6 +64,9 @@ export const photoSchema = z.object({
   url: z.string(),
   caption: z.string().nullable(),
   order: z.number().int().nonnegative(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  takenAt: z.string().datetime().nullable().optional(),
   createdAt: z.string().datetime(),
 });
 

@@ -80,8 +80,37 @@ My legs feel strong and ready. Just need to keep up the training until Springer 
       windUnit: 'mph',
       recordedAt: '2026-01-23T12:00:00Z',
     },
-    photoCaptions: [
-      'Testing my full pack setup on the greenway',
+    // Photos with GPS coordinates sampled from the Suunto route
+    // These coordinates correspond to different parts of the hike
+    photosWithGps: [
+      {
+        caption: 'Testing my full pack setup on the greenway',
+        // Start of hike - first GPS point area
+        latitude: 34.0395,
+        longitude: -84.1173,
+        takenAt: '2026-01-23T09:15:00Z', // ~15min into hike
+      },
+      {
+        caption: 'Beautiful creek crossing',
+        // Mid-point GPS coordinates
+        latitude: 34.0412,
+        longitude: -84.1089,
+        takenAt: '2026-01-23T10:30:00Z', // ~1.5hr into hike
+      },
+      {
+        caption: 'Trail winds through the forest',
+        // Later in the hike
+        latitude: 34.0378,
+        longitude: -84.1042,
+        takenAt: '2026-01-23T11:45:00Z', // ~2.75hr into hike
+      },
+      {
+        caption: 'Almost done - feeling strong!',
+        // Near the end
+        latitude: 34.0356,
+        longitude: -84.1155,
+        takenAt: '2026-01-23T12:30:00Z', // ~3.5hr into hike
+      },
     ],
   },
   {
@@ -461,22 +490,44 @@ async function main() {
       },
     });
 
-    // Add photos using shuffled personal photos
-    for (let i = 0; i < entry.photoCaptions.length; i++) {
-      const photoUrl = shuffledPhotos[photoIndex % shuffledPhotos.length];
-      photoIndex++;
+    // Add photos - either with GPS data or just captions
+    if ('photosWithGps' in entry && entry.photosWithGps) {
+      // Photos with GPS coordinates
+      for (let i = 0; i < entry.photosWithGps.length; i++) {
+        const photoData = entry.photosWithGps[i];
+        const photoUrl = shuffledPhotos[photoIndex % shuffledPhotos.length];
+        photoIndex++;
 
-      await prisma.photo.create({
-        data: {
-          journalEntryId: journalEntry.id,
-          url: photoUrl,
-          caption: entry.photoCaptions[i],
-          order: i,
-        },
-      });
+        await prisma.photo.create({
+          data: {
+            journalEntryId: journalEntry.id,
+            url: photoUrl,
+            caption: photoData.caption,
+            order: i,
+            latitude: photoData.latitude,
+            longitude: photoData.longitude,
+            takenAt: photoData.takenAt ? new Date(photoData.takenAt) : null,
+          },
+        });
+      }
+      console.log(`  ✓ Added ${entry.photosWithGps.length} photo(s) with GPS coordinates`);
+    } else if ('photoCaptions' in entry && entry.photoCaptions) {
+      // Photos with just captions (no GPS)
+      for (let i = 0; i < entry.photoCaptions.length; i++) {
+        const photoUrl = shuffledPhotos[photoIndex % shuffledPhotos.length];
+        photoIndex++;
+
+        await prisma.photo.create({
+          data: {
+            journalEntryId: journalEntry.id,
+            url: photoUrl,
+            caption: entry.photoCaptions[i],
+            order: i,
+          },
+        });
+      }
+      console.log(`  ✓ Added ${entry.photoCaptions.length} photo(s)`);
     }
-
-    console.log(`  ✓ Added ${entry.photoCaptions.length} photo(s)`);
   }
 
   console.log(`\n✅ Successfully created ${SAMPLE_ENTRIES.length} journal entries!`);
