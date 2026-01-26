@@ -380,14 +380,19 @@ export default function EditEntryPage() {
                     <Input
                       id="dayNumber"
                       type="number"
-                      min="1"
+                      min={entry?.entryType === "training" ? undefined : "1"}
                       value={formData.dayNumber}
                       onChange={(e) =>
-                        handleChange("dayNumber", parseInt(e.target.value) || 1)
+                        handleChange("dayNumber", parseInt(e.target.value) || 0)
                       }
                       required
                       className="h-10"
                     />
+                    {entry?.entryType === "training" && (
+                      <p className="text-xs text-muted-foreground">
+                        Training entries can use 0 or negative day numbers
+                      </p>
+                    )}
                   </div>
                 </div>
 
