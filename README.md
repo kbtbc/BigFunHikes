@@ -6,10 +6,17 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.2)
+## Current Features (v3.3)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
+- **Offline Mode**: Create journal entries without internet connection
+  - Entries saved locally in IndexedDB when offline
+  - Photos stored as base64 for offline queuing
+  - Automatic sync when connection is restored
+  - Manual "Sync Now" button available
+  - Pending entries shown on Timeline page with status indicators
+  - GPS coordinates captured offline (satellite-based, no internet needed)
 - **Training Hikes**: Log pre-hike training entries that aren't counted in trail stats
   - Toggle between "Trail Entry" and "Training" when creating entries
   - Training entries use amber/orange styling for visual distinction
@@ -106,6 +113,8 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 │   │   │   ├── GpxFileUpload.tsx      # GPX file upload component
 │   │   │   ├── EditableCoordinates.tsx # Inline GPS coordinate editor
 │   │   │   ├── EnhancedStats.tsx      # Statistics dashboard
+│   │   │   ├── OfflineIndicator.tsx   # Connection status indicator
+│   │   │   ├── PendingEntriesPanel.tsx # Offline entries management
 │   │   │   ├── JournalEntry.tsx       # Entry display component
 │   │   │   └── Timeline.tsx           # Timeline view
 │   │   ├── pages/
@@ -118,12 +127,15 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 │   │   ├── hooks/
 │   │   │   ├── use-entries.ts         # React Query hooks
 │   │   │   ├── use-geolocation.ts     # GPS location hook
+│   │   │   ├── use-offline.ts         # Offline status and sync hooks
 │   │   │   └── use-dynamic-trail-segment.ts # Dynamic route calculation
 │   │   ├── context/
 │   │   │   └── AuthContext.tsx        # Auth state management
 │   │   ├── lib/
 │   │   │   ├── api.ts                 # API client
 │   │   │   ├── gpx-parser.ts          # GPX file parsing and distance calculations
+│   │   │   ├── offline-storage.ts     # IndexedDB storage for offline entries
+│   │   │   ├── sync-service.ts        # Online/offline sync logic
 │   │   │   └── transformEntries.ts    # Data transformation
 │   │   ├── index.css                  # Design system & Tailwind
 │   │   └── App.tsx                    # Main app with routing
@@ -354,9 +366,9 @@ See full deployment guide in the original README section.
 #### Phase 3C: Import/Export
 - **Export Features**: PDF journal export, JSON backup
 
-#### Phase 3D: Offline & PWA
-- **PWA Support**: Offline mode for areas without service
-- **Background Sync**: Queue entries when offline, sync when connected
+#### Phase 3D: Enhanced PWA
+- **Service Worker**: Cache app shell for instant loading
+- **Install Prompt**: Add to home screen functionality
 
 ### Other Refinements
 
@@ -386,8 +398,8 @@ See full deployment guide in the original README section.
 
 - **Mobile First**: Designed for on-trail updates from your phone
 - **Photos**: Upload directly from your phone's camera roll
-- **GPS**: Works best outdoors with clear sky view
-- **Connectivity**: Works great when you have service; offline mode coming soon
+- **GPS**: Works best outdoors with clear sky view (GPS works offline!)
+- **Offline Mode**: Create entries without internet - they'll sync when you're back online
 - **Battery**: Map rendering can be battery-intensive on older devices
 
 ---

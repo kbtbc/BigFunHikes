@@ -14,10 +14,13 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { entriesApi, api, type CreateJournalEntryInput, type WeatherData } from "@/lib/api";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw, Pencil, Check, Dumbbell, Info } from "lucide-react";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw, Pencil, Check, Dumbbell, Info, WifiOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGeolocation, formatCoordinates, formatAccuracy } from "@/hooks/use-geolocation";
 import { GpxFileUpload, type GpxUploadResult } from "@/components/GpxFileUpload";
+import { savePendingEntry } from "@/lib/offline-storage";
+import { isOnline } from "@/lib/sync-service";
+import { useOfflineStatus } from "@/hooks/use-offline";
 
 // Photo state interface
 interface PhotoUpload {
@@ -276,7 +279,10 @@ export default function NewEntryPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { isOnline: online, refreshPendingCount } = useOfflineStatus();
+  const [savingOffline, setSavingOffline] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate required fields
@@ -303,7 +309,7 @@ export default function NewEntryPage() {
       totalMilesCompleted = (lastEntry?.totalMilesCompleted || 0) + milesHiked;
     }
 
-    createMutation.mutate({
+    const entryData: CreateJournalEntryInput = {
       date: dateString,
       dayNumber: formData.dayNumber,
       title: formData.title.trim(),
@@ -317,7 +323,36 @@ export default function NewEntryPage() {
       weather: weatherData ? JSON.stringify(weatherData) : null,
       gpxData: gpxData ? gpxData.gpxData : null,
       entryType,
-    });
+    };
+
+    // If offline, save locally
+    if (!online) {
+      setSavingOffline(true);
+      try {
+        await savePendingEntry(
+          entryData,
+          photos.map((p, i) => ({ file: p.file, caption: p.caption, order: i }))
+        );
+        await refreshPendingCount();
+        toast({
+          title: "Saved offline",
+          description: "Your entry has been saved locally and will sync when you're back online.",
+        });
+        navigate("/timeline");
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save entry offline. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setSavingOffline(false);
+      }
+      return;
+    }
+
+    // Online - use normal mutation
+    createMutation.mutate(entryData);
   };
 
   const handleChange = (
@@ -378,7 +413,7 @@ export default function NewEntryPage() {
     }
   };
 
-  const isPending = createMutation.isPending || uploadingPhotos;
+  const isPending = createMutation.isPending || uploadingPhotos || savingOffline;
 
   return (
     <div className="min-h-screen bg-muted/30 py-8 md:py-12">
@@ -815,6 +850,15 @@ export default function NewEntryPage() {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                {/* Offline indicator */}
+                {!online && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 mb-2 sm:mb-0 sm:hidden">
+                    <WifiOff className="h-4 w-4 flex-shrink-0" />
+                    <p className="text-sm">
+                      You're offline. Entry will be saved locally.
+                    </p>
+                  </div>
+                )}
                 <Button
                   type="submit"
                   size="lg"
@@ -824,16 +868,18 @@ export default function NewEntryPage() {
                   {isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {uploadingPhotos ? "Uploading photos..." : "Saving..."}
+                      {savingOffline ? "Saving offline..." : uploadingPhotos ? "Uploading photos..." : "Saving..."}
                     </>
                   ) : (
                     <>
-                      {entryType === "training" ? (
+                      {!online ? (
+                        <WifiOff className="h-4 w-4 mr-2" />
+                      ) : entryType === "training" ? (
                         <Dumbbell className="h-4 w-4 mr-2" />
                       ) : (
                         <Mountain className="h-4 w-4 mr-2" />
                       )}
-                      Save {entryType === "training" ? "Training" : "Entry"}
+                      {!online ? "Save Offline" : `Save ${entryType === "training" ? "Training" : "Entry"}`}
                     </>
                   )}
                 </Button>

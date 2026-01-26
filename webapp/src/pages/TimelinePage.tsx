@@ -1,4 +1,5 @@
 import { Timeline } from "@/components/Timeline";
+import { PendingEntriesPanel } from "@/components/PendingEntriesPanel";
 import { useEntries } from "@/hooks/use-entries";
 import { useAuth } from "@/context/AuthContext";
 import { transformApiEntryToComponent } from "@/lib/transformEntries";
@@ -27,6 +28,13 @@ export function TimelinePage() {
             Each entry captures the beauty, challenges, and magic of the journey.
           </p>
         </div>
+
+        {/* Pending Offline Entries */}
+        {isAuthenticated && (
+          <div className="max-w-4xl mx-auto mb-8">
+            <PendingEntriesPanel />
+          </div>
+        )}
 
         {/* Timeline */}
         <div className="max-w-4xl mx-auto">

@@ -3,6 +3,7 @@ import { Mountain, BookOpen, LogOut, Shield, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 export function Navbar() {
   const location = useLocation();
@@ -68,6 +69,9 @@ export function Navbar() {
                 <span className="hidden sm:inline">New</span>
               </Link>
             )}
+
+            {/* Offline Status Indicator */}
+            {!isLoading && isAuthenticated && <OfflineIndicator />}
 
             {/* Admin Logout Button - only when authenticated */}
             {!isLoading && isAuthenticated && (

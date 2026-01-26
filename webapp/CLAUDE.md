@@ -18,15 +18,20 @@
     TrailMap.tsx    — Full AT trail display (home page)
     EntryMap.tsx    — Dynamic route segment map (entry pages)
     GpxFileUpload.tsx — GPX file upload with auto-parsing
+    OfflineIndicator.tsx — Connection status in navbar
+    PendingEntriesPanel.tsx — Offline entries management
     EditableCoordinates.tsx — Inline GPS coordinate editor
     EnhancedStats.tsx — Statistics dashboard with charts
   src/hooks/
     use-entries.ts  — React Query hooks for API
     use-geolocation.ts — GPS location capture
+    use-offline.ts  — Offline status and sync hooks
     use-dynamic-trail-segment.ts — Dynamic route calculation
   src/lib/
     api.ts          — API client with auth support
     gpx-parser.ts   — GPX parsing and distance/elevation calculations
+    offline-storage.ts — IndexedDB storage for pending entries
+    sync-service.ts — Online/offline detection and sync logic
     transformEntries.ts — Data transformation utilities
   public/data/
     appalachian_trail.gpx — Full AT route (26MB, source)
@@ -43,6 +48,16 @@
   - Training entries: Pre-hike training (excluded from stats, amber styling)
   - Toggle between types on NewEntryPage
   - Training entries show single location marker on map (no trail path)
+
+  Offline Mode:
+  - Entries saved to IndexedDB when offline via offline-storage.ts
+  - Photos converted to base64 for offline storage
+  - sync-service.ts handles online/offline detection
+  - Auto-sync when connection restored (navigator.onLine events)
+  - useOfflineStatus hook provides status and sync functions
+  - OfflineIndicator shows in navbar when offline or pending
+  - PendingEntriesPanel on Timeline page shows queued entries
+  - GPS coordinates captured offline (satellite-based, no internet needed)
 
   GPX Import:
   - Upload GPX files from Suunto, Garmin, or other fitness watches
