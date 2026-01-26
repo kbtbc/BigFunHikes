@@ -72,7 +72,13 @@ export function ActivityPlayer({
 
   // Check if we have playable data
   const hasData = useMemo(() => {
-    return hasActivityData({ suuntoData, gpxData });
+    const result = hasActivityData({ suuntoData, gpxData });
+    console.log("[ActivityPlayer] hasActivityData check:", {
+      suuntoData: suuntoData ? `${suuntoData.substring(0, 100)}...` : null,
+      gpxData: gpxData ? `${gpxData.substring(0, 100)}...` : null,
+      result
+    });
+    return result;
   }, [suuntoData, gpxData]);
 
   // Parse activity data when expanded

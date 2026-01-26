@@ -239,7 +239,8 @@ function smoothElevation(points: ActivityDataPoint[], windowSize: number = 5): v
 
 function parseSuuntoActivity(suuntoData: SuuntoParseResult): ActivityData {
   const gpsTrack = suuntoData.gpsTrack;
-  const timeSamples = suuntoData.timeSamples;
+  const timeSamples = suuntoData.timeSamples || [];
+  const hrOverTime = suuntoData.hrOverTime || [];
 
   if (!gpsTrack.length) {
     throw new Error("No GPS track data found in Suunto file");
@@ -255,6 +256,12 @@ function parseSuuntoActivity(suuntoData: SuuntoParseResult): ActivityData {
   for (const sample of timeSamples) {
     const sampleTime = new Date(sample.timestamp).getTime();
     sampleMap.set(Math.floor((sampleTime - startTime) / 1000), sample);
+  }
+
+  // Create a map of HR values by time (seconds from start)
+  const hrMap = new Map<number, number>();
+  for (const hr of hrOverTime) {
+    hrMap.set(hr.time, hr.hr);
   }
 
   // Process GPS points
@@ -273,13 +280,20 @@ function parseSuuntoActivity(suuntoData: SuuntoParseResult): ActivityData {
       if (matchedSample) break;
     }
 
+    // Try to find matching HR value (within 30 seconds)
+    let matchedHr: number | undefined;
+    for (let offset = -30; offset <= 30; offset++) {
+      matchedHr = hrMap.get(secondsFromStart + offset);
+      if (matchedHr !== undefined) break;
+    }
+
     const point: ActivityDataPoint = {
       timestamp,
       lat: gps.lat,
       lon: gps.lon,
       elevation: gps.altitude || matchedSample?.altitude,
       speed: matchedSample?.speed,
-      hr: matchedSample?.hr,
+      hr: matchedSample?.hr || matchedHr,
       cadence: matchedSample?.cadence,
       distance: distances[i],
     };
@@ -471,6 +485,7 @@ export type ActivityDataSource =
 /**
  * Parse activity data with auto-detection of source format
  * Prioritizes Suunto data if both are available (has more metrics)
+ * Handles both raw Suunto JSON and pre-parsed SuuntoParseResult formats
  */
 export function parseActivityData(source: ActivityDataSource): ActivityData {
   if (source.type === "suunto") {
@@ -490,6 +505,15 @@ export function parseActivityData(source: ActivityDataSource): ActivityData {
   // Auto-detect: prefer Suunto if available (has more data)
   if (source.suuntoData) {
     try {
+      const data = JSON.parse(source.suuntoData);
+
+      // Check if this is already a parsed SuuntoParseResult (has gpsTrack array directly)
+      if (data.gpsTrack && Array.isArray(data.gpsTrack) && data.gpsTrack.length > 0) {
+        // It's pre-parsed data, use it directly
+        return parseSuuntoActivity(data);
+      }
+
+      // Otherwise try parsing as raw Suunto JSON
       const parsed = parseSuuntoJson(source.suuntoData);
       if (parsed.gpsTrack.length > 0) {
         return parseSuuntoActivity(parsed);
@@ -513,6 +537,7 @@ export function parseActivityData(source: ActivityDataSource): ActivityData {
 
 /**
  * Check if entry has playable activity data
+ * Handles both raw Suunto JSON and pre-parsed SuuntoParseResult formats
  */
 export function hasActivityData(entry: {
   suuntoData?: string | null;
@@ -520,6 +545,14 @@ export function hasActivityData(entry: {
 }): boolean {
   if (entry.suuntoData) {
     try {
+      const data = JSON.parse(entry.suuntoData);
+
+      // Check if this is a pre-parsed SuuntoParseResult (has gpsTrack array directly)
+      if (data.gpsTrack && Array.isArray(data.gpsTrack)) {
+        return data.gpsTrack.length > 0;
+      }
+
+      // Otherwise try parsing as raw Suunto JSON
       const parsed = parseSuuntoJson(entry.suuntoData);
       return parsed.gpsTrack.length > 0;
     } catch {
