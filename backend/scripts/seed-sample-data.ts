@@ -396,11 +396,11 @@ async function main() {
 
     if ('suuntoFile' in entry && entry.suuntoFile) {
       try {
-        // Try multiple paths to find the Suunto file
+        // Try multiple paths to find the Suunto file (now in backend/data/)
         const possiblePaths = [
-          path.join(__dirname, '../../webapp/public', entry.suuntoFile),
-          path.join(process.cwd(), '../webapp/public', entry.suuntoFile),
-          `/home/user/workspace/webapp/public/${entry.suuntoFile}`,
+          path.join(__dirname, '../data', entry.suuntoFile),
+          path.join(process.cwd(), 'data', entry.suuntoFile),
+          `/home/user/workspace/backend/data/${entry.suuntoFile}`,
         ];
 
         let suuntoContent: string | null = null;
