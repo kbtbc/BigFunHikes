@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Timeline } from "@/components/Timeline";
 import { PendingEntriesPanel } from "@/components/PendingEntriesPanel";
 import { useEntries } from "@/hooks/use-entries";
@@ -12,6 +14,7 @@ export function TimelinePage() {
   const { data: entriesData, isLoading: entriesLoading, error: entriesError } = useEntries(1, 50, {
     enabled: true, // Public access - no authentication required
   });
+  const location = useLocation();
 
   const entries = entriesData?.entries.map(transformApiEntryToComponent) || [];
 
@@ -30,6 +33,19 @@ export function TimelinePage() {
     }
     return b.day - a.day;
   });
+
+  // Scroll to entry if hash is present in URL
+  useEffect(() => {
+    if (location.hash && !entriesLoading && entries.length > 0) {
+      // Small delay to ensure DOM is rendered
+      setTimeout(() => {
+        const element = document.querySelector(location.hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [location.hash, entriesLoading, entries.length]);
 
   return (
     <div className="min-h-screen py-12 md:py-16">

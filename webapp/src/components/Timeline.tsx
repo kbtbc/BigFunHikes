@@ -44,7 +44,8 @@ function TimelineEntryCard({ entry, index }: TimelineEntryCardProps) {
 
   return (
     <div
-      className="relative animate-in fade-in slide-in-from-bottom-4"
+      id={`entry-${entry.id}`}
+      className="relative animate-in fade-in slide-in-from-bottom-4 scroll-mt-24"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Timeline dot with enhanced styling - centered at same point as line (left-[33px]) */}
