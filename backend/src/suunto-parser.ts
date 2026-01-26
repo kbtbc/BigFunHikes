@@ -62,10 +62,28 @@ interface SuuntoRawLap {
   Temperature?: Array<{ Avg: number; Max: number; Min: number }>;
 }
 
+interface SuuntoRawWindow {
+  Window: {
+    Type: string;
+    Duration: number;
+    Distance: number;
+    Ascent: number;
+    Descent: number;
+    Energy: number;
+    HR?: Array<{ Avg: number; Max: number; Min: number }>;
+    Speed?: Array<{ Avg: number; Max: number; Min: number }>;
+    Temperature?: Array<{ Avg: number; Max: number; Min: number }>;
+    Cadence?: Array<{ Avg: number; Max: number; Min: number }>;
+    Altitude?: Array<{ Avg: number; Max: number; Min: number }>;
+  };
+  TimeISO8601: string;
+}
+
 interface SuuntoRawData {
   DeviceLog: {
     Header: SuuntoRawHeader;
     Samples: SuuntoRawSample[];
+    Windows?: SuuntoRawWindow[];
   };
 }
 
@@ -261,17 +279,18 @@ export function parseSuuntoJson(jsonContent: string | object): SuuntoParseResult
     maxAltitudeFeet: Math.round(metersToFeet(header.Altitude.Max)),
   };
 
-  // Laps
+  // Laps - read from Windows array (not Samples)
   const laps: SuuntoLap[] = [];
+  const windows = data.DeviceLog.Windows ?? [];
   let lapNumber = 1;
-  for (const sample of samples) {
-    if (sample.Window && sample.Window.Type === 'Lap') {
-      const lap = sample.Window;
+  for (const windowEntry of windows) {
+    if (windowEntry.Window && windowEntry.Window.Type === 'Lap') {
+      const lap = windowEntry.Window;
       const lapDistanceMiles = metersToMiles(lap.Distance);
       const lapAvgSpeed = lap.Speed?.[0]?.Avg ?? 0;
       laps.push({
         lapNumber: lapNumber++,
-        timestamp: sample.TimeISO8601,
+        timestamp: windowEntry.TimeISO8601,
         durationSeconds: lap.Duration,
         distanceMeters: lap.Distance,
         distanceMiles: Math.round(lapDistanceMiles * 100) / 100,
