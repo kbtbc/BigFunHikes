@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.8 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.9 COMPLETE)
 
 ### Overview
 
@@ -150,6 +150,24 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - Expandable collapsible section on entry detail pages
 - Only shows when GPS track data is available
 - Components: ActivityMap, ActivityCharts, PlaybackControls
+
+### Activity Player Enhancements (NEW v3.9 - 100% Complete)
+- **3D Terrain Mode**: Toggle Mapbox GL terrain extrusion with 1.5x exaggeration
+  - Sky atmosphere layer for realistic horizon
+  - Adjusts pitch automatically when enabled
+- **Camera Modes**: Three distinct viewing perspectives
+  - **Follow**: Smooth pan keeping marker centered, 45-60° pitch
+  - **Overview**: User-controlled camera, no automatic movement
+  - **First-Person**: Looks ahead in direction of travel, high pitch (60-75°), closer zoom
+- **Photo Timestamps**: Smart photo-to-timeline matching
+  - Matches photos to GPS coordinates when available
+  - Falls back to timestamp matching against entry date
+  - Photos fade in during playback as they're "reached"
+- **Segment Highlighting**: Interactive chart-to-map connection
+  - Click and drag on any chart to select a time range
+  - Selected segment highlighted in yellow on the map
+  - Map flies to selected segment automatically
+  - Double-click to clear selection
 
 ### Enhanced Statistics (100% Complete)
 - 7-day moving average pace
@@ -302,12 +320,6 @@ webapp/public/data/
 
 ## NEXT STEPS (Suggested Priorities)
 
-### Phase 1: Activity Player Enhancements (High Priority)
-- [ ] **3D Terrain Mode**: Add Mapbox GL 3D terrain extrusion for immersive flyover views
-- [ ] **Camera Modes**: Follow mode (tracks marker), overview mode, first-person perspective
-- [ ] **Photo Timestamps**: Match photos to GPS timestamps for timed display during playback
-- [ ] **Segment Highlighting**: Click chart to highlight that section on the map
-
 ### Phase 2: UX Improvements (High Priority)
 - [ ] **Bulk Photo Upload**: Drag-and-drop multiple photos at once with progress indicator
 - [ ] **Entry Templates**: Pre-fill common fields based on previous entries
@@ -329,6 +341,12 @@ webapp/public/data/
 - [ ] PDF journal export with stats and photos
 - [ ] JSON backup/restore for all entries
 - [ ] Share entry as image for social media
+
+### Phase 6: Activity Player Advanced (Future)
+- [ ] **Minimap**: Small overview map showing full route with current position
+- [ ] **Split Screen**: Side-by-side chart and map view
+- [ ] **Lap Markers**: Show lap/mile markers on the route during playback
+- [ ] **Voice Narration**: Text-to-speech reading of journal entry synced to playback
 
 ---
 
@@ -418,6 +436,10 @@ bun run seed  # Creates 11 sample entries including training hike with Suunto da
 - [x] **Synchronized playback charts** (NEW v3.8) - HR, elevation, speed charts follow marker
 - [x] **Heatmap route coloring** (NEW v3.8) - Route colored by speed, HR, or elevation
 - [x] **Unified activity data parser** (NEW v3.8) - Suunto JSON + GPX auto-detection
+- [x] **3D Terrain Mode** (NEW v3.9) - Mapbox GL terrain extrusion with sky atmosphere
+- [x] **Camera Modes** (NEW v3.9) - Follow, Overview, and First-Person perspectives
+- [x] **Photo Timestamps** (NEW v3.9) - Photos matched to GPS/timeline for timed display
+- [x] **Segment Highlighting** (NEW v3.9) - Click charts to highlight map sections
 
 ---
 

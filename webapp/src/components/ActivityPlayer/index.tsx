@@ -1,6 +1,12 @@
 /**
  * ActivityPlayer - Main component for Relive-style activity playback
  * Combines animated map, synchronized charts, and playback controls
+ *
+ * Phase 1 Enhancements:
+ * - 3D Terrain Mode with Mapbox terrain extrusion
+ * - Camera Modes: Follow, Overview, First-Person
+ * - Photo timestamps for timed display during playback
+ * - Segment highlighting from chart selection
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
@@ -19,14 +25,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
-  Play,
   ChevronDown,
   ChevronUp,
   Activity,
   Palette,
+  Mountain,
+  Video,
+  Eye,
+  Navigation,
 } from "lucide-react";
-import { ActivityMap, type ColorMode } from "./ActivityMap";
+import { ActivityMap, type ColorMode, type CameraMode, type ActivityMapRef } from "./ActivityMap";
 import { ActivityCharts } from "./ActivityCharts";
 import { PlaybackControls } from "./PlaybackControls";
 import {
@@ -41,6 +52,9 @@ interface Photo {
   id: string;
   url: string;
   caption?: string | null;
+  timestamp?: string | null; // Photo creation timestamp
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface ActivityPlayerProps {
@@ -67,8 +81,14 @@ export function ActivityPlayer({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [colorMode, setColorMode] = useState<ColorMode>("speed");
 
+  // Phase 1 Enhancement states
+  const [terrain3D, setTerrain3D] = useState(false);
+  const [cameraMode, setCameraMode] = useState<CameraMode>("follow");
+  const [highlightedSegment, setHighlightedSegment] = useState<{ start: number; end: number } | null>(null);
+
   const animationRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
+  const mapRef = useRef<ActivityMapRef>(null);
 
   // Check if we have playable data
   const hasData = useMemo(() => {
@@ -184,18 +204,89 @@ export function ActivityPlayer({
     lastUpdateRef.current = 0;
   }, [activityData]);
 
-  // Map photos to activity timeline (if timestamps available)
+  // Handle segment highlighting from chart
+  const handleHighlightSegment = useCallback((segment: { start: number; end: number } | null) => {
+    setHighlightedSegment(segment);
+
+    // Fly to the segment on the map
+    if (segment && mapRef.current) {
+      mapRef.current.flyToSegment(segment.start, segment.end);
+    }
+  }, []);
+
+  // Map photos to activity timeline with GPS matching
   const activityPhotos: ActivityPhoto[] = useMemo(() => {
     if (!activityData || !photos.length) return [];
 
-    // For now, just use photo positions without timestamps
-    // In a future enhancement, we could match photos to GPS positions
-    return photos.map((photo) => ({
-      id: photo.id,
-      url: photo.url,
-      caption: photo.caption,
-    }));
-  }, [activityData, photos]);
+    const activityStartTime = activityData.dataPoints[0]?.timestamp || 0;
+    const activityEndTime = activityData.dataPoints[activityData.dataPoints.length - 1]?.timestamp || 0;
+
+    return photos.map((photo) => {
+      let photoTimestamp: number | undefined;
+      let photoLat: number | undefined;
+      let photoLon: number | undefined;
+
+      // If photo has GPS coordinates, use them directly
+      if (photo.latitude && photo.longitude) {
+        photoLat = photo.latitude;
+        photoLon = photo.longitude;
+
+        // Find closest data point by GPS
+        let closestDist = Infinity;
+        let closestPoint: typeof activityData.dataPoints[0] | null = null;
+
+        for (const point of activityData.dataPoints) {
+          const dist = Math.sqrt(
+            Math.pow(point.lat - photoLat, 2) + Math.pow(point.lon - photoLon, 2)
+          );
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestPoint = point;
+          }
+        }
+
+        if (closestPoint) {
+          photoTimestamp = closestPoint.timestamp;
+        }
+      }
+
+      // If photo has a timestamp, try to match it to activity timeline
+      if (!photoTimestamp && photo.timestamp && entryDate) {
+        try {
+          const photoTime = new Date(photo.timestamp).getTime();
+          const entryTime = new Date(entryDate).getTime();
+
+          // Calculate relative time from entry date
+          const relativeTime = photoTime - entryTime;
+
+          // If within activity duration, use it
+          if (relativeTime >= 0 && relativeTime <= activityEndTime) {
+            photoTimestamp = relativeTime;
+
+            // Find position at this timestamp
+            const matchingPoint = activityData.dataPoints.find(
+              (p) => p.timestamp >= relativeTime
+            );
+            if (matchingPoint) {
+              photoLat = matchingPoint.lat;
+              photoLon = matchingPoint.lon;
+            }
+          }
+        } catch {
+          // Invalid timestamp, skip
+        }
+      }
+
+      return {
+        id: photo.id,
+        url: photo.url,
+        caption: photo.caption,
+        timestamp: photoTimestamp,
+        lat: photoLat,
+        lon: photoLon,
+      };
+    });
+  }, [activityData, photos, entryDate]);
 
   if (!hasData) {
     return null;
@@ -253,38 +344,86 @@ export function ActivityPlayer({
 
             {activityData && !isLoading && (
               <>
-                {/* Color Mode Selector */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Palette className="h-4 w-4" />
-                    <span>Route color:</span>
+                {/* Controls Row */}
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  {/* Color Mode */}
+                  <div className="flex items-center gap-2">
+                    <Palette className="h-4 w-4 text-muted-foreground" />
+                    <Select
+                      value={colorMode}
+                      onValueChange={(val) => setColorMode(val as ColorMode)}
+                    >
+                      <SelectTrigger className="w-28 h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="speed">Speed</SelectItem>
+                        {activityData.hasHeartRate && (
+                          <SelectItem value="hr">Heart Rate</SelectItem>
+                        )}
+                        <SelectItem value="elevation">Elevation</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Select
-                    value={colorMode}
-                    onValueChange={(val) => setColorMode(val as ColorMode)}
-                  >
-                    <SelectTrigger className="w-32 h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="speed">Speed</SelectItem>
-                      {activityData.hasHeartRate && (
-                        <SelectItem value="hr">Heart Rate</SelectItem>
-                      )}
-                      <SelectItem value="elevation">Elevation</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                  {/* Camera Mode */}
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-muted-foreground" />
+                    <Select
+                      value={cameraMode}
+                      onValueChange={(val) => setCameraMode(val as CameraMode)}
+                    >
+                      <SelectTrigger className="w-32 h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="follow">
+                          <div className="flex items-center gap-2">
+                            <Navigation className="h-3 w-3" />
+                            Follow
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="overview">
+                          <div className="flex items-center gap-2">
+                            <Eye className="h-3 w-3" />
+                            Overview
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="firstPerson">
+                          <div className="flex items-center gap-2">
+                            <Video className="h-3 w-3" />
+                            First Person
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 3D Terrain Toggle */}
+                  <div className="flex items-center gap-2">
+                    <Mountain className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="terrain-toggle" className="text-sm">3D</Label>
+                    <Switch
+                      id="terrain-toggle"
+                      checked={terrain3D}
+                      onCheckedChange={setTerrain3D}
+                    />
+                  </div>
                 </div>
 
                 {/* Map */}
                 <div className="rounded-lg overflow-hidden border" style={{ height: "350px" }}>
                   <ActivityMap
+                    ref={mapRef}
                     dataPoints={activityData.dataPoints}
                     currentIndex={currentIndex}
                     bounds={activityData.bounds}
                     colorMode={colorMode}
+                    cameraMode={cameraMode}
+                    terrain3D={terrain3D}
                     hasHeartRate={activityData.hasHeartRate}
                     photos={activityPhotos}
+                    highlightedSegment={highlightedSegment}
                   />
                 </div>
 
@@ -311,6 +450,7 @@ export function ActivityPlayer({
                   hasCadence={activityData.hasCadence}
                   hasSpeed={activityData.hasSpeed}
                   onSeek={handleSeek}
+                  onHighlightSegment={handleHighlightSegment}
                   duration={activityData.summary.duration}
                 />
               </>

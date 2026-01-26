@@ -1,9 +1,9 @@
 /**
  * ActivityMap - Mapbox GL animated map for activity playback
- * Shows route with heatmap coloring and animated marker
+ * Shows route with heatmap coloring, animated marker, 3D terrain, and camera modes
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { ActivityDataPoint, ActivityPhoto } from "@/lib/activity-data-parser";
@@ -13,6 +13,7 @@ import { getGradientColor } from "@/lib/activity-data-parser";
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || "";
 
 export type ColorMode = "speed" | "hr" | "elevation";
+export type CameraMode = "follow" | "overview" | "firstPerson";
 
 interface ActivityMapProps {
   dataPoints: ActivityDataPoint[];
@@ -24,25 +25,80 @@ interface ActivityMapProps {
     west: number;
   };
   colorMode: ColorMode;
+  cameraMode: CameraMode;
+  terrain3D: boolean;
   hasHeartRate: boolean;
   photos?: ActivityPhoto[];
+  highlightedSegment?: { start: number; end: number } | null;
   onPhotoClick?: (photo: ActivityPhoto) => void;
 }
 
-export function ActivityMap({
-  dataPoints,
-  currentIndex,
-  bounds,
-  colorMode,
-  hasHeartRate,
-  photos = [],
-  onPhotoClick,
-}: ActivityMapProps) {
+export interface ActivityMapRef {
+  flyToSegment: (startIndex: number, endIndex: number) => void;
+}
+
+export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function ActivityMap(
+  {
+    dataPoints,
+    currentIndex,
+    bounds,
+    colorMode,
+    cameraMode,
+    terrain3D,
+    hasHeartRate,
+    photos = [],
+    highlightedSegment,
+    onPhotoClick,
+  },
+  ref
+) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const photoMarkers = useRef<mapboxgl.Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [terrainLoaded, setTerrainLoaded] = useState(false);
+  const lastCameraUpdate = useRef<number>(0);
+
+  // Expose methods to parent
+  useImperativeHandle(ref, () => ({
+    flyToSegment: (startIndex: number, endIndex: number) => {
+      if (!map.current || !mapLoaded) return;
+
+      const startPoint = dataPoints[startIndex];
+      const endPoint = dataPoints[endIndex];
+      if (!startPoint || !endPoint) return;
+
+      // Calculate center and zoom for segment
+      const centerLat = (startPoint.lat + endPoint.lat) / 2;
+      const centerLon = (startPoint.lon + endPoint.lon) / 2;
+
+      map.current.flyTo({
+        center: [centerLon, centerLat],
+        zoom: 14,
+        pitch: terrain3D ? 60 : 45,
+        duration: 1000,
+      });
+    },
+  }));
+
+  // Calculate bearing between two points
+  const calculateBearing = useCallback(
+    (p1: ActivityDataPoint, p2: ActivityDataPoint): number => {
+      const lon1 = (p1.lon * Math.PI) / 180;
+      const lon2 = (p2.lon * Math.PI) / 180;
+      const lat1 = (p1.lat * Math.PI) / 180;
+      const lat2 = (p2.lat * Math.PI) / 180;
+
+      const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+      const x =
+        Math.cos(lat1) * Math.sin(lat2) -
+        Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+
+      return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+    },
+    []
+  );
 
   // Initialize map
   useEffect(() => {
@@ -56,7 +112,7 @@ export function ActivityMap({
         (bounds.north + bounds.south) / 2,
       ],
       zoom: 13,
-      pitch: 45, // Slight 3D tilt
+      pitch: 45,
       bearing: 0,
     });
 
@@ -84,13 +140,64 @@ export function ActivityMap({
     };
   }, [bounds]);
 
+  // Add/remove 3D terrain
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    if (terrain3D) {
+      // Add terrain source if not exists
+      if (!map.current.getSource("mapbox-dem")) {
+        map.current.addSource("mapbox-dem", {
+          type: "raster-dem",
+          url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+          tileSize: 512,
+          maxzoom: 14,
+        });
+      }
+
+      map.current.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
+
+      // Add sky layer for better 3D effect
+      if (!map.current.getLayer("sky")) {
+        map.current.addLayer({
+          id: "sky",
+          type: "sky",
+          paint: {
+            "sky-type": "atmosphere",
+            "sky-atmosphere-sun": [0.0, 90.0],
+            "sky-atmosphere-sun-intensity": 15,
+          },
+        });
+      }
+
+      setTerrainLoaded(true);
+    } else {
+      // Remove terrain
+      map.current.setTerrain(null);
+      if (map.current.getLayer("sky")) {
+        map.current.removeLayer("sky");
+      }
+      setTerrainLoaded(false);
+    }
+  }, [terrain3D, mapLoaded]);
+
   // Add route layer with heatmap coloring
   useEffect(() => {
     if (!map.current || !mapLoaded || dataPoints.length < 2) return;
 
     // Remove existing layers and sources (in reverse order of addition)
-    const layersToRemove = ["route-progress", "route-segments", "route-base"];
-    const sourcesToRemove = ["route-progress", "route-segments", "route-base"];
+    const layersToRemove = [
+      "route-highlight",
+      "route-progress",
+      "route-segments",
+      "route-base",
+    ];
+    const sourcesToRemove = [
+      "route-highlight",
+      "route-progress",
+      "route-segments",
+      "route-base",
+    ];
 
     layersToRemove.forEach((layer) => {
       if (map.current?.getLayer(layer)) {
@@ -169,7 +276,12 @@ export function ActivityMap({
         value = p1.elevation ?? 0;
       }
 
-      const color = getGradientColor(value, minVal, maxVal, colorMode === "hr" ? "hr" : colorMode === "elevation" ? "elevation" : "speed");
+      const color = getGradientColor(
+        value,
+        minVal,
+        maxVal,
+        colorMode === "hr" ? "hr" : colorMode === "elevation" ? "elevation" : "speed"
+      );
 
       features.push({
         type: "Feature",
@@ -232,7 +344,62 @@ export function ActivityMap({
         "line-opacity": 1,
       },
     });
+
+    // Add highlight layer for segment selection
+    map.current.addSource("route-highlight", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: [],
+      },
+    });
+
+    map.current.addLayer({
+      id: "route-highlight",
+      type: "line",
+      source: "route-highlight",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round",
+      },
+      paint: {
+        "line-color": "#ffff00",
+        "line-width": 8,
+        "line-opacity": 0.8,
+      },
+    });
   }, [mapLoaded, dataPoints, colorMode, hasHeartRate]);
+
+  // Update highlighted segment (from chart click)
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !map.current.getSource("route-highlight")) return;
+
+    if (!highlightedSegment) {
+      (map.current.getSource("route-highlight") as mapboxgl.GeoJSONSource).setData({
+        type: "FeatureCollection",
+        features: [],
+      });
+      return;
+    }
+
+    const { start, end } = highlightedSegment;
+    const highlightCoords: [number, number][] = [];
+
+    for (let i = start; i <= Math.min(end, dataPoints.length - 1); i++) {
+      highlightCoords.push([dataPoints[i].lon, dataPoints[i].lat]);
+    }
+
+    if (highlightCoords.length >= 2) {
+      (map.current.getSource("route-highlight") as mapboxgl.GeoJSONSource).setData({
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: highlightCoords,
+        },
+      });
+    }
+  }, [highlightedSegment, mapLoaded, dataPoints]);
 
   // Update progress line as playback advances
   useEffect(() => {
@@ -273,7 +440,12 @@ export function ActivityMap({
         value = p1.elevation ?? 0;
       }
 
-      const color = getGradientColor(value, minVal, maxVal, colorMode === "hr" ? "hr" : colorMode === "elevation" ? "elevation" : "speed");
+      const color = getGradientColor(
+        value,
+        minVal,
+        maxVal,
+        colorMode === "hr" ? "hr" : colorMode === "elevation" ? "elevation" : "speed"
+      );
 
       progressFeatures.push({
         type: "Feature",
@@ -294,7 +466,7 @@ export function ActivityMap({
     });
   }, [currentIndex, mapLoaded, dataPoints, colorMode, hasHeartRate]);
 
-  // Create and update animated marker
+  // Create and update animated marker + camera following
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
@@ -322,16 +494,42 @@ export function ActivityMap({
       marker.current.setLngLat([currentPoint.lon, currentPoint.lat]);
     }
 
-    // Update map center to follow marker (with some lag)
-    if (currentIndex > 0 && currentIndex % 5 === 0) {
+    // Camera behavior based on mode
+    const now = Date.now();
+    const timeSinceLastUpdate = now - lastCameraUpdate.current;
+
+    // Only update camera periodically to avoid jerky movement
+    if (timeSinceLastUpdate < 200 && cameraMode !== "overview") return;
+    lastCameraUpdate.current = now;
+
+    if (cameraMode === "follow") {
+      // Follow mode: smooth pan to keep marker centered
       map.current.easeTo({
         center: [currentPoint.lon, currentPoint.lat],
-        duration: 500,
+        pitch: terrain3D ? 60 : 45,
+        duration: 300,
       });
-    }
-  }, [currentIndex, mapLoaded, dataPoints]);
+    } else if (cameraMode === "firstPerson") {
+      // First-person mode: look ahead in direction of travel
+      const nextIndex = Math.min(currentIndex + 3, dataPoints.length - 1);
+      const nextPoint = dataPoints[nextIndex];
 
-  // Add photo markers
+      if (nextPoint && nextPoint !== currentPoint) {
+        const bearing = calculateBearing(currentPoint, nextPoint);
+
+        map.current.easeTo({
+          center: [currentPoint.lon, currentPoint.lat],
+          bearing,
+          pitch: terrain3D ? 75 : 60,
+          zoom: 16,
+          duration: 300,
+        });
+      }
+    }
+    // Overview mode: no camera movement (user controls)
+  }, [currentIndex, mapLoaded, dataPoints, cameraMode, terrain3D, calculateBearing]);
+
+  // Add photo markers with timestamps
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
@@ -345,6 +543,11 @@ export function ActivityMap({
 
       const el = document.createElement("div");
       el.className = "photo-marker";
+
+      // Check if this photo should be visible based on playback position
+      const isVisible = photo.timestamp === undefined ||
+        (dataPoints[currentIndex]?.timestamp ?? 0) >= photo.timestamp;
+
       el.style.cssText = `
         width: 32px;
         height: 32px;
@@ -356,6 +559,9 @@ export function ActivityMap({
         background-size: cover;
         background-position: center;
         border: 2px solid white;
+        opacity: ${isVisible ? 1 : 0.3};
+        transition: opacity 0.3s, transform 0.3s;
+        transform: scale(${isVisible ? 1 : 0.8});
       `;
 
       el.addEventListener("click", () => {
@@ -373,7 +579,7 @@ export function ActivityMap({
       photoMarkers.current.forEach((m) => m.remove());
       photoMarkers.current = [];
     };
-  }, [photos, mapLoaded, onPhotoClick]);
+  }, [photos, mapLoaded, onPhotoClick, currentIndex, dataPoints]);
 
   return (
     <div
@@ -382,4 +588,4 @@ export function ActivityMap({
       style={{ minHeight: "300px" }}
     />
   );
-}
+});
