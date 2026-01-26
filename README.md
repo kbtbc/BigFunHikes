@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.7)
+## Current Features (v3.8)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -22,7 +22,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - Training entries use amber/orange styling for visual distinction
   - Training hikes can use day 0 or negative day numbers
   - Stats (total miles, elevation, projections) only include trail entries
-  - **NEW: Training entries appear at top of Timeline** for easy access
+  - Training entries appear at top of Timeline for easy access
 - **GPX Import**: Import GPS tracks from your fitness watch (Suunto, Garmin, etc.)
   - Upload GPX files directly from your Suunto Vertical 2, Garmin, or other fitness watch
   - Automatically extracts distance, elevation gain, and route coordinates
@@ -45,6 +45,14 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Lap Splits Table**: Per-lap breakdown with duration, pace, HR, elevation, temperature
   - **Effort Score**: Calculated training intensity based on HR zones + elevation
   - Beautiful tabbed display with charts and statistics
+- **NEW: Activity Player (v3.8)**: Relive-style animated activity playback
+  - **Animated Map Playback**: Mapbox GL with 3D terrain and moving marker
+  - **Synchronized Charts**: Heart rate, elevation, and speed charts follow playback position
+  - **Heatmap Route Coloring**: Route colored by speed, heart rate, or elevation gradient
+  - **Playback Controls**: Play/pause, speed (0.5x-4x), scrub bar, skip forward/back
+  - **Auto-Detection**: Works with both Suunto JSON and GPX data sources
+  - **Photo Pins**: Photos displayed on map at their locations
+  - Expandable section on entry detail pages (only shows when GPS data available)
 - **Improved Entry Layout**: Title and content appear above photos for better readability
 - **Photo Uploads**: Add and caption multiple photos per entry with carousel display
 - **Photo Caption Editing**: Edit captions on existing photos directly from the edit page
@@ -124,11 +132,12 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 ### Frontend (Port 8000)
 - **Framework**: React 18 + Vite
 - **Styling**: Tailwind CSS + shadcn/ui components
-- **Maps**: Leaflet.js with OpenTopoMap tiles
+- **Maps**: Leaflet.js with OpenTopoMap tiles + Mapbox GL for Activity Player
 - **Markdown**: react-markdown with remark-gfm
 - **Carousel**: Embla Carousel for photo galleries
 - **Routing**: React Router v6
 - **State**: React Query for server state
+- **Charts**: Recharts for data visualization
 - **Type Safety**: TypeScript with Zod schemas
 
 ### Backend (Port 3000)

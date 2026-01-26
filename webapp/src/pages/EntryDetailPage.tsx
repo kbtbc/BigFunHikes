@@ -6,6 +6,7 @@ import { JournalEntry } from "@/components/JournalEntry";
 import { EntryMap } from "@/components/EntryMap";
 import { EditableCoordinates } from "@/components/EditableCoordinates";
 import { SuuntoStatsDisplay } from "@/components/SuuntoStatsDisplay";
+import { ActivityPlayer } from "@/components/ActivityPlayer";
 import { useEntry, useDeleteEntry, useEntries, useUpdateEntry } from "@/hooks/use-entries";
 import { useAuth } from "@/context/AuthContext";
 import { transformApiEntryToComponent } from "@/lib/transformEntries";
@@ -326,6 +327,20 @@ export function EntryDetailPage() {
               <SuuntoStatsDisplay suuntoData={entry.suuntoData} />
             </div>
           )}
+
+          {/* Activity Player - Relive style playback */}
+          <div className="mt-8">
+            <ActivityPlayer
+              suuntoData={apiEntry?.suuntoData}
+              gpxData={apiEntry?.gpxData}
+              photos={apiEntry?.photos?.map(p => ({
+                id: p.id,
+                url: p.url,
+                caption: p.caption,
+              }))}
+              entryDate={entry.date}
+            />
+          </div>
 
           {/* Map Section */}
           <div className="mt-8">

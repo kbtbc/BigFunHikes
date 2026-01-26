@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.7 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.8 COMPLETE)
 
 ### Overview
 
@@ -135,6 +135,21 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - **GPS Track Extraction**: Route displayed on map from watch GPS data
 - **Beautiful Tabbed Display**: Heart Rate, Elevation, and Lap Splits tabs
 - Works for both training and trail entries
+
+### Activity Player - Relive Style Playback (NEW v3.8 - 100% Complete)
+- **Animated Map Playback**: Mapbox GL with outdoor terrain and moving marker
+- **Synchronized Charts**: Heart rate, elevation, and speed charts follow playback position
+- **Heatmap Route Coloring**: Route colored by speed, heart rate, or elevation gradient
+- **Playback Controls**: Play/pause, speed (0.5x-4x), scrub bar, skip forward/back
+- **Auto-Detection**: Works with both Suunto JSON and GPX data sources
+- **Photo Pins**: Photos displayed on map at their locations
+- **Unified Data Parser**: Normalizes Suunto JSON and GPX into common format
+  - Resamples data to consistent 5-second intervals
+  - Computes derived metrics (cumulative distance, grade, moving vs stopped)
+  - Smooths elevation to reduce GPS noise
+- Expandable collapsible section on entry detail pages
+- Only shows when GPS track data is available
+- Components: ActivityMap, ActivityCharts, PlaybackControls
 
 ### Enhanced Statistics (100% Complete)
 - 7-day moving average pace
@@ -287,29 +302,30 @@ webapp/public/data/
 
 ## NEXT STEPS (Suggested Priorities)
 
-### Phase 1: UX Improvements (High Priority)
+### Phase 1: Activity Player Enhancements (High Priority)
+- [ ] **3D Terrain Mode**: Add Mapbox GL 3D terrain extrusion for immersive flyover views
+- [ ] **Camera Modes**: Follow mode (tracks marker), overview mode, first-person perspective
+- [ ] **Photo Timestamps**: Match photos to GPS timestamps for timed display during playback
+- [ ] **Segment Highlighting**: Click chart to highlight that section on the map
+
+### Phase 2: UX Improvements (High Priority)
 - [ ] **Bulk Photo Upload**: Drag-and-drop multiple photos at once with progress indicator
 - [ ] **Entry Templates**: Pre-fill common fields based on previous entries
 - [ ] **Quick Entry Mode**: Simplified form for rapid trail logging (just miles + notes)
 
-### Phase 2: Watch Data Enhancements (Medium Priority)
+### Phase 3: Watch Data Enhancements (Medium Priority)
 - [ ] **Garmin FIT Support**: Extend parser to support Garmin FIT files
 - [ ] **Apple Watch Health Export**: Support importing workout data from Apple Health exports
 - [ ] **Watch Data Comparison**: Compare fitness metrics between hikes (HR trends, pace improvement)
 
-### Phase 3: Training Analytics Dashboard (Medium Priority)
+### Phase 4: Training Analytics Dashboard (Medium Priority)
 - [ ] Separate training stats page with cumulative training metrics
 - [ ] Training volume charts (weekly/monthly miles, elevation)
 - [ ] Training goals and progress tracking
 - [ ] **Fitness Readiness Score**: Combine HR, elevation gain, and mileage to track conditioning
 
-### Phase 4: Enhanced Visualizations (Lower Priority)
-- [ ] Interactive elevation profile on entry detail (click to see HR/pace at that point)
-- [ ] Speed/pace heatmap on GPS route (color-coded by pace)
-- [ ] Combined HR + elevation chart overlay
-- [ ] **3D Trail Visualization**: Use GPS + elevation data for immersive 3D route replay
-
-### Phase 5: Export & Backup (Future)
+### Phase 5: Export & Sharing (Future)
+- [ ] **Video Export**: Render Activity Player to MP4 with FFmpeg (server-side)
 - [ ] PDF journal export with stats and photos
 - [ ] JSON backup/restore for all entries
 - [ ] Share entry as image for social media
@@ -398,6 +414,10 @@ bun run seed  # Creates 11 sample entries including training hike with Suunto da
 - [x] **Protected route guards** (NEW v3.7)
 - [x] **Image lazy loading with error handling** (NEW v3.7)
 - [x] **Global ErrorBoundary** (NEW v3.7)
+- [x] **Activity Player** (NEW v3.8) - Relive-style animated activity playback with Mapbox GL
+- [x] **Synchronized playback charts** (NEW v3.8) - HR, elevation, speed charts follow marker
+- [x] **Heatmap route coloring** (NEW v3.8) - Route colored by speed, HR, or elevation
+- [x] **Unified activity data parser** (NEW v3.8) - Suunto JSON + GPX auto-detection
 
 ---
 
