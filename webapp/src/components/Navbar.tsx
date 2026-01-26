@@ -19,12 +19,10 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <img
-              src="/logo.png"
-              alt="BigFun Hikes"
-              className="w-12 h-12 rounded-full group-hover:scale-110 transition-transform"
-            />
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-foreground group-hover:scale-110 transition-transform">
+              <Mountain className="h-6 w-6" />
+            </div>
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold font-outfit">BigFun Hikes!</h1>
               <p className="text-xs text-muted-foreground">
