@@ -56,11 +56,3 @@ This workspace contains a web app and backend server.
   4. Always include 2-3 creative new feature suggestions at the bottom of PROJECT_PLAN.md under "NEXT STEPS"
   5. Feature suggestions should be practical, build on existing functionality, and inspire future development
 </documentation_rules>
-
-<git_workflow>
-  When saving/committing the project:
-  1. ALWAYS push to GitHub after committing changes
-  2. Use: git push origin main
-  3. GitHub credentials are configured in the git remote URL
-  4. Never commit .env files - they contain secrets and are gitignored
-</git_workflow>
