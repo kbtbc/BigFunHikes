@@ -362,6 +362,41 @@ Both servers run with hot reload:
 - **Frontend**: http://localhost:8000 (Vite dev server)
 - **Backend**: http://localhost:3000 (Bun watch mode)
 
+### Syncing Local Dev Environment
+
+When pulling updates from the repository:
+
+```bash
+# 1. Pull latest code
+git pull origin main
+
+# 2. Install any new dependencies
+cd backend && bun install
+cd ../webapp && bun install
+
+# 3. Update database schema (if changed)
+cd ../backend
+bunx prisma db push
+bunx prisma generate
+
+# 4. (Optional) Reset sample data if needed
+bun run seed   # WARNING: deletes existing data!
+
+# 5. Start servers (in separate terminals)
+# Terminal 1:
+cd backend && bun run dev
+
+# Terminal 2:
+cd webapp && bun run dev
+```
+
+**Quick version** (if you just pulled code):
+```bash
+cd backend && bun install && bunx prisma db push && bun run dev
+# In another terminal:
+cd webapp && bun install && bun run dev
+```
+
 ## Deployment
 
 ### Environment Variables
