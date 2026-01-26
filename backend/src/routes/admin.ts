@@ -7,6 +7,48 @@ import { randomBytes, timingSafeEqual } from "crypto";
 
 const adminRouter = new Hono();
 
+// Rate limiting for login attempts
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+function getClientIP(c: { req: { header: (name: string) => string | undefined } }): string {
+  return c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+         c.req.header("x-real-ip") ||
+         "unknown";
+}
+
+function isRateLimited(ip: string): { limited: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const attempt = loginAttempts.get(ip);
+
+  if (!attempt || now > attempt.resetAt) {
+    return { limited: false };
+  }
+
+  if (attempt.count >= MAX_ATTEMPTS) {
+    const retryAfter = Math.ceil((attempt.resetAt - now) / 1000);
+    return { limited: true, retryAfter };
+  }
+
+  return { limited: false };
+}
+
+function recordFailedAttempt(ip: string): void {
+  const now = Date.now();
+  const attempt = loginAttempts.get(ip);
+
+  if (!attempt || now > attempt.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+  } else {
+    attempt.count++;
+  }
+}
+
+function clearAttempts(ip: string): void {
+  loginAttempts.delete(ip);
+}
+
 // Admin login request schema
 const adminLoginSchema = z.object({
   password: z.string().min(1, "Password is required"),
@@ -21,6 +63,23 @@ const SESSION_DURATION = 7 * 24 * 60 * 60; // 7 days in seconds
  */
 adminRouter.post("/login", async (c) => {
   try {
+    // Rate limiting check
+    const clientIP = getClientIP(c);
+    const rateLimit = isRateLimited(clientIP);
+
+    if (rateLimit.limited) {
+      return c.json(
+        {
+          error: {
+            message: `Too many login attempts. Try again in ${rateLimit.retryAfter} seconds.`,
+            code: "RATE_LIMITED",
+            retryAfter: rateLimit.retryAfter,
+          },
+        },
+        429
+      );
+    }
+
     let body;
     try {
       // Try to get the request body
@@ -61,6 +120,7 @@ adminRouter.post("/login", async (c) => {
       timingSafeEqual(passwordBuffer, adminPasswordBuffer);
 
     if (!passwordsMatch) {
+      recordFailedAttempt(clientIP);
       return c.json(
         {
           error: {
@@ -71,6 +131,9 @@ adminRouter.post("/login", async (c) => {
         401
       );
     }
+
+    // Clear rate limit on successful login
+    clearAttempts(clientIP);
 
     // Determine if we're using HTTPS (for production) or HTTP (for local dev)
     const isSecure = c.req.url.startsWith("https://");
