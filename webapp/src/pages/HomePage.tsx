@@ -40,23 +40,13 @@ export function HomePage() {
         </div>
 
         <div className="relative flex items-center justify-center text-center px-4 py-8 md:py-10">
-          <div className="max-w-4xl mx-auto">
-            {/* Logo + Title Row */}
-            <div className="flex items-center justify-center gap-6 md:gap-8 mb-6">
-              <img
-                src="/logo.png"
-                alt="BigFun Hikes Logo"
-                className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain flex-shrink-0"
-              />
-              <div className="text-left">
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-2 text-shadow">
-                  BigFun Hikes!
-                </h1>
-                <p className="text-xl md:text-2xl text-white/90 text-shadow-sm">
-                  Follow my journey along the Appalachian Trail
-                </p>
-              </div>
-            </div>
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 text-shadow">
+              BigFun Hikes!
+            </h1>
+            <p className="text-xl md:text-2xl text-white/90 mb-6 text-shadow-sm">
+              Follow my journey along the Appalachian Trail
+            </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/timeline">
                 <Button size="lg" className="font-semibold">
