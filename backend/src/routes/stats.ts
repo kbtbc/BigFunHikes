@@ -54,10 +54,11 @@ statsRouter.get("/", async (c) => {
     const AT_TOTAL_MILES = 2190; // Total Appalachian Trail miles
     const percentComplete = (totalMiles / AT_TOTAL_MILES) * 100;
 
-    // Find longest day (by miles)
+    // Find longest day (by miles) - entries[0] is guaranteed to exist since we checked length > 0
+    const firstEntry = entries[0]!;
     const longestDayEntry = entries.reduce((max, entry) =>
       entry.milesHiked > max.milesHiked ? entry : max
-    , entries[0]);
+    , firstEntry);
     const longestDay = {
       miles: longestDayEntry.milesHiked,
       date: longestDayEntry.date.toISOString(),
@@ -67,7 +68,7 @@ statsRouter.get("/", async (c) => {
     // Find biggest climb (by elevation)
     const biggestClimbEntry = entries.reduce((max, entry) =>
       (entry.elevationGain || 0) > (max.elevationGain || 0) ? entry : max
-    , entries[0]);
+    , firstEntry);
     const biggestClimb = {
       elevation: biggestClimbEntry.elevationGain || 0,
       date: biggestClimbEntry.date.toISOString(),
@@ -77,10 +78,12 @@ statsRouter.get("/", async (c) => {
     // Calculate current streak (consecutive days)
     let currentStreak = 0;
     for (let i = entries.length - 1; i >= 0; i--) {
-      const currentDate = new Date(entries[i].date);
-      const nextDate = i < entries.length - 1 ? new Date(entries[i + 1].date) : null;
+      const currentEntry = entries[i]!;
+      const nextEntry = i < entries.length - 1 ? entries[i + 1] : null;
+      const currentDate = new Date(currentEntry.date);
 
-      if (nextDate) {
+      if (nextEntry) {
+        const nextDate = new Date(nextEntry.date);
         const diffDays = Math.floor((nextDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays === 1) {
           currentStreak++;
