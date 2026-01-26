@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.4 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.5 COMPLETE)
 
 ### Overview
 
@@ -95,8 +95,11 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - Display actual recorded route on maps
 - Support for Suunto, Garmin, and other fitness watches
 
-### Suunto Watch Data Import (NEW v3.4 - 100% Complete)
+### Suunto Watch Data Import (UPDATED v3.5 - 100% Complete)
 - **Native JSON import**: Parse Suunto watch export files directly
+- **NEW: Upload UI in Entry Forms**: Import Suunto JSON directly when creating or editing entries
+- **NEW: Auto-populate Fields**: Miles, elevation gain, date filled automatically from watch data
+- **NEW: Combined GPX + Suunto**: Use GPX for route display and Suunto for fitness metrics together
 - **Heart Rate Analytics**:
   - Average, min, max BPM display
   - Time-in-zone distribution (Recovery, Easy, Aerobic, Threshold, Maximum)
@@ -264,23 +267,25 @@ webapp/public/data/
 
 ## NEXT STEPS (Suggested Priorities)
 
-### Phase 1: Suunto Integration Enhancements (High Priority)
-- [ ] **Suunto JSON Upload UI**: Add file upload component in NewEntryPage and EditEntryPage for Suunto JSON files (similar to GPX upload)
-- [ ] **Auto-populate from Suunto**: When Suunto JSON is uploaded, auto-fill miles, elevation, date, duration from watch data
+### Phase 1: Watch Data Enhancements (High Priority)
 - [ ] **Garmin FIT Support**: Extend parser to support Garmin FIT files (similar data structure)
-- [ ] **Combined GPX+Suunto**: Allow both GPX route data AND Suunto metrics on same entry
+- [ ] **Apple Watch Health Export**: Support importing workout data from Apple Health exports
+- [ ] **Strava Integration**: Connect to Strava API to pull workout data directly
+- [ ] **Watch Data Comparison**: Compare fitness metrics between hikes (HR trends, pace improvement)
 
 ### Phase 2: Training Analytics Dashboard (Medium Priority)
 - [ ] Separate training stats page with cumulative training metrics
 - [ ] Training volume charts (weekly/monthly miles, elevation)
 - [ ] Training goals and progress tracking
 - [ ] Compare training vs trail performance
+- [ ] **Fitness Readiness Score**: Combine HR, elevation gain, and mileage to track conditioning
 
 ### Phase 3: Enhanced Visualizations (Medium Priority)
 - [ ] Interactive elevation profile on entry detail (click to see HR/pace at that point)
 - [ ] Speed/pace heatmap on GPS route (color-coded by pace)
 - [ ] Combined HR + elevation chart overlay
 - [ ] Weekly summary cards with aggregated watch data
+- [ ] **3D Trail Visualization**: Use GPS + elevation data for immersive 3D route replay
 
 ### Phase 4: Export & Backup (Lower Priority)
 - [ ] PDF journal export with stats and photos
@@ -294,6 +299,7 @@ webapp/public/data/
 - [ ] Trail section completion by state
 - [ ] Public trail page for followers
 - [ ] Push notifications for daily logging reminders
+- [ ] **AI Trail Insights**: Use entry content and watch data to generate personalized hiking tips
 
 ---
 
@@ -362,10 +368,13 @@ bun run seed  # Creates 11 sample entries including training hike with Suunto da
 - [x] Training hike support
 - [x] Offline mode with sync
 - [x] Photo caption editing
-- [x] **Suunto watch data import and display** (NEW v3.4)
-- [x] **GPS route from Suunto data** (NEW v3.4)
-- [x] **HR zones, pace, steps, calories, temperature display** (NEW v3.4)
-- [x] **Lap splits table** (NEW v3.4)
+- [x] **Suunto watch data import and display** (v3.4)
+- [x] **GPS route from Suunto data** (v3.4)
+- [x] **HR zones, pace, steps, calories, temperature display** (v3.4)
+- [x] **Lap splits table** (v3.4)
+- [x] **Suunto upload UI in entry forms** (NEW v3.5)
+- [x] **Auto-populate fields from Suunto data** (NEW v3.5)
+- [x] **Combined GPX + Suunto support** (NEW v3.5)
 
 ---
 

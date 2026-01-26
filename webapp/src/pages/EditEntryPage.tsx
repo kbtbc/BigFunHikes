@@ -15,10 +15,11 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { entriesApi, photosApi, api, type UpdateJournalEntryInput, type Photo, type WeatherData } from "@/lib/api";
 import { useEntry, useUpdateEntry } from "@/hooks/use-entries";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud, Info } from "lucide-react";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud, Info, Watch } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCoordinates } from "@/hooks/use-geolocation";
 import { GpxFileUpload, type GpxUploadResult } from "@/components/GpxFileUpload";
+import { SuuntoFileUpload, type SuuntoUploadResult } from "@/components/SuuntoFileUpload";
 
 // Photo state interface for new uploads
 interface PhotoUpload {
@@ -60,19 +61,41 @@ export default function EditEntryPage() {
   const [gpxData, setGpxData] = useState<GpxUploadResult | null>(null);
   const [gpxRemoved, setGpxRemoved] = useState(false);
 
+  // Suunto data state
+  const [suuntoData, setSuuntoData] = useState<SuuntoUploadResult | null>(null);
+  const [suuntoRemoved, setSuuntoRemoved] = useState(false);
+
   // Handle GPX parsed callback
   const handleGpxParsed = (result: GpxUploadResult | null) => {
     if (result) {
       setGpxData(result);
       setGpxRemoved(false);
-      // Auto-populate miles hiked from GPX data
-      setFormData((prev) => ({
-        ...prev,
-        milesHiked: result.distanceMiles.toString(),
-      }));
+      // Auto-populate miles hiked from GPX data (only if no Suunto data)
+      if (!suuntoData) {
+        setFormData((prev) => ({
+          ...prev,
+          milesHiked: result.distanceMiles.toString(),
+        }));
+      }
     } else {
       setGpxData(null);
       setGpxRemoved(true);
+    }
+  };
+
+  // Handle Suunto parsed callback - auto-populate fields
+  const handleSuuntoParsed = (result: SuuntoUploadResult | null) => {
+    if (result) {
+      setSuuntoData(result);
+      setSuuntoRemoved(false);
+      // Auto-populate form fields from Suunto data
+      setFormData((prev) => ({
+        ...prev,
+        milesHiked: result.distanceMiles.toFixed(1),
+      }));
+    } else {
+      setSuuntoData(null);
+      setSuuntoRemoved(true);
     }
   };
 
@@ -208,6 +231,13 @@ export default function EditEntryPage() {
       ? parseFloat(formData.totalMilesCompleted)
       : entry.totalMilesCompleted;
 
+    // Determine elevation gain - prioritize Suunto, then GPX
+    const newElevationGain = suuntoData
+      ? suuntoData.elevationGainFeet
+      : gpxData
+        ? gpxData.elevationGainFeet
+        : undefined;
+
     const updateData: UpdateJournalEntryInput = {
       date: dateString,
       dayNumber: formData.dayNumber,
@@ -216,14 +246,25 @@ export default function EditEntryPage() {
       milesHiked,
       totalMilesCompleted,
       locationName: formData.locationName.trim() || null,
+      // Include elevation gain if new watch data was uploaded
+      ...(newElevationGain !== undefined && { elevationGain: newElevationGain }),
       // Include GPX data if new GPX was uploaded, or null if removed
       ...(gpxData && {
         gpxData: gpxData.gpxData,
-        elevationGain: gpxData.elevationGainFeet,
         latitude: gpxData.startCoords[0],
         longitude: gpxData.startCoords[1],
       }),
       ...(gpxRemoved && !gpxData && { gpxData: null }),
+      // Include Suunto data if new file was uploaded, or null if removed
+      ...(suuntoData && {
+        suuntoData: suuntoData.suuntoData,
+        // Use Suunto GPS if no GPX data
+        ...(!gpxData && suuntoData.startCoords && {
+          latitude: suuntoData.startCoords[0],
+          longitude: suuntoData.startCoords[1],
+        }),
+      }),
+      ...(suuntoRemoved && !suuntoData && { suuntoData: null }),
     };
 
     try {
@@ -480,18 +521,53 @@ export default function EditEntryPage() {
                 </div>
               </div>
 
-              {/* GPX Import Section */}
+              {/* Watch Data Import Section */}
               <div className="space-y-4 pt-4 border-t">
-                <GpxFileUpload
-                  onGpxParsed={handleGpxParsed}
-                  existingGpx={!gpxRemoved ? entry.gpxData : null}
+                <div className="flex items-center gap-2">
+                  <Watch className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold font-outfit">Import Watch Data</h3>
+                </div>
+
+                {/* Suunto Upload */}
+                <SuuntoFileUpload
+                  onSuuntoParsed={handleSuuntoParsed}
+                  existingSuuntoData={!suuntoRemoved ? entry.suuntoData : null}
                   disabled={isPending}
                 />
-                {gpxData && (
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                {suuntoData && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-400">
                     <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <p className="text-sm">
-                      New GPX track imported! Miles have been updated. Your route will be displayed on the entry map.
+                      New Suunto data imported! Miles have been updated.
+                      Heart rate, pace, and lap data will be displayed on the entry.
+                    </p>
+                  </div>
+                )}
+
+                {/* GPX Upload */}
+                <div className="pt-2">
+                  <GpxFileUpload
+                    onGpxParsed={handleGpxParsed}
+                    existingGpx={!gpxRemoved ? entry.gpxData : null}
+                    disabled={isPending}
+                  />
+                  {gpxData && (
+                    <div className="flex items-start gap-2 p-3 mt-3 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                      <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm">
+                        New GPX track imported! {!suuntoData && "Miles have been updated. "}
+                        Your route will be displayed on the entry map.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Combined info when both are present */}
+                {suuntoData && gpxData && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">
+                      Using Suunto metrics (HR, pace, steps) + GPX route for best accuracy.
                     </p>
                   </div>
                 )}

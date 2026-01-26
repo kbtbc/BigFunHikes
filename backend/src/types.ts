@@ -27,6 +27,7 @@ export const createJournalEntrySchema = z.object({
   locationName: z.string().max(500).nullable().optional(),
   weather: z.string().nullable().optional(), // JSON string of weather data
   gpxData: z.string().nullable().optional(),
+  suuntoData: z.string().nullable().optional(), // JSON string of parsed Suunto watch data
   entryType: entryTypeSchema.optional().default("trail"),
 });
 
@@ -48,6 +49,7 @@ export const updateJournalEntrySchema = z.object({
   locationName: z.string().max(500).nullable().optional(),
   weather: z.string().nullable().optional(), // JSON string of weather data
   gpxData: z.string().nullable().optional(),
+  suuntoData: z.string().nullable().optional(), // JSON string of parsed Suunto watch data
   entryType: entryTypeSchema.optional(),
 });
 
@@ -85,6 +87,7 @@ export const journalEntrySchema = z.object({
   locationName: z.string().nullable(),
   weather: z.string().nullable(), // JSON string of weather data
   gpxData: z.string().nullable(),
+  suuntoData: z.string().nullable(), // JSON string of parsed Suunto watch data
   entryType: entryTypeSchema,
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

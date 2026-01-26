@@ -205,6 +205,7 @@ export interface CreateJournalEntryInput {
   locationName?: string | null;
   weather?: string | null;
   gpxData?: string | null;
+  suuntoData?: string | null;
   entryType?: "trail" | "training";
 }
 
@@ -221,6 +222,7 @@ export interface UpdateJournalEntryInput {
   locationName?: string | null;
   weather?: string | null;
   gpxData?: string | null;
+  suuntoData?: string | null;
   entryType?: "trail" | "training";
 }
 
