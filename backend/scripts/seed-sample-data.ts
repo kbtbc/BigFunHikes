@@ -397,19 +397,26 @@ async function main() {
     if ('suuntoFile' in entry && entry.suuntoFile) {
       try {
         // Try multiple paths to find the Suunto file (now in backend/data/)
+        // Use path.resolve for cross-platform compatibility (Windows/Mac/Linux)
         const possiblePaths = [
-          path.join(__dirname, '../data', entry.suuntoFile),
-          path.join(process.cwd(), 'data', entry.suuntoFile),
-          `/home/user/workspace/backend/data/${entry.suuntoFile}`,
+          path.resolve(__dirname, '..', 'data', entry.suuntoFile),
+          path.resolve(process.cwd(), 'data', entry.suuntoFile),
+          path.resolve(process.cwd(), '..', 'webapp', 'public', entry.suuntoFile), // Legacy location fallback
         ];
 
         let suuntoContent: string | null = null;
+        console.log(`  Looking for Suunto file: ${entry.suuntoFile}`);
         for (const filePath of possiblePaths) {
+          console.log(`    Checking: ${filePath}`);
           if (fs.existsSync(filePath)) {
             console.log(`  Loading Suunto data from: ${filePath}`);
             suuntoContent = fs.readFileSync(filePath, 'utf-8');
             break;
           }
+        }
+
+        if (!suuntoContent) {
+          console.log(`  ⚠ Suunto file not found in any location. Make sure ${entry.suuntoFile} exists in backend/data/`);
         }
 
         if (suuntoContent) {
