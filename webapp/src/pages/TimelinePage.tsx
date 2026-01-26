@@ -15,6 +15,22 @@ export function TimelinePage() {
 
   const entries = entriesData?.entries.map(transformApiEntryToComponent) || [];
 
+  // Sort entries: training entries first, then trail entries by day (descending)
+  const sortedEntries = [...entries].sort((a, b) => {
+    const aIsTraining = a.entryType === 'training';
+    const bIsTraining = b.entryType === 'training';
+
+    // Training entries come first
+    if (aIsTraining && !bIsTraining) return -1;
+    if (!aIsTraining && bIsTraining) return 1;
+
+    // Within same type, sort by day (descending for trail, ascending for training)
+    if (aIsTraining && bIsTraining) {
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    }
+    return b.day - a.day;
+  });
+
   return (
     <div className="min-h-screen py-12 md:py-16">
       <div className="container mx-auto px-4">
@@ -58,7 +74,7 @@ export function TimelinePage() {
               </p>
             </div>
           ) : (
-            <Timeline entries={entries} />
+            <Timeline entries={sortedEntries} />
           )}
         </div>
       </div>
