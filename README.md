@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.9)
+## Current Features (v3.10)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -45,19 +45,22 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Lap Splits Table**: Per-lap breakdown with duration, pace, HR, elevation, temperature
   - **Effort Score**: Calculated training intensity based on HR zones + elevation
   - Beautiful tabbed display with charts and statistics
-- **NEW: Activity Player (v3.8)**: Relive-style animated activity playback
+- **Activity Player (v3.8)**: Relive-style animated activity playback
   - **Animated Map Playback**: Mapbox GL with 3D terrain and moving marker
   - **Synchronized Charts**: Heart rate, elevation, and speed charts follow playback position
   - **Heatmap Route Coloring**: Route colored by speed, heart rate, or elevation gradient
   - **Playback Controls**: Play/pause, speed (0.5x-4x), scrub bar, skip forward/back
   - **Auto-Detection**: Works with both Suunto JSON and GPX data sources
-  - **Photo Pins**: Photos displayed on map at their locations
+  - **Photo Markers**: Photos displayed on map at GPS locations along the route
   - Expandable section on entry detail pages (only shows when GPS data available)
-- **NEW: Activity Player Enhancements (v3.9)**:
-  - **3D Terrain Mode**: Toggle Mapbox GL terrain extrusion for immersive flyover views with sky atmosphere
+- **Activity Player Enhancements (v3.9-3.10)**:
+  - **3D Terrain Mode**: Toggle Mapbox GL terrain extrusion (2.5x) for immersive flyover views with sky atmosphere
   - **Camera Modes**: Follow (tracks marker), Overview (user-controlled), First-Person (looks ahead in direction of travel)
-  - **Photo Timestamps**: Photos matched to GPS timestamps, appear during playback with fade-in effect
+  - **Photo Timestamps**: Photos matched to GPS coordinates, appear during playback with fade-in effect
   - **Segment Highlighting**: Click and drag on charts to highlight that section on the map in yellow
+  - **Satellite Toggle**: Switch between outdoor and satellite map styles
+  - **Smoother Camera (v3.10)**: Improved camera tracking with panTo, linear easing, and zoom stability
+  - **Photo Marker Fix (v3.10)**: Photos now correctly placed along GPS route with proper coordinate matching
 - **Improved Entry Layout**: Title and content appear above photos for better readability
 - **Photo Uploads**: Add and caption multiple photos per entry with carousel display
 - **Photo Caption Editing**: Edit captions on existing photos directly from the edit page

@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.9 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.10 COMPLETE)
 
 ### Overview
 
@@ -151,10 +151,11 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - Only shows when GPS track data is available
 - Components: ActivityMap, ActivityCharts, PlaybackControls
 
-### Activity Player Enhancements (NEW v3.9 - 100% Complete)
-- **3D Terrain Mode**: Toggle Mapbox GL terrain extrusion with 1.5x exaggeration
+### Activity Player Enhancements (v3.9-3.10 - 100% Complete)
+- **3D Terrain Mode**: Toggle Mapbox GL terrain extrusion with 2.5x exaggeration
   - Sky atmosphere layer for realistic horizon
   - Adjusts pitch automatically when enabled
+  - Satellite map style toggle
 - **Camera Modes**: Three distinct viewing perspectives
   - **Follow**: Smooth pan keeping marker centered, 45-60° pitch
   - **Overview**: User-controlled camera, no automatic movement
@@ -168,6 +169,16 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
   - Selected segment highlighted in yellow on the map
   - Map flies to selected segment automatically
   - Double-click to clear selection
+- **Camera Smoothness (v3.10)**: Major improvements to playback fluidity
+  - Follow mode uses panTo() for smoother continuous motion
+  - Linear easing for natural movement feel
+  - Zoom only adjusted when significantly off-target (>0.3 difference)
+  - Camera throttle reduced to 150ms for responsive tracking
+  - First-person bearing lerp factor reduced to 0.08 for gentler turns
+- **Photo Markers Fix (v3.10)**: Photos now display correctly on map
+  - Fixed GPS coordinate matching to actual route
+  - Seed data updated with coordinates along the actual Suunto track
+  - Debug logging added for photo matching troubleshooting
 
 ### Enhanced Statistics (100% Complete)
 - 7-day moving average pace
@@ -440,6 +451,23 @@ bun run seed  # Creates 11 sample entries including training hike with Suunto da
 - [x] **Camera Modes** (NEW v3.9) - Follow, Overview, and First-Person perspectives
 - [x] **Photo Timestamps** (NEW v3.9) - Photos matched to GPS/timeline for timed display
 - [x] **Segment Highlighting** (NEW v3.9) - Click charts to highlight map sections
+- [x] **Satellite Map Toggle** (NEW v3.10) - Switch between outdoor and satellite styles
+- [x] **Smoother Camera Tracking** (NEW v3.10) - panTo with linear easing, zoom stability
+- [x] **Photo Markers Fix** (NEW v3.10) - Correct GPS coordinate matching for photos
+
+---
+
+## NEXT STEPS (Suggested Priorities)
+
+### Phase 1: Activity Player Polish (High Priority)
+- [ ] **Playback Speed Indicator**: Visual feedback showing current playback speed on map
+- [ ] **Photo Popup on Hover**: Show photo preview when hovering over photo markers
+- [ ] **Elevation-Aware Camera**: Adjust camera altitude based on terrain height in first-person mode
+
+### Phase 2: UX Improvements (Medium Priority)
+- [ ] **Bulk Photo Upload**: Drag-and-drop multiple photos at once with progress indicator
+- [ ] **Entry Templates**: Pre-fill common fields based on previous entries
+- [ ] **Quick Entry Mode**: Simplified form for rapid trail logging (just miles + notes)
 
 ---
 
