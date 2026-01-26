@@ -21,6 +21,7 @@ model JournalEntry {
   locationName         String?
   weather              String?
   gpxData              String?
+  suuntoData           String?  // Parsed Suunto watch data (JSON string)
   entryType            String   @default("trail") // "trail" | "training"
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt

@@ -1,3 +1,5 @@
+import type { SuuntoParseResult } from "@/lib/suunto-parser";
+
 export interface WeatherInfo {
   temperature: number;
   temperatureUnit: "F" | "C";
@@ -35,6 +37,7 @@ export interface JournalEntry {
   weather?: WeatherInfo; // Weather at time of entry
   locationName?: string; // Human-readable location name
   entryType?: "trail" | "training"; // Type of entry (default: trail)
+  suuntoData?: SuuntoParseResult; // Parsed Suunto watch data
 }
 
 export const TOTAL_AT_MILES = 2190;

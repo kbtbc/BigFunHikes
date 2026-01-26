@@ -185,6 +185,7 @@ export interface JournalEntry {
   locationName: string | null;
   weather: string | null; // JSON string of WeatherData
   gpxData: string | null;
+  suuntoData: string | null; // JSON string of SuuntoParseResult
   entryType: "trail" | "training";
   createdAt: string;
   updatedAt: string;

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { JournalEntry } from "@/components/JournalEntry";
 import { EntryMap } from "@/components/EntryMap";
 import { EditableCoordinates } from "@/components/EditableCoordinates";
+import { SuuntoStatsDisplay } from "@/components/SuuntoStatsDisplay";
 import { useEntry, useDeleteEntry, useEntries, useUpdateEntry } from "@/hooks/use-entries";
 import { useAuth } from "@/context/AuthContext";
 import { transformApiEntryToComponent } from "@/lib/transformEntries";
@@ -316,6 +317,13 @@ export function EntryDetailPage() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Suunto Fitness Watch Data */}
+          {entry.suuntoData && (
+            <div className="mt-8 p-6 bg-background rounded-lg border-2 shadow-md">
+              <SuuntoStatsDisplay suuntoData={entry.suuntoData} />
             </div>
           )}
 

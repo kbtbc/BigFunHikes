@@ -16,6 +16,9 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { parseSuuntoJson } from '../src/suunto-parser';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -49,32 +52,36 @@ function getNextPhotos(count: number): string[] {
 const SAMPLE_ENTRIES = [
   {
     day: -1,
-    date: '2026-03-10',
-    title: 'Pre-Trail Training Hike - Kennesaw Mountain',
-    location: 'Kennesaw Mountain, GA',
-    latitude: 33.9831,
-    longitude: -84.5781,
+    date: '2026-01-23',
+    title: 'Pre-Trail Training Hike - Suwanee Creek Greenway',
+    location: 'Suwanee Creek Greenway, GA',
+    latitude: 34.2479,
+    longitude: -84.1125,
     entryType: 'training' as const,
-    content: `Final shakedown hike before starting the AT! Hiked the full Kennesaw Mountain trail loop with my full pack to test gear and get my legs ready.
+    suuntoFile: 'suwaneetrek-1.json', // Will load Suunto data from this file
+    content: `Amazing training hike on the Suwanee Creek Greenway! This was a great shakedown for my upcoming AT thru-hike attempt.
 
-Pack weight came in at 28 lbs with food and water. Still a bit heavy but I'm confident I can handle it. The hip belt is dialed in perfectly now.
+The watch data shows I'm getting into solid hiking shape:
+- Covered over 10 miles with significant elevation changes
+- Heart rate stayed mostly in zones 1-2 (aerobic conditioning)
+- Pace was consistent throughout the hike
 
-Tested out my new water filter and it works great. Also broke in my trail runners a bit more - no hot spots!
+The trail had some surprisingly challenging terrain for a greenway - lots of elevation variation and technical sections. Great prep for the real mountains ahead!
 
-Feeling nervous but excited. Five more days until Springer Mountain!`,
-    milesHiked: 8.5,
-    elevationGain: 1100,
+My legs feel strong and ready. Just need to keep up the training until Springer Mountain!`,
+    milesHiked: 10.7, // Will be updated from Suunto data
+    elevationGain: 2058, // Will be updated from Suunto data
     weather: {
-      temperature: 58,
+      temperature: 65,
       temperatureUnit: 'F' as const,
-      conditions: 'Sunny',
+      conditions: 'Partly Cloudy',
       humidity: 55,
       windSpeed: 8,
       windUnit: 'mph',
-      recordedAt: '2026-03-10T15:00:00Z',
+      recordedAt: '2026-01-23T12:00:00Z',
     },
     photoCaptions: [
-      'Testing my full pack setup',
+      'Testing my full pack setup on the greenway',
     ],
   },
   {
@@ -380,20 +387,69 @@ async function main() {
 
     console.log(`Creating Day ${entry.day}: ${entry.title}`);
 
+    // Load Suunto data if specified
+    let suuntoData: string | null = null;
+    let actualMiles = entry.milesHiked;
+    let actualElevation = entry.elevationGain;
+    let actualLat = entry.latitude;
+    let actualLon = entry.longitude;
+
+    if ('suuntoFile' in entry && entry.suuntoFile) {
+      try {
+        // Try multiple paths to find the Suunto file
+        const possiblePaths = [
+          path.join(__dirname, '../../webapp/public', entry.suuntoFile),
+          path.join(process.cwd(), '../webapp/public', entry.suuntoFile),
+          `/home/user/workspace/webapp/public/${entry.suuntoFile}`,
+        ];
+
+        let suuntoContent: string | null = null;
+        for (const filePath of possiblePaths) {
+          if (fs.existsSync(filePath)) {
+            console.log(`  Loading Suunto data from: ${filePath}`);
+            suuntoContent = fs.readFileSync(filePath, 'utf-8');
+            break;
+          }
+        }
+
+        if (suuntoContent) {
+          const parsed = parseSuuntoJson(suuntoContent);
+
+          // Update entry with actual Suunto data
+          actualMiles = parsed.distanceMiles;
+          actualElevation = parsed.elevation.ascentFeet;
+
+          // Use first GPS coordinate if available
+          if (parsed.gpsTrack.length > 0) {
+            actualLat = parsed.gpsTrack[0].lat;
+            actualLon = parsed.gpsTrack[0].lon;
+          }
+
+          // Store parsed data (not raw file)
+          suuntoData = JSON.stringify(parsed);
+
+          console.log(`  ✓ Loaded Suunto data: ${parsed.distanceMiles} miles, ${parsed.stepCount} steps, ${parsed.heartRate.avgBpm} avg HR`);
+        }
+      } catch (err) {
+        console.log(`  ⚠ Could not load Suunto file: ${err}`);
+      }
+    }
+
     const journalEntry = await prisma.journalEntry.create({
       data: {
         date: new Date(entry.date + 'T12:00:00Z'),
         dayNumber: entry.day,
         title: entry.title,
         content: entry.content,
-        milesHiked: entry.milesHiked,
-        elevationGain: entry.elevationGain,
+        milesHiked: actualMiles,
+        elevationGain: actualElevation,
         totalMilesCompleted: totalMiles,
         weather: JSON.stringify(entry.weather),
-        latitude: entry.latitude ?? null,
-        longitude: entry.longitude ?? null,
+        latitude: actualLat ?? null,
+        longitude: actualLon ?? null,
         locationName: entry.location ?? null,
         gpxData: null,
+        suuntoData: suuntoData,
         entryType: entry.entryType ?? 'trail',
       },
     });

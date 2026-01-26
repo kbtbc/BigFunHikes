@@ -1,5 +1,6 @@
 import type { JournalEntry as ApiJournalEntry, WeatherData } from "@/lib/api";
 import type { JournalEntry as ComponentJournalEntry, WeatherInfo } from "@/data/journalEntries";
+import type { SuuntoParseResult } from "@/lib/suunto-parser";
 
 const TOTAL_AT_MILES = 2190;
 
@@ -79,6 +80,16 @@ export function transformApiEntryToComponent(
     }
   }
 
+  // Parse Suunto data if available
+  let suuntoData: SuuntoParseResult | undefined;
+  if (apiEntry.suuntoData) {
+    try {
+      suuntoData = JSON.parse(apiEntry.suuntoData) as SuuntoParseResult;
+    } catch (e) {
+      console.warn("Failed to parse Suunto data:", e);
+    }
+  }
+
   return {
     id: apiEntry.id,
     day: apiEntry.dayNumber,
@@ -102,6 +113,7 @@ export function transformApiEntryToComponent(
     weather,
     locationName: apiEntry.locationName || undefined,
     entryType: apiEntry.entryType,
+    suuntoData,
   };
 }
 

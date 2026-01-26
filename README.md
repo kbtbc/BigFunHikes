@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.3)
+## Current Features (v3.4)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -28,6 +28,19 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - Auto-fills miles hiked and GPS coordinates from your track data
   - Displays your actual recorded route on the entry map (red line for trail entries, amber for training)
   - Replaces the estimated AT segment with your actual GPS track when present
+- **Suunto Watch Data Import** (NEW in v3.4): Full fitness watch data analysis
+  - Import native Suunto JSON export files with comprehensive fitness metrics
+  - **Heart Rate Analytics**: Average, min, max HR with time-in-zone distribution
+    - Visual HR zone bar chart (Recovery, Easy, Aerobic, Threshold, Maximum)
+    - HR over time chart
+  - **Pace & Speed**: Average pace (min/mile), average/max speed
+  - **Step Count**: Total steps with steps-per-mile calculation
+  - **Calories Burned**: Energy expenditure from watch sensors
+  - **Temperature**: Actual trail temperature recorded (min, avg, max)
+  - **Elevation Profile**: Detailed altitude chart from barometric/GPS data
+  - **Lap Splits Table**: Per-lap breakdown with duration, pace, HR, elevation, temperature
+  - **Effort Score**: Calculated training intensity based on HR zones + elevation
+  - Beautiful tabbed display with charts and statistics
 - **Improved Entry Layout**: Title and content appear above photos for better readability
 - **Photo Uploads**: Add and caption multiple photos per entry with carousel display
 - **Photo Caption Editing**: Edit captions on existing photos directly from the edit page
@@ -134,6 +147,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 │   │   ├── lib/
 │   │   │   ├── api.ts                 # API client
 │   │   │   ├── gpx-parser.ts          # GPX file parsing and distance calculations
+│   │   │   ├── suunto-parser.ts       # Suunto JSON watch data parser
 │   │   │   ├── offline-storage.ts     # IndexedDB storage for offline entries
 │   │   │   ├── sync-service.ts        # Online/offline sync logic
 │   │   │   └── transformEntries.ts    # Data transformation
