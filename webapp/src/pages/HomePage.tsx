@@ -59,7 +59,7 @@ export function HomePage() {
               <Alert className="bg-amber-50/95 dark:bg-amber-950/95 border-amber-200 dark:border-amber-800">
                 <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <AlertDescription className="text-amber-900 dark:text-amber-100">
-                  <strong>Under Construction</strong> - Currently using test data (I don't start hiking until mid Feb)
+                  <strong>Under Construction</strong> - I'm in training, hike starting Feb 12. Some data seeded for testing.
                 </AlertDescription>
               </Alert>
             </div>
