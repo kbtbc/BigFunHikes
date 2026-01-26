@@ -12,17 +12,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function HomePage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { data: entriesData, isLoading: entriesLoading, error: entriesError } = useEntries(1, 1, {
+  const { data: entriesData, isLoading: entriesLoading, error: entriesError } = useEntries(1, 20, {
     enabled: true, // Public access - no authentication required
   });
   const { data: statsData, isLoading: statsLoading, error: statsError } = useStats({
     enabled: true, // Public access - no authentication required
   });
 
-  const latestEntry = entriesData?.entries[0]
-    ? transformApiEntryToComponent(entriesData.entries[0])
-    : null;
   const allEntries = entriesData?.entries.map(transformApiEntryToComponent) || [];
+
+  // Find the most recent training entry, or fall back to the latest entry
+  const latestTrainingEntry = allEntries.find(e => e.entryType === 'training');
+  const latestEntry = latestTrainingEntry || allEntries[0] || null;
 
   return (
     <div className="min-h-screen">
