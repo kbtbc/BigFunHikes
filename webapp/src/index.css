@@ -153,6 +153,6 @@ All colors are HSL format
 
 /* Journal full content - only apply to detail view, not timeline preview */
 .journal-full-content p {
-  margin-bottom: 0.85em !important;
+  margin-bottom: 0.65em !important;
   line-height: 1.6 !important;
 }
