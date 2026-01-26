@@ -82,7 +82,7 @@ All colors are HSL format
     --popover-foreground: 60 29% 96%;
 
     --primary: 146 26% 45%;
-    --primary-foreground: 230 25% 12%;
+    --primary-foreground: 60 29% 98%;
 
     --secondary: 106 45% 35%;
     --secondary-foreground: 60 29% 96%;
@@ -149,4 +149,10 @@ All colors are HSL format
   .text-shadow {
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
+}
+
+/* Journal full content - only apply to detail view, not timeline preview */
+.journal-full-content p {
+  margin-bottom: 0.55em !important;
+  line-height: 1.6 !important;
 }

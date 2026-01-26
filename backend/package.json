@@ -7,7 +7,8 @@
     "dev": "bun run --hot src/index.ts",
     "start": "test -f prisma/schema.prisma && bunx prisma generate || true && bun run src/index.ts",
     "studio": "cloud-studio --port 3001 --hostname 0.0.0.0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "bun run scripts/seed-sample-data.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",

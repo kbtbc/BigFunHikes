@@ -68,22 +68,39 @@ adminRouter.post("/login", async (c) => {
 
     // Determine if we're using HTTPS (for production) or HTTP (for local dev)
     const isSecure = c.req.url.startsWith("https://");
-    
+
     // Extract hostname from request URL
     const url = new URL(c.req.url);
     const hostname = url.hostname;
-    
+
+    console.log(`[Login] Request URL: ${c.req.url}, hostname: ${hostname}, isSecure: ${isSecure}`);
+
     // Determine cookie domain: set for domain names, but not for localhost/IP addresses
     // This allows cookies to work across different ports on the same domain
-    const isDomainName = hostname !== "localhost" && 
-                        hostname !== "127.0.0.1" && 
+    const isDomainName = hostname !== "localhost" &&
+                        hostname !== "127.0.0.1" &&
                         !hostname.match(/^\d+\.\d+\.\d+\.\d+$/); // Not an IP address
-    
+
+    // For Vibecode subdomains, extract the parent domain to allow cross-subdomain cookies
+    // e.g., preview-xxx.dev.vibecode.run -> .dev.vibecode.run
+    let cookieDomain: string | undefined;
+    if (isDomainName) {
+      const parts = hostname.split('.');
+      // If it's a vibecode subdomain (e.g., xxx.dev.vibecode.run or xxx.vibecode.run)
+      if (hostname.includes('.vibecode.run')) {
+        // Extract parent domain with leading dot (e.g., .dev.vibecode.run or .vibecode.run)
+        cookieDomain = '.' + parts.slice(-3).join('.');
+      } else {
+        // For other domains, use the hostname as-is
+        cookieDomain = hostname;
+      }
+    }
+
     // For domain names with HTTP, we need sameSite=None to work across ports
     // Even though browsers prefer secure=true with sameSite=None, some allow it for local dev
     // We'll try sameSite=None with secure=false for domain names on HTTP
     const sameSiteValue = isSecure ? "None" : (isDomainName ? "None" : "Lax");
-    
+
     // Set admin session cookie
     setCookie(c, "admin_session", "authenticated", {
       httpOnly: true,
@@ -91,19 +108,23 @@ adminRouter.post("/login", async (c) => {
       sameSite: sameSiteValue as "None" | "Lax" | "Strict",
       maxAge: SESSION_DURATION,
       path: "/",
-      ...(isDomainName && { domain: hostname }), // Set domain for domain names to allow cross-port sharing
+      ...(cookieDomain && { domain: cookieDomain }), // Set domain for cross-subdomain sharing
       ...(isSecure && { partitioned: true }), // Only use partitioned for HTTPS
     });
 
     // Generate a token for Authorization header fallback (for cross-origin HTTP)
     // This allows authentication to work when cookies don't work across ports
-    // Always generate token for domain names (even if HTTPS, as backup)
+    // Always generate token for domain names OR when Vibecode mode is enabled (as backup)
+    const isVibecodeModeEnabled = process.env.DISABLE_VIBECODE !== "true";
     let authToken: string | undefined;
-    if (isDomainName) {
+    if (isDomainName || isVibecodeModeEnabled) {
       authToken = Buffer.from(`admin_${Date.now()}_${Math.random()}`).toString("base64");
       // Store token with expiration
       authTokens.set(authToken, Date.now() + SESSION_DURATION * 1000);
+      console.log(`[Login] Generated token for domain ${hostname}, cookie domain: ${cookieDomain}, vibecode: ${isVibecodeModeEnabled}`);
     }
+
+    console.log(`[Login] Successful login - isSecure: ${isSecure}, isDomainName: ${isDomainName}, token: ${!!authToken}, vibecodeModeEnabled: ${isVibecodeModeEnabled}`);
 
     return c.json({
       data: {
@@ -147,26 +168,37 @@ adminRouter.post("/login", async (c) => {
 adminRouter.post("/logout", (c) => {
   // Determine if we're using HTTPS (for production) or HTTP (for local dev)
   const isSecure = c.req.url.startsWith("https://");
-  
+
   // Extract hostname from request URL
   const url = new URL(c.req.url);
   const hostname = url.hostname;
-  
+
   // Determine cookie domain: set for domain names, but not for localhost/IP addresses
-  const isDomainName = hostname !== "localhost" && 
-                        hostname !== "127.0.0.1" && 
+  const isDomainName = hostname !== "localhost" &&
+                        hostname !== "127.0.0.1" &&
                         !hostname.match(/^\d+\.\d+\.\d+\.\d+$/); // Not an IP address
-  
+
+  // For Vibecode subdomains, extract the parent domain to allow cross-subdomain cookies
+  let cookieDomain: string | undefined;
+  if (isDomainName) {
+    const parts = hostname.split('.');
+    if (hostname.includes('.vibecode.run')) {
+      cookieDomain = '.' + parts.slice(-3).join('.');
+    } else {
+      cookieDomain = hostname;
+    }
+  }
+
   // For domain names with HTTP, use sameSite=None to match login
   const sameSiteValue = isSecure ? "None" : (isDomainName ? "None" : "Lax");
-  
+
   // Delete cookie with same attributes as when it was set
   deleteCookie(c, "admin_session", {
     httpOnly: true,
     secure: isSecure,
     sameSite: sameSiteValue as "None" | "Lax" | "Strict",
     path: "/",
-    ...(isDomainName && { domain: hostname }), // Set domain for domain names to allow cross-port sharing
+    ...(cookieDomain && { domain: cookieDomain }), // Set domain for cross-subdomain sharing
     ...(isSecure && { partitioned: true }), // Only use partitioned for HTTPS
   });
 

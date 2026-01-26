@@ -13,11 +13,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { entriesApi, photosApi, type UpdateJournalEntryInput, type Photo, type WeatherData } from "@/lib/api";
+import { entriesApi, photosApi, api, type UpdateJournalEntryInput, type Photo, type WeatherData } from "@/lib/api";
 import { useEntry, useUpdateEntry } from "@/hooks/use-entries";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud } from "lucide-react";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud, Info, Watch, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCoordinates } from "@/hooks/use-geolocation";
+import { GpxFileUpload, type GpxUploadResult } from "@/components/GpxFileUpload";
+import { SuuntoFileUpload, type SuuntoUploadResult } from "@/components/SuuntoFileUpload";
 
 // Photo state interface for new uploads
 interface PhotoUpload {
@@ -40,6 +42,9 @@ export default function EditEntryPage() {
   const updateMutation = useUpdateEntry();
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
+  const [editingCaptionPhotoId, setEditingCaptionPhotoId] = useState<string | null>(null);
+  const [editedCaptions, setEditedCaptions] = useState<Record<string, string>>({});
+  const [locationLoading, setLocationLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     date: "",
@@ -52,6 +57,48 @@ export default function EditEntryPage() {
   });
 
   const [newPhotos, setNewPhotos] = useState<PhotoUpload[]>([]);
+
+  // GPX data state
+  const [gpxData, setGpxData] = useState<GpxUploadResult | null>(null);
+  const [gpxRemoved, setGpxRemoved] = useState(false);
+
+  // Suunto data state
+  const [suuntoData, setSuuntoData] = useState<SuuntoUploadResult | null>(null);
+  const [suuntoRemoved, setSuuntoRemoved] = useState(false);
+
+  // Handle GPX parsed callback
+  const handleGpxParsed = (result: GpxUploadResult | null) => {
+    if (result) {
+      setGpxData(result);
+      setGpxRemoved(false);
+      // Auto-populate miles hiked from GPX data (only if no Suunto data)
+      if (!suuntoData) {
+        setFormData((prev) => ({
+          ...prev,
+          milesHiked: result.distanceMiles.toString(),
+        }));
+      }
+    } else {
+      setGpxData(null);
+      setGpxRemoved(true);
+    }
+  };
+
+  // Handle Suunto parsed callback - auto-populate fields
+  const handleSuuntoParsed = (result: SuuntoUploadResult | null) => {
+    if (result) {
+      setSuuntoData(result);
+      setSuuntoRemoved(false);
+      // Auto-populate form fields from Suunto data
+      setFormData((prev) => ({
+        ...prev,
+        milesHiked: result.distanceMiles.toFixed(1),
+      }));
+    } else {
+      setSuuntoData(null);
+      setSuuntoRemoved(true);
+    }
+  };
 
   // Parse weather data if it exists
   const existingWeather: WeatherData | null = entry?.weather
@@ -134,6 +181,33 @@ export default function EditEntryPage() {
     }
   };
 
+  // Update existing photo caption
+  const handleUpdatePhotoCaption = async (photoId: string, caption: string) => {
+    if (!id) return;
+
+    try {
+      await photosApi.update(id, photoId, { caption: caption || null });
+      queryClient.invalidateQueries({ queryKey: ["entries", id] });
+      queryClient.invalidateQueries({ queryKey: ["entries"] });
+      setEditingCaptionPhotoId(null);
+      setEditedCaptions(prev => {
+        const updated = { ...prev };
+        delete updated[photoId];
+        return updated;
+      });
+      toast({
+        title: "Caption updated",
+        description: "The photo caption has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update caption.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -158,6 +232,13 @@ export default function EditEntryPage() {
       ? parseFloat(formData.totalMilesCompleted)
       : entry.totalMilesCompleted;
 
+    // Determine elevation gain - prioritize Suunto, then GPX
+    const newElevationGain = suuntoData
+      ? suuntoData.elevationGainFeet
+      : gpxData
+        ? gpxData.elevationGainFeet
+        : undefined;
+
     const updateData: UpdateJournalEntryInput = {
       date: dateString,
       dayNumber: formData.dayNumber,
@@ -166,6 +247,25 @@ export default function EditEntryPage() {
       milesHiked,
       totalMilesCompleted,
       locationName: formData.locationName.trim() || null,
+      // Include elevation gain if new watch data was uploaded
+      ...(newElevationGain !== undefined && { elevationGain: newElevationGain }),
+      // Include GPX data if new GPX was uploaded, or null if removed
+      ...(gpxData && {
+        gpxData: gpxData.gpxData,
+        latitude: gpxData.startCoords[0],
+        longitude: gpxData.startCoords[1],
+      }),
+      ...(gpxRemoved && !gpxData && { gpxData: null }),
+      // Include Suunto data if new file was uploaded, or null if removed
+      ...(suuntoData && {
+        suuntoData: suuntoData.suuntoData,
+        // Use Suunto GPS if no GPX data
+        ...(!gpxData && suuntoData.startCoords && {
+          latitude: suuntoData.startCoords[0],
+          longitude: suuntoData.startCoords[1],
+        }),
+      }),
+      ...(suuntoRemoved && !suuntoData && { suuntoData: null }),
     };
 
     try {
@@ -190,13 +290,12 @@ export default function EditEntryPage() {
           formDataPhoto.append("order", (maxOrder + 1 + i).toString());
 
           try {
-            // Use relative URL so it goes through Vite proxy (same-origin for cookies)
-            const response = await fetch(
+            // Use api.raw() to include auth token in headers
+            const response = await api.raw(
               `/api/entries/${id}/photos/upload`,
               {
                 method: "POST",
                 body: formDataPhoto,
-                credentials: "include",
               }
             );
 
@@ -235,6 +334,94 @@ export default function EditEntryPage() {
     value: string | number
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Reverse geocode to lookup location name from coordinates
+  const handleLookupLocation = async () => {
+    if (!entry?.latitude || !entry?.longitude) return;
+
+    setLocationLoading(true);
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${entry.latitude}&lon=${entry.longitude}&zoom=14`,
+        {
+          headers: {
+            "User-Agent": "TrailJournalApp/1.0",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch location name");
+      }
+
+      const data = await response.json();
+      const address = data.address || {};
+      const parts: string[] = [];
+
+      const placeName =
+        address.natural ||
+        address.tourism ||
+        address.leisure ||
+        address.amenity ||
+        address.hamlet ||
+        address.village ||
+        address.town ||
+        address.city ||
+        address.municipality;
+
+      if (placeName) {
+        parts.push(placeName);
+      }
+
+      if (address.county && !parts.includes(address.county)) {
+        parts.push(address.county);
+      }
+
+      if (address.state) {
+        const stateAbbreviations: Record<string, string> = {
+          Alabama: "AL", Alaska: "AK", Arizona: "AZ", Arkansas: "AR", California: "CA",
+          Colorado: "CO", Connecticut: "CT", Delaware: "DE", Florida: "FL", Georgia: "GA",
+          Hawaii: "HI", Idaho: "ID", Illinois: "IL", Indiana: "IN", Iowa: "IA",
+          Kansas: "KS", Kentucky: "KY", Louisiana: "LA", Maine: "ME", Maryland: "MD",
+          Massachusetts: "MA", Michigan: "MI", Minnesota: "MN", Mississippi: "MS", Missouri: "MO",
+          Montana: "MT", Nebraska: "NE", Nevada: "NV", "New Hampshire": "NH", "New Jersey": "NJ",
+          "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", Ohio: "OH",
+          Oklahoma: "OK", Oregon: "OR", Pennsylvania: "PA", "Rhode Island": "RI", "South Carolina": "SC",
+          "South Dakota": "SD", Tennessee: "TN", Texas: "TX", Utah: "UT", Vermont: "VT",
+          Virginia: "VA", Washington: "WA", "West Virginia": "WV", Wisconsin: "WI", Wyoming: "WY",
+        };
+        const abbrev = stateAbbreviations[address.state] || address.state;
+        parts.push(abbrev);
+      }
+
+      if (parts.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          locationName: parts.join(", "),
+        }));
+        toast({
+          title: "Location found",
+          description: parts.join(", "),
+        });
+      } else {
+        toast({
+          title: "No location found",
+          description: "Could not determine a location name for these coordinates.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Reverse geocoding error:", error);
+      toast({
+        title: "Lookup failed",
+        description: "Could not fetch location name. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLocationLoading(false);
+    }
   };
 
   if (entryLoading) {
@@ -323,14 +510,19 @@ export default function EditEntryPage() {
                     <Input
                       id="dayNumber"
                       type="number"
-                      min="1"
+                      min={entry?.entryType === "training" ? undefined : "1"}
                       value={formData.dayNumber}
                       onChange={(e) =>
-                        handleChange("dayNumber", parseInt(e.target.value) || 1)
+                        handleChange("dayNumber", parseInt(e.target.value) || 0)
                       }
                       required
                       className="h-10"
                     />
+                    {entry?.entryType === "training" && (
+                      <p className="text-xs text-muted-foreground">
+                        Training entries can use 0 or negative day numbers
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -406,16 +598,95 @@ export default function EditEntryPage() {
                   <Label htmlFor="locationName" className="text-sm font-medium">
                     Location Name (optional)
                   </Label>
-                  <Input
-                    id="locationName"
-                    type="text"
-                    placeholder="e.g., Springer Mountain, GA"
-                    value={formData.locationName}
-                    onChange={(e) => handleChange("locationName", e.target.value)}
-                    className="h-10"
-                    maxLength={500}
-                  />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="locationName"
+                        type="text"
+                        placeholder={locationLoading ? "Looking up location..." : "e.g., Springer Mountain, GA"}
+                        value={formData.locationName}
+                        onChange={(e) => handleChange("locationName", e.target.value)}
+                        className="h-10"
+                        maxLength={500}
+                      />
+                      {locationLoading && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    {entry?.latitude !== null && entry?.longitude !== null && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleLookupLocation}
+                        disabled={locationLoading}
+                        title="Look up location from GPS coordinates"
+                        className="h-10 w-10"
+                      >
+                        <Search className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {entry?.latitude !== null && entry?.longitude !== null && (
+                    <p className="text-xs text-muted-foreground">
+                      Click the search icon to auto-fill from GPS coordinates
+                    </p>
+                  )}
                 </div>
+              </div>
+
+              {/* Watch Data Import Section */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center gap-2">
+                  <Watch className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold font-outfit">Import Watch Data</h3>
+                </div>
+
+                {/* Suunto Upload */}
+                <SuuntoFileUpload
+                  onSuuntoParsed={handleSuuntoParsed}
+                  existingSuuntoData={!suuntoRemoved ? entry.suuntoData : null}
+                  disabled={isPending}
+                />
+                {suuntoData && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-400">
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">
+                      New Suunto data imported! Miles have been updated.
+                      Heart rate, pace, and lap data will be displayed on the entry.
+                    </p>
+                  </div>
+                )}
+
+                {/* GPX Upload */}
+                <div className="pt-2">
+                  <GpxFileUpload
+                    onGpxParsed={handleGpxParsed}
+                    existingGpx={!gpxRemoved ? entry.gpxData : null}
+                    disabled={isPending}
+                  />
+                  {gpxData && (
+                    <div className="flex items-start gap-2 p-3 mt-3 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                      <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm">
+                        New GPX track imported! {!suuntoData && "Miles have been updated. "}
+                        Your route will be displayed on the entry map.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Combined info when both are present */}
+                {suuntoData && gpxData && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">
+                      Using Suunto metrics (HR, pace, steps) + GPX route for best accuracy.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Location & Weather Display (read-only from original entry) */}
@@ -469,7 +740,7 @@ export default function EditEntryPage() {
                     </h3>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {existingPhotos.map((photo: Photo) => (
                       <div
                         key={photo.id}
@@ -478,29 +749,82 @@ export default function EditEntryPage() {
                         <img
                           src={photo.url}
                           alt={photo.caption || "Photo"}
-                          className="w-full h-32 object-cover"
+                          className="w-full h-48 object-cover"
                         />
                         <Button
                           type="button"
                           variant="destructive"
                           size="icon"
-                          className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleDeletePhoto(photo.id)}
                           disabled={deletingPhotoId === photo.id}
                         >
                           {deletingPhotoId === photo.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-4 w-4" />
                           )}
                         </Button>
-                        {photo.caption && (
-                          <div className="p-2 bg-background/80">
-                            <p className="text-xs text-muted-foreground truncate">
-                              {photo.caption}
+                        <div className="p-3 bg-background">
+                          {editingCaptionPhotoId === photo.id ? (
+                            <div className="flex gap-2">
+                              <Input
+                                value={editedCaptions[photo.id] ?? photo.caption ?? ""}
+                                onChange={(e) =>
+                                  setEditedCaptions(prev => ({
+                                    ...prev,
+                                    [photo.id]: e.target.value
+                                  }))
+                                }
+                                placeholder="Add a caption..."
+                                className="h-8 text-sm"
+                                maxLength={500}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() =>
+                                  handleUpdatePhotoCaption(
+                                    photo.id,
+                                    editedCaptions[photo.id] ?? photo.caption ?? ""
+                                  )
+                                }
+                                className="h-8"
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingCaptionPhotoId(null);
+                                  setEditedCaptions(prev => {
+                                    const updated = { ...prev };
+                                    delete updated[photo.id];
+                                    return updated;
+                                  });
+                                }}
+                                className="h-8"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <p
+                              className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                              onClick={() => {
+                                setEditingCaptionPhotoId(photo.id);
+                                setEditedCaptions(prev => ({
+                                  ...prev,
+                                  [photo.id]: photo.caption ?? ""
+                                }));
+                              }}
+                            >
+                              {photo.caption || "Click to add caption..."}
                             </p>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

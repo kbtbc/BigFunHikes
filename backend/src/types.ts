@@ -5,11 +5,18 @@ import { z } from "zod";
 // ============================================================
 
 /**
+ * Entry type enum - "trail" for regular AT hiking, "training" for pre-hike training
+ */
+export const entryTypeSchema = z.enum(["trail", "training"]);
+export type EntryType = z.infer<typeof entryTypeSchema>;
+
+/**
  * Schema for creating a new journal entry
+ * Training entries can use dayNumber <= 0 to indicate pre-hike training
  */
 export const createJournalEntrySchema = z.object({
   date: z.string().datetime(),
-  dayNumber: z.number().int().positive(),
+  dayNumber: z.number().int(), // Allow 0 or negative for training entries
   title: z.string().min(1).max(500),
   content: z.string(),
   milesHiked: z.number().nonnegative(),
@@ -20,6 +27,8 @@ export const createJournalEntrySchema = z.object({
   locationName: z.string().max(500).nullable().optional(),
   weather: z.string().nullable().optional(), // JSON string of weather data
   gpxData: z.string().nullable().optional(),
+  suuntoData: z.string().nullable().optional(), // JSON string of parsed Suunto watch data
+  entryType: entryTypeSchema.optional().default("trail"),
 });
 
 export type CreateJournalEntryInput = z.infer<typeof createJournalEntrySchema>;
@@ -29,7 +38,7 @@ export type CreateJournalEntryInput = z.infer<typeof createJournalEntrySchema>;
  */
 export const updateJournalEntrySchema = z.object({
   date: z.string().datetime().optional(),
-  dayNumber: z.number().int().positive().optional(),
+  dayNumber: z.number().int().optional(), // Allow 0 or negative for training entries
   title: z.string().min(1).max(500).optional(),
   content: z.string().optional(),
   milesHiked: z.number().nonnegative().optional(),
@@ -40,6 +49,8 @@ export const updateJournalEntrySchema = z.object({
   locationName: z.string().max(500).nullable().optional(),
   weather: z.string().nullable().optional(), // JSON string of weather data
   gpxData: z.string().nullable().optional(),
+  suuntoData: z.string().nullable().optional(), // JSON string of parsed Suunto watch data
+  entryType: entryTypeSchema.optional(),
 });
 
 export type UpdateJournalEntryInput = z.infer<typeof updateJournalEntrySchema>;
@@ -65,7 +76,7 @@ export const journalEntrySchema = z.object({
   id: z.string().uuid(),
   userId: z.string(),
   date: z.string().datetime(),
-  dayNumber: z.number().int().positive(),
+  dayNumber: z.number().int(), // Allow 0 or negative for training entries
   title: z.string(),
   content: z.string(),
   milesHiked: z.number(),
@@ -76,6 +87,8 @@ export const journalEntrySchema = z.object({
   locationName: z.string().nullable(),
   weather: z.string().nullable(), // JSON string of weather data
   gpxData: z.string().nullable(),
+  suuntoData: z.string().nullable(), // JSON string of parsed Suunto watch data
+  entryType: entryTypeSchema,
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   photos: z.array(photoSchema).optional(),
@@ -139,6 +152,15 @@ export const uploadPhotoSchema = z.object({
 
 export type UploadPhotoInput = z.infer<typeof uploadPhotoSchema>;
 
+/**
+ * Schema for updating a photo's caption
+ */
+export const updatePhotoSchema = z.object({
+  caption: z.string().max(500).nullable().optional(),
+});
+
+export type UpdatePhotoInput = z.infer<typeof updatePhotoSchema>;
+
 // ============================================================
 // STATS SCHEMAS
 // ============================================================
@@ -147,11 +169,34 @@ export type UploadPhotoInput = z.infer<typeof uploadPhotoSchema>;
  * Schema for overall hiking statistics
  */
 export const statsSchema = z.object({
+  // Basic stats
   totalMiles: z.number().nonnegative(),
   totalDays: z.number().int().nonnegative(),
   totalElevationGain: z.number().int().nonnegative(),
   averageMilesPerDay: z.number().nonnegative(),
   lastEntryDate: z.string().datetime().nullable(),
+  // Enhanced stats
+  longestDay: z.object({
+    miles: z.number(),
+    date: z.string().datetime(),
+    title: z.string(),
+  }).nullable(),
+  biggestClimb: z.object({
+    elevation: z.number(),
+    date: z.string().datetime(),
+    title: z.string(),
+  }).nullable(),
+  currentStreak: z.number().int().nonnegative(),
+  percentComplete: z.number().nonnegative(),
+  projectedCompletionDate: z.string().datetime().nullable(),
+  daysRemaining: z.number().int().nullable(),
+  recentPace: z.number().nonnegative(),
+  elevationProfile: z.array(z.object({
+    date: z.string().datetime(),
+    dayNumber: z.number().int(),
+    elevation: z.number(),
+    miles: z.number(),
+  })),
 });
 
 export type Stats = z.infer<typeof statsSchema>;

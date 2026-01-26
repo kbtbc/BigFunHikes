@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Mountain, BookOpen, LogOut, Shield, Plus } from "lucide-react";
+import { Mountain, BookOpen, LogOut, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 export function Navbar() {
   const location = useLocation();
@@ -69,20 +70,10 @@ export function Navbar() {
               </Link>
             )}
 
-            {/* Admin Button - always visible */}
-            {!isLoading && !isAuthenticated && (
-              <Link to="/admin" title="Admin Login">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="ml-2"
-                >
-                  <Shield className="h-4 w-4" />
-                </Button>
-              </Link>
-            )}
+            {/* Offline Status Indicator */}
+            {!isLoading && isAuthenticated && <OfflineIndicator />}
 
-            {/* Admin Logout - just icons */}
+            {/* Admin Logout Button - only when authenticated */}
             {!isLoading && isAuthenticated && (
               <Button
                 variant="ghost"
@@ -91,8 +82,7 @@ export function Navbar() {
                 className="ml-2"
                 title="Logout"
               >
-                <Shield className="h-4 w-4" />
-                <LogOut className="h-3.5 w-3.5" />
+                <LogOut className="h-4 w-4" />
               </Button>
             )}
           </div>

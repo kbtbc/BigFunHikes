@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { TrailMap } from "@/components/TrailMap";
-import { Stats } from "@/components/Stats";
+import { EnhancedStats } from "@/components/EnhancedStats";
 import { JournalEntry } from "@/components/JournalEntry";
 import { useEntries, useStats } from "@/hooks/use-entries";
 import { useAuth } from "@/context/AuthContext";
-import { transformApiEntryToComponent, transformApiStatsToComponent } from "@/lib/transformEntries";
-import { ArrowRight, AlertCircle } from "lucide-react";
+import { transformApiEntryToComponent } from "@/lib/transformEntries";
+import { ArrowRight, AlertCircle, Youtube } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -23,28 +23,28 @@ export function HomePage() {
     ? transformApiEntryToComponent(entriesData.entries[0])
     : null;
   const allEntries = entriesData?.entries.map(transformApiEntryToComponent) || [];
-  const stats = statsData ? transformApiStatsToComponent(statsData) : null;
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[60vh] md:h-[70vh] overflow-hidden">
+      <section className="relative overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage:
-              "url('/gemini-generated-image-620sd5620sd5620s.png')",
+              "url('/r4hf8ay49q0jd8fdqh8igqsrfzhf5mc-vvnffmed-uq.webp')",
+            // Previous: "url('/gemini-generated-image-620sd5620sd5620s.png')",
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-background"></div>
         </div>
 
-        <div className="relative h-full flex items-center justify-center text-center px-4">
+        <div className="relative flex items-center justify-center text-center px-4 py-8 md:py-10">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 text-shadow">
               BigFun Hikes!
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-8 text-shadow-sm">
+            <p className="text-xl md:text-2xl text-white/90 mb-6 text-shadow-sm">
               Follow my journey along the Appalachian Trail
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -62,6 +62,30 @@ export function HomePage() {
                   <strong>Under Construction</strong> - Currently using test data (I don't start hiking until mid Feb)
                 </AlertDescription>
               </Alert>
+            </div>
+
+            {/* YouTube Intro Video */}
+            <div className="mt-6 max-w-sm mx-auto">
+              <div className="rounded-lg overflow-hidden shadow-lg border-2 border-white/20">
+                <div className="aspect-video">
+                  <iframe
+                    src="https://www.youtube.com/embed/kgKnqN4yDGU"
+                    title="BigFun Hikes Intro"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full"
+                  />
+                </div>
+              </div>
+              <a
+                href="https://www.youtube.com/@BigFunHikes"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-3 text-white/80 hover:text-white transition-colors text-sm"
+              >
+                <Youtube className="h-4 w-4" />
+                Subscribe on YouTube
+              </a>
             </div>
           </div>
         </div>
@@ -86,14 +110,8 @@ export function HomePage() {
                 Failed to load statistics. Please try again later.
               </AlertDescription>
             </Alert>
-          ) : stats ? (
-            <Stats
-              totalMiles={stats.totalMiles}
-              milesCompleted={stats.milesCompleted}
-              daysOnTrail={stats.daysOnTrail}
-              averageDailyMiles={stats.averageDailyMiles}
-              totalElevationGain={stats.totalElevationGain}
-            />
+          ) : statsData ? (
+            <EnhancedStats stats={statsData} />
           ) : null}
         </div>
       </section>
@@ -160,7 +178,21 @@ export function HomePage() {
               </AlertDescription>
             </Alert>
           ) : (
-            <TrailMap entries={allEntries} height="500px" />
+            <TrailMap
+              height="500px"
+              showFullTrail={true}
+              latestEntryMarker={
+                latestEntry && latestEntry.coordinates.start[0] !== 34.6266
+                  ? {
+                      lat: latestEntry.coordinates.start[0],
+                      lng: latestEntry.coordinates.start[1],
+                      title: latestEntry.title,
+                      day: latestEntry.day,
+                      id: latestEntry.id,
+                    }
+                  : null
+              }
+            />
           )}
         </div>
       </section>

@@ -1,5 +1,6 @@
 import type { JournalEntry as ApiJournalEntry, WeatherData } from "@/lib/api";
 import type { JournalEntry as ComponentJournalEntry, WeatherInfo } from "@/data/journalEntries";
+import type { SuuntoParseResult } from "@/lib/suunto-parser";
 
 const TOTAL_AT_MILES = 2190;
 
@@ -28,11 +29,26 @@ export function transformApiEntryToComponent(
     }
   }
 
+  // Parse Suunto data if available
+  let suuntoData: SuuntoParseResult | undefined;
+  if (apiEntry.suuntoData) {
+    try {
+      suuntoData = JSON.parse(apiEntry.suuntoData) as SuuntoParseResult;
+
+      // If no GPX track but Suunto has GPS data, use that for the map route
+      if (!gpxTrack && suuntoData.gpsTrack && suuntoData.gpsTrack.length > 0) {
+        gpxTrack = suuntoData.gpsTrack.map((pt) => [pt.lat, pt.lon] as [number, number]);
+      }
+    } catch (e) {
+      console.warn("Failed to parse Suunto data:", e);
+    }
+  }
+
   // Default coordinates (Springer Mountain, GA - AT southern terminus)
   const defaultCoords: [number, number] = [34.6266, -84.1934];
 
   // Determine start and end coordinates
-  // Priority: 1. Direct lat/lon from entry, 2. GPX track, 3. Default
+  // Priority: 1. Direct lat/lon from entry, 2. GPX/Suunto track, 3. Default
   let startCoords: [number, number];
   let endCoords: [number, number];
 
@@ -41,7 +57,7 @@ export function transformApiEntryToComponent(
     startCoords = [apiEntry.latitude, apiEntry.longitude];
     endCoords = [apiEntry.latitude, apiEntry.longitude];
   } else if (gpxTrack && gpxTrack.length > 0) {
-    // Fall back to GPX track
+    // Fall back to GPX/Suunto track
     startCoords = gpxTrack[0];
     endCoords = gpxTrack[gpxTrack.length - 1];
   } else {
@@ -101,6 +117,8 @@ export function transformApiEntryToComponent(
     gpxTrack,
     weather,
     locationName: apiEntry.locationName || undefined,
+    entryType: apiEntry.entryType,
+    suuntoData,
   };
 }
 

@@ -6,21 +6,85 @@
   Tailwind v3 + shadcn/ui for styling and components.
   Framer Motion for animations.
   lucide-react for icons.
+  Leaflet.js for maps with OpenTopoMap tiles.
+  Recharts for data visualization.
   Pre-installed shadcn/ui components.
 </stack>
 
 <structure>
-  src/pages/        — Page components (manually routed in App.tsx). Add new pages to this folder.
+  src/pages/        — Page components (manually routed in App.tsx)
   src/components/
-    ui/             — shadcn/ui components (pre-built). Use these first.
-  src/hooks/        — Custom React hooks. Add new hooks to this folder.
-  src/lib/          — Utilities: utils.ts (cn helper for className merge)
+    ui/             — shadcn/ui components (pre-built)
+    TrailMap.tsx    — Full AT trail display (home page)
+    EntryMap.tsx    — Dynamic route segment map (entry pages)
+    GpxFileUpload.tsx — GPX file upload with auto-parsing
+    OfflineIndicator.tsx — Connection status in navbar
+    PendingEntriesPanel.tsx — Offline entries management
+    EditableCoordinates.tsx — Inline GPS coordinate editor
+    EnhancedStats.tsx — Statistics dashboard with charts
+  src/hooks/
+    use-entries.ts  — React Query hooks for API
+    use-geolocation.ts — GPS location capture
+    use-offline.ts  — Offline status and sync hooks
+    use-dynamic-trail-segment.ts — Dynamic route calculation
+  src/lib/
+    api.ts          — API client with auth support
+    gpx-parser.ts   — GPX parsing and distance/elevation calculations
+    offline-storage.ts — IndexedDB storage for pending entries
+    sync-service.ts — Online/offline detection and sync logic
+    transformEntries.ts — Data transformation utilities
+  public/data/
+    appalachian_trail.gpx — Full AT route (26MB, source)
+    at-trail-optimized.json — Optimized for home map (40KB)
+    at-trail-indexed.json — Indexed for dynamic segments (134KB)
+  scripts/
+    optimize-gpx.ts — Generate optimized trail JSON
+    create-trail-index.ts — Generate indexed trail
+</structure>
 
-  Create small, focused components instead of monolithic files.
-  Do not write long Index.tsx or page files.
-  Extract components into separate files.
-  Organize components in a logical folder structure.
-  </structure>
+<key_features>
+  Entry Types:
+  - Trail entries: Regular AT hiking days (included in stats)
+  - Training entries: Pre-hike training (excluded from stats, amber styling)
+  - Toggle between types on NewEntryPage
+  - Training entries show single location marker on map (no trail path)
+
+  Offline Mode:
+  - Entries saved to IndexedDB when offline via offline-storage.ts
+  - Photos converted to base64 for offline storage
+  - sync-service.ts handles online/offline detection
+  - Auto-sync when connection restored (navigator.onLine events)
+  - useOfflineStatus hook provides status and sync functions
+  - OfflineIndicator shows in navbar when offline or pending
+  - PendingEntriesPanel on Timeline page shows queued entries
+  - GPS coordinates captured offline (satellite-based, no internet needed)
+
+  GPX Import:
+  - Upload GPX files from Suunto, Garmin, or other fitness watches
+  - gpx-parser.ts handles parsing, distance, and elevation calculations
+  - GpxFileUpload component provides UI with auto-fill
+  - Auto-populates miles hiked, elevation gain, and GPS coordinates
+  - EntryMap displays GPX tracks (red for trail, amber for training)
+  - GPX track overrides AT segment estimation when present
+
+  Maps:
+  - TrailMap: Full AT trail on home page with current location marker
+  - EntryMap: Dynamic route segment between entries (trail) or single marker (training)
+  - Uses at-trail-indexed.json for segment calculation
+  - Haversine distance to find closest points on trail
+  - Supports GPX track overlay when imported
+
+  GPS/Location:
+  - Auto-capture via useGeolocation hook
+  - Manual coordinate entry (click to edit)
+  - EditableCoordinates component for inline editing
+  - Weather auto-fetch from Open-Meteo API
+
+  Authentication:
+  - Dual-mode: cookie + Bearer token
+  - API client handles auth headers automatically
+  - AuthContext for state management
+</key_features>
 
 <typescript>
   Explicit type annotations for useState: `useState<Type[]>([])` not `useState([])`
@@ -29,160 +93,39 @@
   Make sure to use ternary operators instead of && for conditional rendering inside JSX.
 </typescript>
 
-<environment>
-  You are in Vibecode. The system manages git and the dev server (port 8080).
-  DO NOT: manage git, touch the dev server, or check its state.
-  The user views the app through Vibecode App or their browser.
-  The user cannot see the code or interact with the terminal. Do not tell the user to do anything with the code or terminal.
-  You can see logs in the server.log file or browser console.
-  The Vibecode App has tabs like ENV tab, API tab, LOGS tab. You can ask the user to use these tabs to view the logs, add environment variables, or give instructions for APIs like OpenAI, Nanobanana, Grok, Elevenlabs, etc. but first try to implement the functionality yourself.
-  The user is likely non-technical, communicate with them in an easy to understand manner.
-  If the user's request is vague or ambitious, scope down to specific functionality. Do everything for them.
-  For images, use URLs from unsplash.com. You can also tell the user they can use the IMAGES tab to generate and upload images.
-</environment>
-
 <routing>
   React Router v6 for routing. Routes are manually registered in `src/App.tsx`.
-  <adding_routes>
-    1. Create a new page component in `src/pages/` (e.g., `src/pages/Settings.tsx`)
-    2. Import it in `src/App.tsx`
-    3. Add a Route inside the Routes component: `<Route path="/settings" element={<Settings />} />`
-    4. Add new routes ABOVE the catch-all "*" route.
-  </adding_routes>
 
-  <navigation>
-    Use `<Link to="/path">` for navigation links.
-    Use `useNavigate()` hook for programmatic navigation.
-    Use `useParams()` for URL params (e.g., /users/:id).
-    Use `useSearchParams()` for query strings.
-  </navigation>
-
-  <nested_routes>
-    For layouts with nested content, use `<Outlet />` from react-router-dom.
-    Wrap child routes inside parent Route components.
-  </nested_routes>
-
-  <rules>
-    Only ONE route can map to "/" — the Index page.
-    The "*" catch-all route must always be LAST.
-    Dynamic params: use `const { id } = useParams()` from react-router-dom.
-  </rules>
+  Current routes:
+  - /           — HomePage (map + stats + latest entry)
+  - /timeline   — TimelinePage (all entries)
+  - /entry/:id  — EntryDetailPage (single entry with map)
+  - /entry/new  — NewEntryPage (create entry)
+  - /entry/:id/edit — EditEntryPage
+  - /admin      — LoginPage
 </routing>
 
 <state>
-  Always use React Query for server/async state. 
+  Always use React Query for server/async state.
   Always use object API: `useQuery({ queryKey, queryFn })`.
-  React Query provider is already set up in App.tsx — use it.
 
-  Use `useMutation` for async operations — no manual `setIsLoading` patterns.
-  Reuse query keys across components to share cached data — don't create duplicate providers.
-
-  For local state, use React hooks (useState, useReducer) or Zustand.
-  For persistence: use localStorage. Only persist necessary data.
+  Key hooks in use-entries.ts:
+  - useEntries(page, pageSize) — List entries
+  - useEntry(id) — Single entry with photos
+  - useStats() — Trail statistics
+  - useCreateEntry() — Create mutation
+  - useUpdateEntry() — Update mutation (including coordinates)
+  - useDeleteEntry() — Delete mutation
 </state>
 
-<data>
-  Create realistic mock data when you lack access to real data.
-  For image analysis: actually send to LLM don't mock.
-</data>
-
-<index_html>
-  IMPORTANT: If index.html still has defaults ("Vibecode.dev App", "/og-base.png"), update title, og:title, og:description, og:image, and meta description to match the app.
-</index_html>
-
-<design>
-  Don't hold back. This is web — design for desktop and mobile responsiveness.
-  Inspiration: Linear, Vercel, Stripe, Notion, polished SaaS dashboards.
-  Read the frontend-design skill for more details on design patterns and best practices.
-  Use shadcn/ui components as building blocks — they're pre-installed and accessible.
-
-  <avoid>
-    Purple gradients on white, generic centered layouts, predictable patterns.
-    Mobile-only designs on web. Overused fonts (Space Grotesk, Inter).
-  </avoid>
-
-  <do>
-    Cohesive themes with dominant colors and sharp accents.
-    High-impact animations: hover states, transitions, loading skeletons.
-    Depth via shadows, borders, and subtle gradients.
-    Use Google Fonts via CSS import or link tag in index.html for distinctive typography.
-  </do>
-</design>
-
-<responsive>
-  Always design mobile-first. Every page and component must work on mobile devices.
-
-  <breakpoints>
-    Mobile: < 768px (default styles, no prefix)
-    Tablet: md: (768px+)
-    Desktop: lg: (1024px+)
-    Large: xl: (1280px+)
-  </breakpoints>
-
-  <useIsMobile_hook>
-    Use `useIsMobile()` from `@/hooks/use-mobile` to conditionally render different UI for mobile vs desktop.
-    ```tsx
-    import { useIsMobile } from "@/hooks/use-mobile"
-
-    function MyComponent() {
-      const isMobile = useIsMobile()
-
-      return isMobile ? <MobileNav /> : <DesktopNav />
-    }
-    ```
-    Use this for: navigation patterns, sidebars, complex layouts that need entirely different components on mobile.
-  </useIsMobile_hook>
-
-  <best_practices>
-    Prefer Tailwind responsive classes over useIsMobile when possible (CSS is faster).
-    Use Sheet/Drawer instead of Dialog on mobile for better UX.
-    Stack layouts vertically on mobile: `flex flex-col md:flex-row`
-    Hide non-essential UI on mobile: `hidden md:block`
-    Make touch targets at least 44px: `min-h-[44px] min-w-[44px]`
-    Test with narrow viewport (375px width).
-  </best_practices>
-</responsive>
-
-<styling>
-  <styling>
-    Use Tailwind for styling. Use cn() helper from src/lib/utils.ts to merge classNames when conditionally applying classNames or passing classNames via props.
-    All shadcn/ui components support className prop.
-    Use responsive classes: sm:, md:, lg:, xl: for different breakpoints.
-    Make sure to ALWAYS a ShadCN component when available.
-  </styling>
-
-  <forms>
-    Use react-hook-form for complex forms, not manual state management.
-    Always validate with zod schemas.
-    Use shadcn/ui form components for consistent styling.
-  </forms>
-
-  <ux>
-    Use Button component from shadcn/ui, not raw HTML buttons.
-    Use Dialog/AlertDialog from shadcn/ui, not window.alert() or window.confirm().
-    Ensure forms are keyboard accessible and have proper focus management.
-  </ux>
-
-  <animations>
-    Use Tailwind's built-in transitions for simple animations (hover, focus states).
-    Use Framer Motion for complex animations (page transitions, staggered reveals).
-    Don't over-animate — subtle is usually better.
-  </animations>
-</styling>
-
 <backend>
-  This app has a backend server at ../backend/.
-  API base URL is available via process.env.VITE_BACKEND_URL.
+  API base URL is available via import.meta.env.VITE_BACKEND_URL.
   DO NOT use localhost.
 
-  To call backend APIs:
-  ```typescript
-  const baseUrl = process.env.VITE_BACKEND_URL!;
-  const response = await fetch(`${baseUrl}/api/your-endpoint`); // Make sure it is the format of /api/your-endpoint, the /api/ is required
-  ```
-
-  Authentication uses simple admin password (cookie-based).
-  See backend/src/routes/admin.ts for auth endpoints.
+  API client in src/lib/api.ts handles:
+  - Auth token injection
+  - { data: ... } envelope unwrapping
+  - Multipart uploads via api.raw()
 
   <shared_types>
     API contracts are defined as Zod schemas in ../backend/src/types.ts.
@@ -190,9 +133,30 @@
   </shared_types>
 </backend>
 
-<skills>
-You have access to a few skills in the `.claude/skills` folder. Use them to your advantage.
-- ai-apis-like-chatgpt: Use this skill when the user asks you to make an app that requires an AI API.
-- web-docs: Use this skill when you need documentation for shadcn/ui, React Router, React Query, or other web libraries.
-- frontend-app-design: Use this skill when the user asks you to design a frontend app component or screen.
-</skills>
+<design>
+  Theme: Rugged meets modern — digital trail journal aesthetic.
+
+  Color Palette:
+  - Forest greens (#4a7c59, #2d5016) - Primary
+  - Warm amber/orange (#f4a261, #e07a5f) - Accents
+  - Earthy cream (#faf9f6, #f5f5dc) - Backgrounds
+  - Deep charcoal (#2b2d42) - Text
+
+  Typography:
+  - Headings: "Outfit" (adventurous, modern)
+  - Body: "Inter" (clean, readable)
+
+  Use shadcn/ui components as building blocks.
+  Mobile-first responsive design.
+</design>
+
+<scripts>
+  Trail data regeneration:
+  ```bash
+  # Regenerate home page trail (40KB, 2000 points)
+  bun run scripts/optimize-gpx.ts
+
+  # Regenerate indexed trail for dynamic segments (134KB, 5000 points)
+  bun run scripts/create-trail-index.ts
+  ```
+</scripts>

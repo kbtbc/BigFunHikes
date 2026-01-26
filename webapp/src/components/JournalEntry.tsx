@@ -54,11 +54,41 @@ export function JournalEntry({
   return (
     <Card className={`border-2 shadow-lg hover:shadow-xl transition-shadow ${className}`}>
       <CardContent className="p-0">
-        {/* Photos carousel */}
+        {/* Header - at the top */}
+        <div className="p-6 pb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="secondary" className="font-outfit">
+              Day {entry.day}
+            </Badge>
+            <span className="text-sm text-muted-foreground flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {formattedDate}
+            </span>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold">{entry.title}</h2>
+        </div>
+
+        {/* Content - below header */}
+        <div className="px-6 pb-6">
+          <div className={`prose prose-sm md:prose-base max-w-none prose-headings:font-outfit prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-a:text-primary prose-blockquote:text-muted-foreground prose-code:text-foreground prose-li:text-foreground ${showFullContent ? 'journal-full-content' : ''}`}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {showFullContent ? entry.content : previewContent}
+            </ReactMarkdown>
+            {!showFullContent ? (
+              <p className="text-muted-foreground italic mt-4">
+                <Link to={`/entry/${entry.id}`} className="text-primary hover:underline font-bold">
+                  Read the full entry...
+                </Link>
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Photos carousel - below content */}
         {entry.photos.length > 0 ? (
           <div className="relative">
             {/* Main carousel */}
-            <div className="overflow-hidden rounded-t-lg" ref={showFullContent && hasMultiplePhotos ? emblaRef : undefined}>
+            <div className="overflow-hidden" ref={showFullContent && hasMultiplePhotos ? emblaRef : undefined}>
               <div className={showFullContent && hasMultiplePhotos ? "flex" : ""}>
                 {(showFullContent ? entry.photos : [entry.photos[0]]).map((photo, index) => (
                   <div
@@ -150,23 +180,9 @@ export function JournalEntry({
           </div>
         )}
 
-        <div className="p-6">
-          {/* Header */}
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary" className="font-outfit">
-                Day {entry.day}
-              </Badge>
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {formattedDate}
-              </span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">{entry.title}</h2>
-          </div>
-
-          {/* Stats */}
-          <div className="flex flex-wrap gap-4 mb-6 pb-6 border-b">
+        {/* Stats - at the bottom */}
+        <div className="p-6 pt-4 border-t">
+          <div className="flex flex-wrap gap-4">
             <Stat icon={<MapPin />} label="Distance" value={`${entry.miles} mi`} />
             <Stat icon={<TrendingUp />} label="Elevation" value={`${entry.elevationGain} ft`} />
             <Stat
@@ -174,20 +190,6 @@ export function JournalEntry({
               label="Total Miles"
               value={`${entry.totalMiles} mi`}
             />
-          </div>
-
-          {/* Content */}
-          <div className="prose prose-sm md:prose-base max-w-none prose-headings:font-outfit prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-a:text-primary prose-blockquote:text-muted-foreground prose-code:text-foreground">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {showFullContent ? entry.content : previewContent}
-            </ReactMarkdown>
-            {!showFullContent ? (
-              <p className="text-muted-foreground italic mt-4">
-                <Link to={`/entry/${entry.id}`} className="text-primary hover:underline font-bold">
-                  Read the full entry...
-                </Link>
-              </p>
-            ) : null}
           </div>
         </div>
       </CardContent>

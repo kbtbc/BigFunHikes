@@ -8,35 +8,38 @@ datasource db {
 }
 
 model JournalEntry {
-  id                   String   @id @default(uuid())
-  date                 DateTime
-  dayNumber            Int
-  title                String
-  content              String
-  milesHiked           Float
-  elevationGain        Int?
-  totalMilesCompleted  Float
-  latitude             Float?
-  longitude            Float?
-  locationName         String?
-  weather              String?
-  gpxData              String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  photos               Photo[]
+  id                  String   @id @default(uuid())
+  date                DateTime
+  dayNumber           Int
+  title               String
+  content             String
+  milesHiked          Float
+  elevationGain       Int?
+  totalMilesCompleted Float
+  latitude            Float?
+  longitude           Float?
+  locationName        String?
+  weather             String?
+  gpxData             String?
+  entryType           String   @default("trail")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  suuntoData          String?
+  photos              Photo[]
 
   @@index([date])
   @@index([dayNumber])
+  @@index([entryType])
 }
 
 model Photo {
   id             String       @id @default(uuid())
   journalEntryId String
-  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
   url            String
   caption        String?
   order          Int
   createdAt      DateTime     @default(now())
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
 
   @@index([journalEntryId])
 }

@@ -10,18 +10,22 @@ import { isValidToken } from "../tokenStore";
  */
 export const requireAdminAuth = (c: Context) => {
   const adminSession = getCookie(c, "admin_session");
-  
+
   // Check for Authorization header token (fallback for cross-origin HTTP)
   const authHeader = c.req.header("Authorization");
   let hasValidToken = false;
-  
+
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.substring(7);
     hasValidToken = isValidToken(token);
+    console.log(`[Auth] Token check - has token: ${!!token}, valid: ${hasValidToken}`);
   }
+
+  console.log(`[Auth] Cookie session: ${adminSession}, Token valid: ${hasValidToken}`);
 
   // Accept either cookie-based auth or token-based auth
   if (adminSession !== "authenticated" && !hasValidToken) {
+    console.log(`[Auth] UNAUTHORIZED - cookie: ${adminSession}, token: ${hasValidToken}`);
     return c.json(
       {
         error: {
@@ -33,5 +37,6 @@ export const requireAdminAuth = (c: Context) => {
     );
   }
 
+  console.log(`[Auth] AUTHORIZED via ${adminSession === "authenticated" ? "cookie" : "token"}`);
   return null;
 };

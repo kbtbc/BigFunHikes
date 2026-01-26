@@ -40,9 +40,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   // Include auth token in headers if available (for cross-origin HTTP)
   const token = getAuthToken();
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -85,16 +85,16 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 // Raw request for non-JSON endpoints (uploads, downloads, streams)
 async function rawRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   // Include auth token in headers if available (for cross-origin HTTP)
   const token = getAuthToken();
-  const headers: HeadersInit = {
-    ...options.headers,
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  
+
   const config: RequestInit = {
     ...options,
     headers,
@@ -185,6 +185,8 @@ export interface JournalEntry {
   locationName: string | null;
   weather: string | null; // JSON string of WeatherData
   gpxData: string | null;
+  suuntoData: string | null; // JSON string of SuuntoParseResult
+  entryType: "trail" | "training";
   createdAt: string;
   updatedAt: string;
   photos?: Photo[];
@@ -203,6 +205,8 @@ export interface CreateJournalEntryInput {
   locationName?: string | null;
   weather?: string | null;
   gpxData?: string | null;
+  suuntoData?: string | null;
+  entryType?: "trail" | "training";
 }
 
 export interface UpdateJournalEntryInput {
@@ -218,6 +222,8 @@ export interface UpdateJournalEntryInput {
   locationName?: string | null;
   weather?: string | null;
   gpxData?: string | null;
+  suuntoData?: string | null;
+  entryType?: "trail" | "training";
 }
 
 export interface JournalEntriesList {
@@ -231,11 +237,34 @@ export interface JournalEntriesList {
 }
 
 export interface Stats {
+  // Basic stats
   totalMiles: number;
   totalDays: number;
   totalElevationGain: number;
   averageMilesPerDay: number;
   lastEntryDate: string | null;
+  // Enhanced stats
+  longestDay: {
+    miles: number;
+    date: string;
+    title: string;
+  } | null;
+  biggestClimb: {
+    elevation: number;
+    date: string;
+    title: string;
+  } | null;
+  currentStreak: number;
+  percentComplete: number;
+  projectedCompletionDate: string | null;
+  daysRemaining: number | null;
+  recentPace: number;
+  elevationProfile: Array<{
+    date: string;
+    dayNumber: number;
+    elevation: number;
+    miles: number;
+  }>;
 }
 
 // ============================================================
@@ -264,6 +293,9 @@ export const statsApi = {
 export const photosApi = {
   add: (entryId: string, data: { url: string; caption?: string; order: number }) =>
     api.post<Photo>(`/api/entries/${entryId}/photos`, data),
+
+  update: (entryId: string, photoId: string, data: { caption?: string | null }) =>
+    api.patch<Photo>(`/api/entries/${entryId}/photos/${photoId}`, data),
 
   delete: (entryId: string, photoId: string) =>
     api.delete<void>(`/api/entries/${entryId}/photos/${photoId}`),
