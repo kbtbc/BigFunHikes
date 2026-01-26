@@ -1,9 +1,11 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LazyImage } from "@/components/ui/lazy-image";
 import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight, Dumbbell } from "lucide-react";
 import { type JournalEntry as JournalEntryType } from "@/data/journalEntries";
 import useEmblaCarousel from "embla-carousel-react";
@@ -82,7 +84,7 @@ export function JournalEntry({
         {/* Content - below header */}
         <div className="px-6 pb-6">
           <div className={`prose prose-sm md:prose-base max-w-none prose-headings:font-outfit prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-a:text-primary prose-blockquote:text-muted-foreground prose-code:text-foreground prose-li:text-foreground ${showFullContent ? 'journal-full-content' : ''}`}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
               {showFullContent ? entry.content : previewContent}
             </ReactMarkdown>
             {!showFullContent ? (
@@ -107,10 +109,11 @@ export function JournalEntry({
                     className={showFullContent && hasMultiplePhotos ? "flex-[0_0_100%] min-w-0" : ""}
                   >
                     <div className={`relative w-full overflow-hidden flex items-center justify-center ${showFullContent && hasMultiplePhotos ? "h-[400px] md:h-[500px] bg-black/5" : ""}`}>
-                      <img
+                      <LazyImage
                         src={photo.url}
                         alt={photo.caption}
                         className={`${showFullContent && hasMultiplePhotos ? "h-full w-auto max-w-full object-contain" : "w-full h-auto object-contain"}`}
+                        fallbackClassName={`${showFullContent && hasMultiplePhotos ? "h-full w-full" : "w-full h-48"}`}
                       />
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                         <p className="text-white text-sm text-shadow text-center">
@@ -181,10 +184,11 @@ export function JournalEntry({
                     : "opacity-60 hover:opacity-100"
                 }`}
               >
-                <img
+                <LazyImage
                   src={photo.url}
                   alt={photo.caption}
                   className="w-16 h-12 object-cover"
+                  fallbackClassName="w-16 h-12"
                 />
               </button>
             ))}

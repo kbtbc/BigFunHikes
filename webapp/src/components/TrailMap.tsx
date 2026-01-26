@@ -67,6 +67,7 @@ export function TrailMap({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const trailLayerRef = useRef<L.Polyline | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
+  const popupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   // Initialize map
@@ -90,6 +91,10 @@ export function TrailMap({
     setMapReady(true);
 
     return () => {
+      if (popupTimeoutRef.current) {
+        clearTimeout(popupTimeoutRef.current);
+        popupTimeoutRef.current = null;
+      }
       map.remove();
       mapInstanceRef.current = null;
       trailLayerRef.current = null;
@@ -147,8 +152,15 @@ export function TrailMap({
 
     // Remove existing marker
     if (markerRef.current) {
+      markerRef.current.closePopup();
       map.removeLayer(markerRef.current);
       markerRef.current = null;
+    }
+
+    // Clear any pending popup timeout
+    if (popupTimeoutRef.current) {
+      clearTimeout(popupTimeoutRef.current);
+      popupTimeoutRef.current = null;
     }
 
     // Add new marker if provided
@@ -173,7 +185,11 @@ export function TrailMap({
       markerRef.current = marker;
 
       // Open popup after a short delay to ensure map is ready
-      setTimeout(() => marker.openPopup(), 500);
+      popupTimeoutRef.current = setTimeout(() => {
+        if (markerRef.current) {
+          markerRef.current.openPopup();
+        }
+      }, 500);
     }
   }, [mapReady, showFullTrail, latestEntryMarker]);
 

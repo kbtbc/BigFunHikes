@@ -3,6 +3,7 @@ import { setCookie, deleteCookie, getCookie } from "hono/cookie";
 import { env } from "../env";
 import { z } from "zod";
 import { authTokens, isValidToken } from "../tokenStore";
+import { randomBytes, timingSafeEqual } from "crypto";
 
 const adminRouter = new Hono();
 
@@ -53,8 +54,13 @@ adminRouter.post("/login", async (c) => {
 
     const { password } = adminLoginSchema.parse(body);
 
-    // Check password against environment variable
-    if (password !== env.ADMIN_PASSWORD) {
+    // Check password against environment variable using constant-time comparison
+    const passwordBuffer = Buffer.from(password);
+    const adminPasswordBuffer = Buffer.from(env.ADMIN_PASSWORD);
+    const passwordsMatch = passwordBuffer.length === adminPasswordBuffer.length &&
+      timingSafeEqual(passwordBuffer, adminPasswordBuffer);
+
+    if (!passwordsMatch) {
       return c.json(
         {
           error: {
@@ -112,13 +118,12 @@ adminRouter.post("/login", async (c) => {
       ...(isSecure && { partitioned: true }), // Only use partitioned for HTTPS
     });
 
-    // Generate a token for Authorization header fallback (for cross-origin HTTP)
-    // This allows authentication to work when cookies don't work across ports
     // Always generate token for domain names OR when Vibecode mode is enabled (as backup)
     const isVibecodeModeEnabled = process.env.DISABLE_VIBECODE !== "true";
     let authToken: string | undefined;
     if (isDomainName || isVibecodeModeEnabled) {
-      authToken = Buffer.from(`admin_${Date.now()}_${Math.random()}`).toString("base64");
+      // Use cryptographically secure random bytes for token generation
+      authToken = randomBytes(32).toString("base64url");
       // Store token with expiration
       authTokens.set(authToken, Date.now() + SESSION_DURATION * 1000);
       console.log(`[Login] Generated token for domain ${hostname}, cookie domain: ${cookieDomain}, vibecode: ${isVibecodeModeEnabled}`);
