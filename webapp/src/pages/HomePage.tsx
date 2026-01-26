@@ -151,9 +151,9 @@ export function HomePage() {
                 <JournalEntry entry={latestEntry} />
               </div>
               <div className="mt-6 text-center">
-                <Link to="/timeline">
+                <Link to={`/entry/${latestEntry.id}`}>
                   <Button size="lg">
-                    View All Entries
+                    View Full Entry
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
