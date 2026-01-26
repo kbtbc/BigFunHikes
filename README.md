@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.6)
+## Current Features (v3.7)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -110,6 +110,8 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 - **Admin Authentication**: Secure password-based login
 - **Dual-Mode Support**: Cookie + token authentication for cross-domain deployment
 - **7-Day Sessions**: Persistent login sessions
+- **Rate Limiting**: Login attempts limited to 5 per 15 minutes per IP (v3.7)
+- **Secure Tokens**: Cryptographically secure token generation (v3.7)
 - Full CRUD operations (Create, Read, Update, Delete)
 - Photo management with file uploads and caption editing
 - React Query for efficient data fetching/caching

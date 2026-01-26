@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.6 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.7 COMPLETE)
 
 ### Overview
 
@@ -12,6 +12,9 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 
 ### Backend (100% Complete)
 - **Authentication**: Password-based admin login with cookies/tokens, 7-day sessions
+- **Rate Limiting**: Login attempts limited to 5 per 15 minutes per IP (NEW v3.7)
+- **Secure Tokens**: Cryptographically secure token generation with crypto.randomBytes (NEW v3.7)
+- **Constant-Time Comparison**: Timing-safe password verification (NEW v3.7)
 - **Database**: Prisma SQLite with JournalEntry, Photo models
 - **CRUD Routes**: All journal entry and photo management endpoints
 - **Statistics**: Enhanced stats with pace analytics, projections, elevation profile
@@ -26,6 +29,15 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
   - Admin login page with dual-mode auth (cookie + token)
   - 7-day persistent sessions
   - Cross-domain authentication support
+  - **Rate limiting on login** (NEW v3.7)
+
+- **Security Improvements (NEW v3.7)**
+  - XSS protection with rehype-sanitize for markdown
+  - Map memory leak fix (setTimeout cleanup)
+  - Protected route guards for admin pages
+  - Image lazy loading with error handling
+  - Global ErrorBoundary with recovery UI
+  - React Query caching configuration (5min stale, 10min gc)
 
 - **Pages**
   - HomePage: Stats dashboard, full AT trail map, YouTube integration
@@ -377,8 +389,15 @@ bun run seed  # Creates 11 sample entries including training hike with Suunto da
 - [x] **Auto-populate fields from Suunto data** (v3.5)
 - [x] **Combined GPX + Suunto support** (v3.5)
 - [x] **Lap splits parsing fixed** (v3.6) - reads from DeviceLog.Windows
-- [x] **Reverse geocoding for location names** (NEW v3.6)
-- [x] **Training entries sorted to top of Timeline** (NEW v3.6)
+- [x] **Reverse geocoding for location names** (v3.6)
+- [x] **Training entries sorted to top of Timeline** (v3.6)
+- [x] **Rate limiting on admin login** (NEW v3.7)
+- [x] **Cryptographically secure tokens** (NEW v3.7)
+- [x] **XSS protection for markdown** (NEW v3.7)
+- [x] **Map memory leak fix** (NEW v3.7)
+- [x] **Protected route guards** (NEW v3.7)
+- [x] **Image lazy loading with error handling** (NEW v3.7)
+- [x] **Global ErrorBoundary** (NEW v3.7)
 
 ---
 
