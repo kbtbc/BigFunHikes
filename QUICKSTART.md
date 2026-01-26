@@ -10,6 +10,9 @@ A complete Appalachian Trail journal web app with:
 - Photo upload with each entry (multiple photos supported)
 - Statistics dashboard (total miles, days, elevation, daily average)
 - Interactive trail map with GPX track display
+- Suunto watch data import (HR, pace, steps, calories, lap splits)
+- Training hike support (separate from trail stats)
+- Offline mode with auto-sync
 - Simple password authentication (no email needed)
 - SQLite database (no external database required)
 - Mobile-responsive design
@@ -31,18 +34,22 @@ curl -fsSL https://bun.sh/install | bash
 
 ## Running Locally
 
-### 1. Configure Environment (Optional)
+### 1. Configure Environment
 
 For local development without Vibecode:
 
 **backend/.env:**
 ```env
 DISABLE_VIBECODE=true
+ADMIN_PASSWORD=your-secure-password
+BETTER_AUTH_SECRET=any-random-string-here
+DATABASE_URL="file:./dev.db"
 ```
 
 **webapp/.env:**
 ```env
 VITE_DISABLE_VIBECODE=true
+VITE_BACKEND_URL=http://localhost:3000
 ```
 
 ### 2. Start the Backend
@@ -55,6 +62,9 @@ bun install
 
 # Initialize database (first time only)
 bunx prisma db push
+
+# Optional: Seed sample data (WARNING: deletes existing data!)
+bun run seed
 
 # Start backend server
 bun run dev
@@ -70,10 +80,10 @@ Open a **new terminal**:
 cd webapp
 
 # Install dependencies
-npm install
+bun install
 
 # Start frontend
-npm run dev
+bun run dev
 ```
 
 You should see: `Local: http://localhost:8000/`
@@ -85,7 +95,23 @@ You should see: `Local: http://localhost:8000/`
 
 Default password: Check `backend/.env` for `ADMIN_PASSWORD`
 
-### 5. Test on Mobile (Same Network)
+### 5. Hosting from Home (Cloudflare Tunnels)
+
+For free remote access without port forwarding:
+
+1. Install cloudflared: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/
+2. Create tunnels for both services:
+   ```bash
+   cloudflared tunnel create bigfun-backend
+   cloudflared tunnel create bigfun-frontend
+   ```
+3. Configure routes to localhost:3000 (backend) and localhost:8000 (frontend)
+4. Update `webapp/.env` with your tunnel URL:
+   ```env
+   VITE_BACKEND_URL=https://your-backend-tunnel.cfargotunnel.com
+   ```
+
+### 6. Test on Mobile (Same Network)
 
 Find your computer's IP:
 - **Windows**: `ipconfig` (look for IPv4 Address)
@@ -102,23 +128,41 @@ On your phone: `http://<your-ip>:8000`
 1. Login at `/admin`
 2. Click "New Entry" in navbar
 3. Fill in:
-   - Date
-   - Day Number
-   - Title
+   - Date, Day Number, Title
    - Miles Hiked / Total Miles
    - Content (markdown supported)
+   - Import GPX track (optional)
+   - Import Suunto JSON (optional) - auto-fills miles, elevation, date
    - Photos (optional)
 4. Submit - entry appears immediately on timeline
+
+### Import Watch Data
+- **GPX files**: Import from any GPS device for route display
+- **Suunto JSON**: Full fitness data including:
+  - Heart rate zones and charts
+  - Pace and speed metrics
+  - Step count and calories
+  - Lap splits with detailed breakdown
+  - Elevation profile
+- Both can be used together (Suunto for metrics, GPX for route)
+
+### Training Hikes
+- Toggle "Training" mode when creating entries
+- Training hikes use amber/orange styling
+- Not counted in trail statistics
+- Great for pre-hike conditioning tracking
 
 ### Timeline View
 - All entries in chronological order
 - Photo thumbnails
+- Training entries styled differently
 - Click any entry to view full details
 
 ### Entry Details
 - Full content with markdown rendering
 - Photo carousel
-- Trail map showing location
+- Trail map showing location/route
+- Suunto fitness stats display
 - Edit/Delete options (when logged in)
 
 ### Statistics
@@ -126,6 +170,9 @@ On your phone: `http://<your-ip>:8000`
 - Days on trail
 - Total elevation gain
 - Average miles per day
+- 7-day moving average pace
+- Projected completion date
+- Personal records (longest day, biggest climb)
 
 ---
 
@@ -136,7 +183,7 @@ On your phone: `http://<your-ip>:8000`
 
 **"Cannot find module"**
 - Run `bun install` in backend
-- Run `npm install` in webapp
+- Run `bun install` in webapp
 
 **Frontend can't connect to backend**
 - Check both `DISABLE_VIBECODE` settings match
@@ -154,6 +201,10 @@ On your phone: `http://<your-ip>:8000`
 **Photos not loading**
 - Ensure `backend/public/uploads/` exists
 - Check CORS settings (DISABLE_VIBECODE should be consistent)
+
+**Suunto import not working**
+- Ensure file is native Suunto JSON export (not GPX)
+- Check browser console for parsing errors
 
 ---
 
@@ -179,6 +230,14 @@ Note: Replace `<your-secure-password>` with your own password. Do not commit rea
 ---
 
 ## Deployment Options
+
+### Cloudflare Tunnels (Free, Home Hosting)
+
+Great for personal use without paying for hosting:
+1. Run backend and frontend locally
+2. Use Cloudflare Tunnels for public HTTPS access
+3. No port forwarding needed
+4. Free SSL certificates
 
 ### Vercel + Railway (Free Tier)
 
@@ -207,7 +266,8 @@ See README.md for detailed VPS deployment instructions.
 | `README.md` | Full documentation |
 | `QUICKSTART.md` | This file |
 | `DISABLE_VIBECODE.md` | Environment variable details |
+| `backend/data/` | Seed data files (Suunto JSON) |
 
 ---
 
-Happy trails! 🥾
+Happy trails!
