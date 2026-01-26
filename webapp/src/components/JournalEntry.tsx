@@ -70,7 +70,7 @@ export function JournalEntry({
 
         {/* Content - below header */}
         <div className="px-6 pb-6">
-          <div className="prose prose-sm md:prose-base max-w-none prose-headings:font-outfit prose-headings:text-foreground prose-p:text-foreground prose-p:leading-relaxed prose-p:mb-6 prose-strong:text-foreground prose-a:text-primary prose-blockquote:text-muted-foreground prose-code:text-foreground prose-li:text-foreground">
+          <div className="prose prose-sm md:prose-base max-w-none prose-headings:font-outfit prose-headings:text-foreground prose-p:text-foreground prose-p:leading-relaxed prose-p:mb-10 prose-strong:text-foreground prose-a:text-primary prose-blockquote:text-muted-foreground prose-code:text-foreground prose-li:text-foreground">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {showFullContent ? entry.content : previewContent}
             </ReactMarkdown>
