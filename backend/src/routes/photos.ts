@@ -7,6 +7,51 @@ import { requireAdminAuth } from "../middleware/adminAuth";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { randomUUID } from "crypto";
+import exifr from "exifr";
+
+interface ExifData {
+  latitude?: number;
+  longitude?: number;
+  takenAt?: Date;
+}
+
+/**
+ * Extract GPS coordinates and date taken from image EXIF data
+ */
+async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
+  try {
+    const result = await exifr.parse(buffer, {
+      gps: true,
+      pick: ["latitude", "longitude", "DateTimeOriginal", "CreateDate", "ModifyDate"],
+    });
+
+    if (!result) {
+      console.log("[photos] No EXIF data found in image");
+      return {};
+    }
+
+    const exifData: ExifData = {};
+
+    // Extract GPS coordinates
+    if (typeof result.latitude === "number" && typeof result.longitude === "number") {
+      exifData.latitude = result.latitude;
+      exifData.longitude = result.longitude;
+      console.log("[photos] Extracted GPS:", { lat: exifData.latitude, lon: exifData.longitude });
+    }
+
+    // Extract date taken (try multiple EXIF date fields)
+    const dateField = result.DateTimeOriginal || result.CreateDate || result.ModifyDate;
+    if (dateField) {
+      exifData.takenAt = dateField instanceof Date ? dateField : new Date(dateField);
+      console.log("[photos] Extracted date taken:", exifData.takenAt);
+    }
+
+    return exifData;
+  } catch (error) {
+    console.error("[photos] Error extracting EXIF data:", error);
+    return {};
+  }
+}
 
 const photosRouter = new Hono();
 
@@ -215,6 +260,9 @@ photosRouter.post("/:id/photos/upload", async (c) => {
     const buffer = await file.arrayBuffer();
     await fs.writeFile(filepath, new Uint8Array(buffer));
 
+    // Extract EXIF data (GPS coordinates and date taken)
+    const exifData = await extractExifData(buffer);
+
     // Construct relative URL for the photo (will be served by backend)
     // Using relative URL so it works with proxy
     const fileUrl = `/public/uploads/${filename}`;
@@ -238,19 +286,30 @@ photosRouter.post("/:id/photos/upload", async (c) => {
       );
     }
 
-    // Create photo record in database
+    // Create photo record in database with EXIF data
     const photo = await prisma.photo.create({
       data: {
         url: fileUrl,
         caption: caption || null,
         order: orderNum,
         journalEntryId: entryId,
+        latitude: exifData.latitude ?? null,
+        longitude: exifData.longitude ?? null,
+        takenAt: exifData.takenAt ?? null,
       },
+    });
+
+    console.log("[photos] Created photo with EXIF data:", {
+      id: photo.id,
+      latitude: photo.latitude,
+      longitude: photo.longitude,
+      takenAt: photo.takenAt,
     });
 
     const formattedPhoto = {
       ...photo,
       createdAt: photo.createdAt.toISOString(),
+      takenAt: photo.takenAt?.toISOString() ?? null,
     };
 
     return c.json({ data: formattedPhoto }, 201);

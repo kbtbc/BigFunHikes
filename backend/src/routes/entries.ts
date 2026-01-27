@@ -69,6 +69,7 @@ entriesRouter.get(
           ...photo,
           url: normalizePhotoUrl(photo.url),
           createdAt: photo.createdAt.toISOString(),
+          takenAt: photo.takenAt?.toISOString() ?? null,
         })),
       }));
 
@@ -149,6 +150,7 @@ entriesRouter.get("/:id", async (c) => {
         ...photo,
         url: normalizePhotoUrl(photo.url),
         createdAt: photo.createdAt.toISOString(),
+        takenAt: photo.takenAt?.toISOString() ?? null,
       })),
     };
 
@@ -283,6 +285,7 @@ entriesRouter.put(
           ...photo,
           url: normalizePhotoUrl(photo.url),
           createdAt: photo.createdAt.toISOString(),
+          takenAt: photo.takenAt?.toISOString() ?? null,
         })),
       };
 
