@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Heart,
   Activity,
@@ -15,6 +15,12 @@ import {
   Watch,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import {
   Table,
@@ -345,6 +351,7 @@ function LapSplitsTable({ laps }: { laps: SuuntoLap[] }) {
 }
 
 export function SuuntoStatsDisplay({ suuntoData }: SuuntoStatsDisplayProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const { heartRate, pace, temperature, elevation, laps, elevationProfile, hrOverTime } =
     suuntoData;
 
@@ -361,27 +368,41 @@ export function SuuntoStatsDisplay({ suuntoData }: SuuntoStatsDisplayProps) {
   }, [heartRate.zones, elevation.ascentFeet, suuntoData.distanceMiles]);
 
   return (
-    <div className="space-y-6">
-      {/* Header with Watch Icon */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
-          <Watch className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold font-outfit">Fitness Watch Data</h3>
-          <p className="text-sm text-muted-foreground">
-            Recorded on {new Date(suuntoData.dateTime).toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-        </div>
-      </div>
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <CollapsibleTrigger asChild>
+        <Button
+          variant="ghost"
+          className="w-full flex items-center justify-between p-0 h-auto hover:bg-transparent"
+        >
+          {/* Header with Watch Icon */}
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+              <Watch className="h-5 w-5 text-primary" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-semibold font-outfit">Fitness Watch Data</h3>
+              <p className="text-sm text-muted-foreground">
+                Recorded on {new Date(suuntoData.dateTime).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
+          </div>
+          {isExpanded ? (
+            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+          )}
+        </Button>
+      </CollapsibleTrigger>
 
-      {/* Summary Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <CollapsibleContent>
+        <div className="space-y-6 pt-6">
+          {/* Summary Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           icon={Footprints}
           label="Steps"
@@ -639,6 +660,8 @@ export function SuuntoStatsDisplay({ suuntoData }: SuuntoStatsDisplayProps) {
           </p>
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

@@ -58,7 +58,7 @@ export function ActivityPlayer({
   entryDate,
   onPhotoClick,
 }: ActivityPlayerProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
