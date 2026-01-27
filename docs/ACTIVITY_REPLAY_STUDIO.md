@@ -179,6 +179,27 @@ BigFun's Suunto Replay Studio is a standalone sub-application within the BigFun 
 - **Full 3D terrain** with satellite view
 - Camera modes: follow, overview, firstPerson
 
+### Demo Data
+
+The Replay Studio uses a sample Suunto JSON file for the demo mode.
+
+**Location**: `backend/data/suwaneetrek-1.json`
+
+**Seed Script**: To ensure demo data is in place, run:
+```bash
+cd backend
+bun run seed:replay-studio
+```
+
+This script will:
+1. Check if demo data already exists
+2. If not, look for source files in known locations
+3. Copy and validate the data
+4. Report status
+
+**API Endpoint**: `GET /api/replay-studio/demo`
+**Frontend Route**: `/suunto/demo`
+
 ---
 
 ## Architecture
