@@ -2,7 +2,7 @@
  * Suunto Replay Studio - Viewer Page
  *
  * Displays uploaded or demo activity with style selector.
- * Supports 4 unique visual styles for the Activity Player.
+ * Supports 10 unique visual styles for the Activity Player.
  */
 
 import { useState, useEffect } from "react";
@@ -16,9 +16,25 @@ import { ClassicPlayer } from "@/components/suunto/players/ClassicPlayer";
 import { CinematicPlayer } from "@/components/suunto/players/CinematicPlayer";
 import { MinimalPlayer } from "@/components/suunto/players/MinimalPlayer";
 import { DashboardPlayer } from "@/components/suunto/players/DashboardPlayer";
+import { StravaPlayer } from "@/components/suunto/players/StravaPlayer";
+import { PolaroidPlayer } from "@/components/suunto/players/PolaroidPlayer";
+import { TerminalPlayer } from "@/components/suunto/players/TerminalPlayer";
+import { NeonPlayer } from "@/components/suunto/players/NeonPlayer";
+import { EditorialPlayer } from "@/components/suunto/players/EditorialPlayer";
+import { TopographicPlayer } from "@/components/suunto/players/TopographicPlayer";
 import type { SuuntoParseResult } from "@/lib/suunto-parser";
 
-export type PlayerStyle = "classic" | "cinematic" | "minimal" | "dashboard";
+export type PlayerStyle =
+  | "classic"
+  | "cinematic"
+  | "minimal"
+  | "dashboard"
+  | "strava"
+  | "polaroid"
+  | "terminal"
+  | "neon"
+  | "editorial"
+  | "topographic";
 
 interface ActivityData {
   shareId?: string;
@@ -99,6 +115,18 @@ export function SuuntoViewerPage() {
         return <MinimalPlayer data={activityData.parsedData} />;
       case "dashboard":
         return <DashboardPlayer data={activityData.parsedData} />;
+      case "strava":
+        return <StravaPlayer data={activityData.parsedData} />;
+      case "polaroid":
+        return <PolaroidPlayer data={activityData.parsedData} />;
+      case "terminal":
+        return <TerminalPlayer data={activityData.parsedData} />;
+      case "neon":
+        return <NeonPlayer data={activityData.parsedData} />;
+      case "editorial":
+        return <EditorialPlayer data={activityData.parsedData} />;
+      case "topographic":
+        return <TopographicPlayer data={activityData.parsedData} />;
       default:
         return <ClassicPlayer data={activityData.parsedData} />;
     }
