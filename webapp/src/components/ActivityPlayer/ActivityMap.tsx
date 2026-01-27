@@ -570,11 +570,13 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
       // Only move if we've drifted more than a small threshold
       if (distanceToPoint > 0.0002) {
         // Use lower pitch to reduce terrain clipping
-        const followPitch = terrain3D ? 45 : 40;
+        const followPitch = terrain3D ? 50 : 45;
+        const followZoom = 15.5; // Closer zoom for follow mode
 
         map.current.easeTo({
           center: [currentPoint.lon, currentPoint.lat],
           pitch: followPitch,
+          zoom: followZoom,
           duration: 400,
           easing: smoothEasing,
         });
@@ -599,13 +601,13 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
         // Calculate dynamic pitch based on elevation change to reduce clipping
         // When going uphill, reduce pitch; when going downhill, can use higher pitch
         const elevationDiff = (lookAheadPoint.elevation ?? 0) - (currentPoint.elevation ?? 0);
-        const basePitch = terrain3D ? 55 : 45;
+        const basePitch = terrain3D ? 50 : 40;
         // Reduce pitch when climbing (negative diff means looking up into terrain)
-        const dynamicPitch = Math.max(35, Math.min(basePitch, basePitch - elevationDiff * 0.3));
+        const dynamicPitch = Math.max(30, Math.min(basePitch, basePitch - elevationDiff * 0.3));
 
         // Use flyTo only occasionally for major adjustments, otherwise just pan
         const currentZoom = map.current.getZoom();
-        const targetZoom = 14.5; // Zoom out slightly to keep camera higher
+        const targetZoom = 14.0; // Further out for first-person to reduce clipping
         const needsZoomAdjust = Math.abs(currentZoom - targetZoom) > 0.5;
 
         if (needsZoomAdjust) {
