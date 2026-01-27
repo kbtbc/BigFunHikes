@@ -1,18 +1,13 @@
 /**
- * Running Player - Nike Run Club Inspired Aesthetic
+ * Running Player - Health-focused running activity display
  *
- * Design Direction: Bold, kinetic energy, high contrast
- * Motivational running app feel with dynamic stats
- *
- * Aesthetic: Dark with vibrant neon accents, motion-focused
- * Color Palette:
- * - Primary: #ff3366 (Electric pink/red - energy)
- * - Secondary: #00ff87 (Neon green - success/pace)
- * - Accent: #ffcc00 (Gold - achievement)
- * - Background: #0a0a0a (Pure black)
+ * Design: Clean, athletic, focused on running metrics
+ * Features: Pace, heart rate zones, cadence, elevation
+ * Full 3D terrain with all map controls
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -31,15 +26,16 @@ import {
   SkipForward,
   Mountain,
   Gauge,
+  Palette,
   Video,
   Eye,
   Navigation,
   Heart,
+  Footprints,
   Flame,
   TrendingUp,
   Timer,
   Activity,
-  Zap,
 } from "lucide-react";
 import {
   AreaChart,
@@ -66,13 +62,12 @@ interface RunningPlayerProps {
 
 type ColorMode = "pace" | "hr" | "elevation";
 
-// Heart Rate Zone definitions
 const HR_ZONES = [
-  { name: "1", min: 50, max: 60, color: "#94a3b8", label: "RECOVERY" },
-  { name: "2", min: 60, max: 70, color: "#00ff87", label: "EASY" },
-  { name: "3", min: 70, max: 80, color: "#ffcc00", label: "AEROBIC" },
-  { name: "4", min: 80, max: 90, color: "#ff9500", label: "THRESHOLD" },
-  { name: "5", min: 90, max: 100, color: "#ff3366", label: "MAX" },
+  { name: "1", min: 50, max: 60, color: "#6b7280", label: "Recovery" },
+  { name: "2", min: 60, max: 70, color: "#22c55e", label: "Easy" },
+  { name: "3", min: 70, max: 80, color: "#eab308", label: "Aerobic" },
+  { name: "4", min: 80, max: 90, color: "#f97316", label: "Threshold" },
+  { name: "5", min: 90, max: 100, color: "#ef4444", label: "Max" },
 ];
 
 function speedToPace(speedMs: number): number {
@@ -212,53 +207,21 @@ export function RunningPlayer({ data }: RunningPlayerProps) {
 
   if (!activityData) {
     return (
-      <div className="running-wrapper">
-        <div className="flex items-center justify-center h-96">
-          <div className="running-loader" />
+      <Card className="running-card p-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
         </div>
-        <style>{runningStyles}</style>
-      </div>
+      </Card>
     );
   }
 
   const hrZoneInfo = currentHrZone > 0 ? HR_ZONES[currentHrZone - 1] : null;
 
   return (
-    <div className="running-wrapper">
-      {/* Hero Section - Pace Display */}
-      <div className="running-hero">
-        <div className="running-hero-bg" />
-        <div className="running-hero-content">
-          <div className="running-pace-display">
-            <div className="running-pace-label">CURRENT PACE</div>
-            <div className="running-pace-value">{formatPace(currentPace)}</div>
-            <div className="running-pace-unit">/MI</div>
-          </div>
-
-          <div className="running-hero-stats">
-            <div className="running-hero-stat">
-              <Activity className="w-5 h-5 text-[#00ff87]" />
-              <span className="running-hero-stat-value">{currentDistance.toFixed(2)}</span>
-              <span className="running-hero-stat-unit">mi</span>
-            </div>
-            <div className="running-hero-divider" />
-            <div className="running-hero-stat">
-              <Timer className="w-5 h-5 text-[#ffcc00]" />
-              <span className="running-hero-stat-value">{formatDuration(currentTime)}</span>
-            </div>
-            <div className="running-hero-divider" />
-            <div className="running-hero-stat">
-              <TrendingUp className="w-5 h-5 text-[#ff3366]" />
-              <span className="running-hero-stat-value">{formatPace(avgPace)}</span>
-              <span className="running-hero-stat-unit">avg</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Map Section */}
-      <div className="running-map-section">
-        <div className="running-map-container">
+    <div className="running-player space-y-4">
+      {/* Map */}
+      <Card className="running-card overflow-hidden">
+        <div className="relative" style={{ height: "450px" }}>
           <RunningMap
             ref={mapRef}
             dataPoints={activityData.dataPoints}
@@ -273,108 +236,180 @@ export function RunningPlayer({ data }: RunningPlayerProps) {
             highlightedSegment={null}
           />
         </div>
+      </Card>
 
-        {/* Map Controls */}
-        <div className="running-map-controls">
-          <Select value={colorMode} onValueChange={(val) => setColorMode(val as ColorMode)}>
-            <SelectTrigger className="running-select">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="running-select-content">
-              <SelectItem value="pace">Pace</SelectItem>
-              {activityData.hasHeartRate && <SelectItem value="hr">Heart Rate</SelectItem>}
-              <SelectItem value="elevation">Elevation</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={cameraMode} onValueChange={(val) => setCameraMode(val as CameraMode)}>
-            <SelectTrigger className="running-select">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="running-select-content">
-              <SelectItem value="follow"><Navigation className="w-3 h-3 inline mr-1" />Follow</SelectItem>
-              <SelectItem value="overview"><Eye className="w-3 h-3 inline mr-1" />Overview</SelectItem>
-              <SelectItem value="firstPerson"><Video className="w-3 h-3 inline mr-1" />POV</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="running-toggle">
-            <Mountain className="w-4 h-4" />
-            <Label className="text-xs">3D</Label>
-            <Switch checked={terrain3D} onCheckedChange={setTerrain3D} />
+      {/* Controls Card */}
+      <Card className="running-card p-4 space-y-4">
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-sm">
+          <div className="running-stat">
+            <span className="running-stat-label">
+              <Timer className="w-3 h-3" /> Pace
+            </span>
+            <span className="running-stat-value text-orange-500">{formatPace(currentPace)}/mi</span>
           </div>
 
-          <div className="running-toggle">
-            <Label className="text-xs">SAT</Label>
-            <Switch checked={mapStyle === "satellite"} onCheckedChange={(c) => setMapStyle(c ? "satellite" : "outdoors")} />
+          <div className="running-stat">
+            <span className="running-stat-label">
+              <TrendingUp className="w-3 h-3" /> Avg Pace
+            </span>
+            <span className="running-stat-value">{formatPace(avgPace)}/mi</span>
+          </div>
+
+          <div className="running-stat">
+            <span className="running-stat-label">
+              <Activity className="w-3 h-3" /> Distance
+            </span>
+            <span className="running-stat-value">{currentDistance.toFixed(2)} mi</span>
+          </div>
+
+          <div className="running-stat">
+            <span className="running-stat-label">
+              <Timer className="w-3 h-3" /> Time
+            </span>
+            <span className="running-stat-value">{formatDuration(currentTime)}</span>
+          </div>
+
+          {activityData.hasHeartRate && currentPoint?.hr && (
+            <div className="running-stat">
+              <span className="running-stat-label">
+                <Heart className="w-3 h-3" /> Heart Rate
+              </span>
+              <span className="running-stat-value" style={{ color: hrZoneInfo?.color }}>
+                {currentPoint.hr} bpm
+              </span>
+            </div>
+          )}
+
+          <div className="running-stat">
+            <span className="running-stat-label">
+              <Mountain className="w-3 h-3" /> Elev Gain
+            </span>
+            <span className="running-stat-value">{Math.round(metersToFeet(activityData.summary.elevationGain))} ft</span>
           </div>
         </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="running-stats-section">
-        {/* Heart Rate Zone */}
+        {/* Heart Rate Zone Bar */}
         {activityData.hasHeartRate && currentPoint?.hr && (
-          <div className="running-hr-card">
-            <div className="running-hr-header">
-              <Heart className="w-5 h-5" style={{ color: hrZoneInfo?.color }} />
-              <span className="running-hr-bpm">{currentPoint.hr}</span>
-              <span className="running-hr-unit">BPM</span>
+          <div className="running-hr-zones">
+            <div className="flex items-center gap-2 mb-2">
+              <Heart className="w-4 h-4" style={{ color: hrZoneInfo?.color }} />
+              <span className="text-xs font-medium text-muted-foreground">HR Zone</span>
+              <span className="text-xs ml-auto" style={{ color: hrZoneInfo?.color }}>
+                {hrZoneInfo?.label}
+              </span>
             </div>
-            <div className="running-hr-zones">
+            <div className="flex gap-1 h-6 rounded overflow-hidden">
               {HR_ZONES.map((zone, idx) => (
                 <div
                   key={zone.name}
-                  className={`running-hr-zone ${currentHrZone === idx + 1 ? "active" : ""}`}
+                  className="flex-1 flex items-center justify-center text-xs font-bold transition-all"
                   style={{
                     backgroundColor: currentHrZone === idx + 1 ? zone.color : "rgba(255,255,255,0.1)",
+                    color: currentHrZone === idx + 1 ? "white" : "rgba(255,255,255,0.3)",
+                    transform: currentHrZone === idx + 1 ? "scaleY(1.15)" : "scaleY(1)",
                   }}
                 >
-                  <span className="running-hr-zone-num">{zone.name}</span>
-                  {currentHrZone === idx + 1 && (
-                    <span className="running-hr-zone-label">{zone.label}</span>
-                  )}
+                  {zone.name}
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Secondary Stats */}
-        <div className="running-stats-grid">
-          <div className="running-stat-card">
-            <Mountain className="w-4 h-4 text-[#00ff87]" />
-            <span className="running-stat-value">{Math.round(metersToFeet(activityData.summary.elevationGain))}</span>
-            <span className="running-stat-label">ELEV GAIN (ft)</span>
+        {/* Progress Scrubber */}
+        <div className="px-1">
+          <Slider
+            value={[progress]}
+            onValueChange={handleSeek}
+            max={100}
+            step={0.1}
+            className="running-slider"
+          />
+        </div>
+
+        {/* Control Buttons & Options */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Playback Controls */}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={handleSkipBack} disabled={currentIndex === 0} className="running-btn">
+              <SkipBack className="h-4 w-4" />
+            </Button>
+            <Button onClick={handlePlayPause} className="running-play-btn h-10 w-10">
+              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleSkipForward} disabled={currentIndex >= activityData.dataPoints.length - 1} className="running-btn">
+              <SkipForward className="h-4 w-4" />
+            </Button>
           </div>
 
-          {activityData.hasCadence && currentPoint?.cadence && (
-            <div className="running-stat-card">
-              <Zap className="w-4 h-4 text-[#ffcc00]" />
-              <span className="running-stat-value">{currentPoint.cadence}</span>
-              <span className="running-stat-label">CADENCE (spm)</span>
+          {/* Options */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Palette className="h-4 w-4 text-muted-foreground" />
+              <Select value={colorMode} onValueChange={(val) => setColorMode(val as ColorMode)}>
+                <SelectTrigger className="w-28 h-8 running-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pace">Pace</SelectItem>
+                  {activityData.hasHeartRate && <SelectItem value="hr">Heart Rate</SelectItem>}
+                  <SelectItem value="elevation">Elevation</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
 
-          {activityData.summary.calories && (
-            <div className="running-stat-card">
-              <Flame className="w-4 h-4 text-[#ff3366]" />
-              <span className="running-stat-value">
-                {Math.round((currentTime / activityData.summary.duration) * activityData.summary.calories)}
-              </span>
-              <span className="running-stat-label">CALORIES</span>
+            <div className="flex items-center gap-2">
+              <Video className="h-4 w-4 text-muted-foreground" />
+              <Select value={cameraMode} onValueChange={(val) => setCameraMode(val as CameraMode)}>
+                <SelectTrigger className="w-32 h-8 running-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="follow"><Navigation className="h-3 w-3 inline mr-1" />Follow</SelectItem>
+                  <SelectItem value="overview"><Eye className="h-3 w-3 inline mr-1" />Overview</SelectItem>
+                  <SelectItem value="firstPerson"><Video className="h-3 w-3 inline mr-1" />First Person</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
+
+            <div className="flex items-center gap-2">
+              <Mountain className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-sm">3D</Label>
+              <Switch checked={terrain3D} onCheckedChange={setTerrain3D} />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Label className="text-sm">Satellite</Label>
+              <Switch checked={mapStyle === "satellite"} onCheckedChange={(c) => setMapStyle(c ? "satellite" : "outdoors")} />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Gauge className="h-4 w-4 text-muted-foreground" />
+              <Select value={playbackSpeed.toString()} onValueChange={(val) => setPlaybackSpeed(parseFloat(val))}>
+                <SelectTrigger className="w-20 h-8 running-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0.5">0.5x</SelectItem>
+                  <SelectItem value="1">1x</SelectItem>
+                  <SelectItem value="2">2x</SelectItem>
+                  <SelectItem value="4">4x</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
-      </div>
+      </Card>
 
       {/* Pace Chart */}
-      <div className="running-chart-section">
-        <div className="running-chart-header">
-          <TrendingUp className="w-4 h-4 text-[#ff3366]" />
-          <span>PACE PROFILE</span>
+      <Card className="running-card p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="w-4 h-4 text-orange-500" />
+          <span className="text-sm font-medium">Pace Profile</span>
+          <span className="text-xs text-muted-foreground ml-auto">Click to seek</span>
         </div>
-        <ResponsiveContainer width="100%" height={80}>
+        <ResponsiveContainer width="100%" height={100}>
           <AreaChart
             data={paceChartData}
             onClick={(data) => {
@@ -385,425 +420,70 @@ export function RunningPlayer({ data }: RunningPlayerProps) {
             style={{ cursor: "pointer" }}
           >
             <defs>
-              <linearGradient id="runningPaceGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ff3366" stopOpacity={0.6} />
-                <stop offset="100%" stopColor="#ff3366" stopOpacity={0.05} />
+              <linearGradient id="runPaceGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#f97316" stopOpacity={0.5} />
+                <stop offset="95%" stopColor="#f97316" stopOpacity={0.05} />
               </linearGradient>
             </defs>
             <XAxis dataKey="time" hide />
             <YAxis hide domain={["dataMin - 1", "dataMax + 1"]} reversed />
-            <Area
-              type="monotone"
-              dataKey="pace"
-              stroke="#ff3366"
-              fill="url(#runningPaceGrad)"
-              strokeWidth={2}
-              connectNulls
-            />
-            <ReferenceLine x={currentTime} stroke="#00ff87" strokeWidth={2} />
+            <Area type="monotone" dataKey="pace" stroke="#f97316" fill="url(#runPaceGrad)" strokeWidth={2} connectNulls />
+            <ReferenceLine x={currentTime} stroke="#22c55e" strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>
-      </div>
+      </Card>
 
-      {/* Playback Controls */}
-      <div className="running-playback">
-        <div className="running-progress">
-          <Slider value={[progress]} onValueChange={handleSeek} max={100} step={0.1} className="running-slider" />
-        </div>
-        <div className="running-controls">
-          <Button variant="ghost" size="icon" onClick={handleSkipBack} disabled={currentIndex === 0} className="running-btn">
-            <SkipBack className="w-5 h-5" />
-          </Button>
-          <Button onClick={handlePlayPause} className="running-play-btn">
-            {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleSkipForward} disabled={currentIndex >= activityData.dataPoints.length - 1} className="running-btn">
-            <SkipForward className="w-5 h-5" />
-          </Button>
-          <div className="running-speed-select">
-            <Gauge className="w-4 h-4" />
-            <Select value={playbackSpeed.toString()} onValueChange={(val) => setPlaybackSpeed(parseFloat(val))}>
-              <SelectTrigger className="running-select-mini">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="running-select-content">
-                <SelectItem value="0.5">0.5x</SelectItem>
-                <SelectItem value="1">1x</SelectItem>
-                <SelectItem value="2">2x</SelectItem>
-                <SelectItem value="4">4x</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      <style>{runningStyles}</style>
+      <style>{`
+        .running-card {
+          background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: #f5f5f7;
+        }
+        .running-stat {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 0.5rem;
+          padding: 0.75rem;
+          text-align: center;
+        }
+        .running-stat-label {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          font-size: 0.7rem;
+          color: rgba(255, 255, 255, 0.5);
+          margin-bottom: 4px;
+        }
+        .running-stat-value {
+          font-family: ui-monospace, monospace;
+          font-weight: 600;
+          font-size: 0.95rem;
+        }
+        .running-btn {
+          color: rgba(255, 255, 255, 0.7);
+        }
+        .running-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+        }
+        .running-play-btn {
+          background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+          color: white;
+          border-radius: 9999px;
+        }
+        .running-play-btn:hover {
+          background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+        }
+        .running-select {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+        .running-hr-zones {
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 0.5rem;
+        }
+      `}</style>
     </div>
   );
 }
-
-const runningStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap');
-
-  .running-wrapper {
-    --running-bg: #0a0a0a;
-    --running-surface: #141414;
-    --running-pink: #ff3366;
-    --running-green: #00ff87;
-    --running-gold: #ffcc00;
-    --running-text: #ffffff;
-    --running-muted: #666666;
-
-    background: var(--running-bg);
-    border-radius: 16px;
-    overflow: hidden;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--running-text);
-  }
-
-  .running-hero {
-    position: relative;
-    padding: 32px 24px;
-    overflow: hidden;
-  }
-
-  .running-hero-bg {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse at 20% 50%, rgba(255, 51, 102, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 50%, rgba(0, 255, 135, 0.1) 0%, transparent 50%);
-  }
-
-  .running-hero-content {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-  }
-
-  .running-pace-display {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 24px;
-  }
-
-  .running-pace-label {
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    color: var(--running-pink);
-  }
-
-  .running-pace-value {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 96px;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, var(--running-pink) 0%, var(--running-gold) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .running-pace-unit {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 32px;
-    color: var(--running-muted);
-  }
-
-  .running-hero-stats {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 24px;
-  }
-
-  .running-hero-stat {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .running-hero-stat-value {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    color: var(--running-text);
-  }
-
-  .running-hero-stat-unit {
-    font-size: 12px;
-    color: var(--running-muted);
-    text-transform: uppercase;
-  }
-
-  .running-hero-divider {
-    width: 1px;
-    height: 32px;
-    background: linear-gradient(to bottom, transparent, var(--running-muted), transparent);
-  }
-
-  .running-map-section {
-    background: var(--running-surface);
-  }
-
-  .running-map-container {
-    height: 350px;
-    position: relative;
-  }
-
-  .running-map-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--running-bg);
-    border-top: 1px solid rgba(255,255,255,0.05);
-  }
-
-  .running-toggle {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--running-muted);
-  }
-
-  .running-stats-section {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .running-hr-card {
-    background: var(--running-surface);
-    border-radius: 12px;
-    padding: 16px;
-    border: 1px solid rgba(255, 51, 102, 0.2);
-  }
-
-  .running-hr-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-
-  .running-hr-bpm {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 36px;
-    line-height: 1;
-  }
-
-  .running-hr-unit {
-    font-size: 12px;
-    color: var(--running-muted);
-  }
-
-  .running-hr-zones {
-    display: flex;
-    gap: 4px;
-    height: 40px;
-  }
-
-  .running-hr-zone {
-    flex: 1;
-    border-radius: 6px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-  }
-
-  .running-hr-zone.active {
-    transform: scaleY(1.1);
-    box-shadow: 0 0 20px currentColor;
-  }
-
-  .running-hr-zone-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 18px;
-    color: var(--running-text);
-  }
-
-  .running-hr-zone-label {
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    color: var(--running-bg);
-  }
-
-  .running-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 12px;
-  }
-
-  .running-stat-card {
-    background: var(--running-surface);
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .running-stat-value {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 32px;
-    line-height: 1;
-  }
-
-  .running-stat-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    color: var(--running-muted);
-  }
-
-  .running-chart-section {
-    padding: 16px 20px;
-    background: var(--running-surface);
-    border-top: 1px solid rgba(255,255,255,0.05);
-  }
-
-  .running-chart-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: var(--running-muted);
-    margin-bottom: 12px;
-  }
-
-  .running-playback {
-    padding: 16px 20px 24px;
-    background: var(--running-bg);
-  }
-
-  .running-progress {
-    margin-bottom: 16px;
-  }
-
-  .running-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-  }
-
-  .running-btn {
-    color: var(--running-muted);
-    transition: color 0.2s;
-  }
-
-  .running-btn:hover { color: var(--running-text); }
-  .running-btn:disabled { opacity: 0.3; }
-
-  .running-play-btn {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--running-pink) 0%, #ff1a53 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 0 30px rgba(255, 51, 102, 0.4);
-  }
-
-  .running-play-btn:hover {
-    transform: scale(1.08);
-    box-shadow: 0 0 50px rgba(255, 51, 102, 0.6);
-  }
-
-  .running-speed-select {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--running-muted);
-    margin-left: 16px;
-  }
-
-  .running-select {
-    height: 32px;
-    background: var(--running-surface);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--running-text);
-    font-size: 12px;
-    min-width: 90px;
-  }
-
-  .running-select-mini {
-    height: 28px;
-    width: 60px;
-    background: var(--running-surface);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--running-text);
-    font-size: 11px;
-  }
-
-  .running-select-content {
-    background: var(--running-surface);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--running-text);
-  }
-
-  .running-slider [data-orientation="horizontal"] {
-    height: 6px;
-    background: var(--running-surface);
-    border-radius: 3px;
-  }
-
-  .running-slider [data-orientation="horizontal"] > span {
-    background: linear-gradient(90deg, var(--running-pink), var(--running-green));
-  }
-
-  .running-slider [role="slider"] {
-    width: 18px;
-    height: 18px;
-    background: var(--running-text);
-    border: 3px solid var(--running-pink);
-    box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
-  }
-
-  .running-loader {
-    width: 48px;
-    height: 48px;
-    border: 3px solid rgba(255, 51, 102, 0.2);
-    border-top-color: var(--running-pink);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  @media (max-width: 640px) {
-    .running-pace-value {
-      font-size: 64px;
-    }
-
-    .running-hero-stats {
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .running-hero-divider {
-      display: none;
-    }
-  }
-`;
