@@ -54,3 +54,6 @@ bun.lockb
 # OS
 Thumbs.db
 Desktop.ini
+
+# Claude skills (user-specific)
+.claude/skills/
