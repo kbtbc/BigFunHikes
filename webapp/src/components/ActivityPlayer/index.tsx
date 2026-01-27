@@ -17,25 +17,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import {
   ChevronDown,
   ChevronUp,
   Activity,
-  Palette,
-  Mountain,
-  Video,
-  Eye,
-  Navigation,
 } from "lucide-react";
 import { ActivityMap, type ColorMode, type CameraMode, type MapStyle, type ActivityMapRef } from "./ActivityMap";
 import { ActivityCharts } from "./ActivityCharts";
@@ -368,83 +354,6 @@ export function ActivityPlayer({
 
             {activityData && !isLoading && (
               <>
-                {/* Controls Row */}
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  {/* Color Mode */}
-                  <div className="flex items-center gap-2">
-                    <Palette className="h-4 w-4 text-muted-foreground" />
-                    <Select
-                      value={colorMode}
-                      onValueChange={(val) => setColorMode(val as ColorMode)}
-                    >
-                      <SelectTrigger className="w-28 h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="speed">Speed</SelectItem>
-                        {activityData.hasHeartRate && (
-                          <SelectItem value="hr">Heart Rate</SelectItem>
-                        )}
-                        <SelectItem value="elevation">Elevation</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Camera Mode */}
-                  <div className="flex items-center gap-2">
-                    <Video className="h-4 w-4 text-muted-foreground" />
-                    <Select
-                      value={cameraMode}
-                      onValueChange={(val) => setCameraMode(val as CameraMode)}
-                    >
-                      <SelectTrigger className="w-32 h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="follow">
-                          <div className="flex items-center gap-2">
-                            <Navigation className="h-3 w-3" />
-                            Follow
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="overview">
-                          <div className="flex items-center gap-2">
-                            <Eye className="h-3 w-3" />
-                            Overview
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="firstPerson">
-                          <div className="flex items-center gap-2">
-                            <Video className="h-3 w-3" />
-                            First Person
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* 3D Terrain Toggle */}
-                  <div className="flex items-center gap-2">
-                    <Mountain className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="terrain-toggle" className="text-sm">3D</Label>
-                    <Switch
-                      id="terrain-toggle"
-                      checked={terrain3D}
-                      onCheckedChange={setTerrain3D}
-                    />
-                  </div>
-
-                  {/* Satellite Toggle */}
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="satellite-toggle" className="text-sm">Satellite</Label>
-                    <Switch
-                      id="satellite-toggle"
-                      checked={mapStyle === "satellite"}
-                      onCheckedChange={(checked) => setMapStyle(checked ? "satellite" : "outdoors")}
-                    />
-                  </div>
-                </div>
-
                 {/* Map */}
                 <div className="rounded-lg overflow-hidden border" style={{ height: "350px" }}>
                   <ActivityMap
@@ -464,7 +373,7 @@ export function ActivityPlayer({
                   />
                 </div>
 
-                {/* Playback Controls */}
+                {/* Playback Controls with integrated options */}
                 <PlaybackControls
                   isPlaying={isPlaying}
                   playbackSpeed={playbackSpeed}
@@ -477,6 +386,15 @@ export function ActivityPlayer({
                   onSeek={handleSeek}
                   onSkipBack={handleSkipBack}
                   onSkipForward={handleSkipForward}
+                  colorMode={colorMode}
+                  onColorModeChange={setColorMode}
+                  cameraMode={cameraMode}
+                  onCameraModeChange={setCameraMode}
+                  terrain3D={terrain3D}
+                  onTerrain3DChange={setTerrain3D}
+                  mapStyle={mapStyle}
+                  onMapStyleChange={setMapStyle}
+                  hasHeartRate={activityData.hasHeartRate}
                 />
 
                 {/* Charts */}

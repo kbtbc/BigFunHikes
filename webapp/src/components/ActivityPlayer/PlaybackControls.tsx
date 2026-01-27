@@ -1,5 +1,6 @@
 /**
  * PlaybackControls - Play/pause, speed, and scrub bar for activity playback
+ * Layout matches Classic player style with all controls in a single row
  */
 
 import { useCallback } from "react";
@@ -12,15 +13,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Play,
   Pause,
   SkipBack,
   SkipForward,
-  Gauge,
+  Palette,
+  Mountain,
+  Navigation,
+  Eye,
+  Video,
 } from "lucide-react";
 import { formatDuration, metersToFeet, msToMph } from "@/lib/activity-data-parser";
 import type { ActivityDataPoint, ActivitySummary } from "@/lib/activity-data-parser";
+import type { ColorMode, CameraMode, MapStyle } from "./ActivityMap";
 
 interface PlaybackControlsProps {
   isPlaying: boolean;
@@ -34,6 +42,16 @@ interface PlaybackControlsProps {
   onSeek: (index: number) => void;
   onSkipBack: () => void;
   onSkipForward: () => void;
+  // Map control props
+  colorMode: ColorMode;
+  onColorModeChange: (mode: ColorMode) => void;
+  cameraMode: CameraMode;
+  onCameraModeChange: (mode: CameraMode) => void;
+  terrain3D: boolean;
+  onTerrain3DChange: (enabled: boolean) => void;
+  mapStyle: MapStyle;
+  onMapStyleChange: (style: MapStyle) => void;
+  hasHeartRate: boolean;
 }
 
 const SPEED_OPTIONS = [
@@ -55,6 +73,15 @@ export function PlaybackControls({
   onSeek,
   onSkipBack,
   onSkipForward,
+  colorMode,
+  onColorModeChange,
+  cameraMode,
+  onCameraModeChange,
+  terrain3D,
+  onTerrain3DChange,
+  mapStyle,
+  onMapStyleChange,
+  hasHeartRate,
 }: PlaybackControlsProps) {
   const progress = totalPoints > 0 ? (currentIndex / (totalPoints - 1)) * 100 : 0;
   const currentTime = currentPoint?.timestamp ? currentPoint.timestamp / 1000 : 0;
@@ -97,29 +124,11 @@ export function PlaybackControls({
           </div>
         )}
 
-        {currentPoint?.speed !== undefined && (
-          <div className="bg-muted/50 rounded-lg p-2 text-center">
-            <span className="text-muted-foreground text-xs block">Speed</span>
-            <span className="font-mono font-semibold">
-              {msToMph(currentPoint.speed).toFixed(1)} mph
-            </span>
-          </div>
-        )}
-
         {currentPoint?.hr !== undefined && (
           <div className="bg-muted/50 rounded-lg p-2 text-center">
             <span className="text-muted-foreground text-xs block">Heart Rate</span>
             <span className="font-mono font-semibold text-red-500">
               {currentPoint.hr} bpm
-            </span>
-          </div>
-        )}
-
-        {currentPoint?.cadence !== undefined && (
-          <div className="bg-muted/50 rounded-lg p-2 text-center">
-            <span className="text-muted-foreground text-xs block">Cadence</span>
-            <span className="font-mono font-semibold text-purple-500">
-              {currentPoint.cadence} spm
             </span>
           </div>
         )}
@@ -136,9 +145,10 @@ export function PlaybackControls({
         />
       </div>
 
-      {/* Control Buttons */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+      {/* Combined Controls Row - Play controls left, options right */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* Left side: Play controls */}
+        <div className="flex items-center gap-1">
           {/* Skip Back */}
           <Button
             variant="ghost"
@@ -146,6 +156,7 @@ export function PlaybackControls({
             onClick={onSkipBack}
             disabled={currentIndex === 0}
             title="Skip back 30 seconds"
+            className="h-8 w-8"
           >
             <SkipBack className="h-4 w-4" />
           </Button>
@@ -155,7 +166,7 @@ export function PlaybackControls({
             variant="default"
             size="icon"
             onClick={onPlayPause}
-            className="h-10 w-10"
+            className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90"
           >
             {isPlaying ? (
               <Pause className="h-5 w-5" />
@@ -171,19 +182,94 @@ export function PlaybackControls({
             onClick={onSkipForward}
             disabled={currentIndex >= totalPoints - 1}
             title="Skip forward 30 seconds"
+            className="h-8 w-8"
           >
             <SkipForward className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Speed Selector */}
-        <div className="flex items-center gap-2">
-          <Gauge className="h-4 w-4 text-muted-foreground" />
+        {/* Right side: All options in a row */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Color Mode */}
+          <div className="flex items-center gap-1.5">
+            <Palette className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={colorMode}
+              onValueChange={(val) => onColorModeChange(val as ColorMode)}
+            >
+              <SelectTrigger className="w-24 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="speed">Speed</SelectItem>
+                {hasHeartRate && <SelectItem value="hr">Heart Rate</SelectItem>}
+                <SelectItem value="elevation">Elevation</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Camera Mode */}
+          <div className="flex items-center gap-1.5">
+            <Navigation className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={cameraMode}
+              onValueChange={(val) => onCameraModeChange(val as CameraMode)}
+            >
+              <SelectTrigger className="w-28 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="follow">
+                  <div className="flex items-center gap-1.5">
+                    <Navigation className="h-3 w-3" />
+                    Follow
+                  </div>
+                </SelectItem>
+                <SelectItem value="overview">
+                  <div className="flex items-center gap-1.5">
+                    <Eye className="h-3 w-3" />
+                    Overview
+                  </div>
+                </SelectItem>
+                <SelectItem value="firstPerson">
+                  <div className="flex items-center gap-1.5">
+                    <Video className="h-3 w-3" />
+                    First Person
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 3D Toggle */}
+          <div className="flex items-center gap-1.5">
+            <Mountain className="h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="terrain-toggle" className="text-xs">3D</Label>
+            <Switch
+              id="terrain-toggle"
+              checked={terrain3D}
+              onCheckedChange={onTerrain3DChange}
+              className="scale-90"
+            />
+          </div>
+
+          {/* Satellite Toggle */}
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="satellite-toggle" className="text-xs">Satellite</Label>
+            <Switch
+              id="satellite-toggle"
+              checked={mapStyle === "satellite"}
+              onCheckedChange={(checked) => onMapStyleChange(checked ? "satellite" : "outdoors")}
+              className="scale-90"
+            />
+          </div>
+
+          {/* Speed Selector */}
           <Select
             value={playbackSpeed.toString()}
             onValueChange={(val) => onSpeedChange(parseFloat(val))}
           >
-            <SelectTrigger className="w-20 h-8">
+            <SelectTrigger className="w-16 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
