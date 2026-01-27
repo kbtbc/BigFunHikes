@@ -22,6 +22,7 @@ export interface ActivityDataPoint {
   distance?: number; // cumulative meters from start
   grade?: number; // percent grade
   isMoving?: boolean;
+  temperature?: number; // Celsius
 }
 
 export interface ActivityPhoto {
@@ -206,6 +207,9 @@ export function resampleDataPoints(
         : before.distance,
       grade: before.grade,
       isMoving: before.isMoving,
+      temperature: before.temperature !== undefined && after.temperature !== undefined
+        ? Math.round((before.temperature + (after.temperature - before.temperature) * ratio) * 10) / 10
+        : before.temperature,
     };
 
     resampled.push(interpolated);
@@ -328,6 +332,7 @@ function parseSuuntoActivity(suuntoData: SuuntoParseResult): ActivityData {
       hr: matchedSample?.hr || matchedHr,
       cadence: matchedSample?.cadence,
       distance: distances[i],
+      temperature: matchedSample?.temperature,
     };
 
     // Calculate speed from distance/time if not available from sample

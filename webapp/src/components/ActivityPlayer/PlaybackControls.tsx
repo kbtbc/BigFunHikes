@@ -18,6 +18,7 @@ import {
   SkipBack,
   SkipForward,
   Gauge,
+  Thermometer,
 } from "lucide-react";
 import { formatDuration, metersToFeet, msToMph } from "@/lib/activity-data-parser";
 import type { ActivityDataPoint, ActivitySummary } from "@/lib/activity-data-parser";
@@ -120,6 +121,15 @@ export function PlaybackControls({
             <span className="text-muted-foreground text-xs block">Cadence</span>
             <span className="font-mono font-semibold text-purple-500">
               {currentPoint.cadence} spm
+            </span>
+          </div>
+        )}
+
+        {currentPoint?.temperature !== undefined && (
+          <div className="bg-muted/50 rounded-lg p-2 text-center">
+            <span className="text-muted-foreground text-xs block">Temp</span>
+            <span className="font-mono font-semibold text-amber-500">
+              {Math.round(currentPoint.temperature * 9/5 + 32)}°F
             </span>
           </div>
         )}

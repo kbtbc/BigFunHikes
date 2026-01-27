@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.10)
+## Current Features (v3.11)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -53,7 +53,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Auto-Detection**: Works with both Suunto JSON and GPX data sources
   - **Photo Markers**: Photos displayed on map at GPS locations along the route
   - Expandable section on entry detail pages (only shows when GPS data available)
-- **Activity Player Enhancements (v3.9-3.10)**:
+- **Activity Player Enhancements (v3.9-3.11)**:
   - **3D Terrain Mode**: Toggle Mapbox GL terrain extrusion (2.5x) for immersive flyover views with sky atmosphere
   - **Camera Modes**: Follow (tracks marker), Overview (user-controlled), First-Person (looks ahead in direction of travel)
   - **Photo Timestamps**: Photos matched to GPS coordinates, appear during playback with fade-in effect
@@ -61,6 +61,9 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Satellite Toggle**: Switch between outdoor and satellite map styles
   - **Smoother Camera (v3.10)**: Improved camera tracking with panTo, linear easing, and zoom stability
   - **Photo Marker Fix (v3.10)**: Photos now correctly placed along GPS route with proper coordinate matching
+  - **Clickable Photo Markers (v3.11)**: Click photo icons on map to scroll carousel to that photo
+  - **Relocated Activity Player (v3.11)**: Player now positioned below journal content, closer to photo carousel
+  - **Live Temperature Display (v3.11)**: Real-time temperature from watch sensor shown in stats during playback
 - **Improved Entry Layout**: Title and content appear above photos for better readability
 - **Photo Uploads**: Add and caption multiple photos per entry with carousel display
 - **Photo Caption Editing**: Edit captions on existing photos directly from the edit page

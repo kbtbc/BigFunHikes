@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.10 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.11 COMPLETE)
 
 ### Overview
 
@@ -151,7 +151,7 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - Only shows when GPS track data is available
 - Components: ActivityMap, ActivityCharts, PlaybackControls
 
-### Activity Player Enhancements (v3.9-3.10 - 100% Complete)
+### Activity Player Enhancements (v3.9-3.11 - 100% Complete)
 - **3D Terrain Mode**: Toggle Mapbox GL terrain extrusion with 2.5x exaggeration
   - Sky atmosphere layer for realistic horizon
   - Adjusts pitch automatically when enabled
@@ -179,6 +179,17 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
   - Fixed GPS coordinate matching to actual route
   - Seed data updated with coordinates along the actual Suunto track
   - Debug logging added for photo matching troubleshooting
+- **Clickable Photo Markers (v3.11)**: Interactive photo icons on map
+  - Click any photo marker to scroll carousel to that photo
+  - Carousel scrolls into view automatically
+  - JournalEntry exposes scrollToPhoto via forwardRef
+- **Relocated Activity Player (v3.11)**: Better integration with entry page
+  - Moved player directly below journal content
+  - Closer proximity to photo carousel for linked interaction
+- **Live Temperature Display (v3.11)**: Real-time temperature in stats
+  - Shows temperature from watch sensor during playback
+  - Displayed in Fahrenheit with amber color styling
+  - Temperature data parsed from Suunto time samples
 
 ### Enhanced Statistics (100% Complete)
 - 7-day moving average pace
@@ -454,6 +465,9 @@ bun run seed  # Creates 11 sample entries including training hike with Suunto da
 - [x] **Satellite Map Toggle** (NEW v3.10) - Switch between outdoor and satellite styles
 - [x] **Smoother Camera Tracking** (NEW v3.10) - panTo with linear easing, zoom stability
 - [x] **Photo Markers Fix** (NEW v3.10) - Correct GPS coordinate matching for photos
+- [x] **Clickable Photo Markers** (NEW v3.11) - Click map photos to scroll carousel
+- [x] **Relocated Activity Player** (NEW v3.11) - Moved below journal content for better UX
+- [x] **Live Temperature Display** (NEW v3.11) - Real-time temperature in playback stats
 
 ---
 
