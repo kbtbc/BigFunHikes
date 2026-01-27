@@ -57,3 +57,5 @@ Desktop.ini
 
 # Claude skills (user-specific)
 .claude/skills/
+.agent/
+.agents/
