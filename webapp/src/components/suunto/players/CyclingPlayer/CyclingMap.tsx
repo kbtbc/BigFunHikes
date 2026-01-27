@@ -1,12 +1,13 @@
 /**
- * Noir Map - Mapbox GL map for Noir player style
+ * Cycling Map - Mapbox GL map for Cycling player style
  *
- * Film noir aesthetic with high contrast black and white, dramatic shadows,
- * and blood red accent color for heart rate data.
- * Color scheme: Pure black (#000000), white (#ffffff), dark gray (#1a1a1a), blood red (#8b0000)
+ * Color scheme: Wahoo/Garmin inspired
+ * - Primary: #0066cc (Wahoo blue)
+ * - Accent: #ff6b35 (Orange for speed/power)
+ * - Background: Dark charcoal (#1a1a2e)
  */
 
-import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { ActivityDataPoint } from "@/lib/activity-data-parser";
@@ -14,15 +15,15 @@ import { getGradientColor } from "@/lib/activity-data-parser";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || "";
 
-export type ColorMode = "speed" | "hr" | "elevation";
+export type ColorMode = "speed" | "hr" | "elevation" | "gradient";
 export type CameraMode = "follow" | "overview" | "firstPerson";
-export type MapStyle = "dark" | "satellite";
+export type MapStyle = "satellite" | "outdoors";
 
-export interface NoirMapRef {
+export interface CyclingMapRef {
   flyToSegment: (startIndex: number, endIndex: number) => void;
 }
 
-interface NoirMapProps {
+interface CyclingMapProps {
   dataPoints: ActivityDataPoint[];
   currentIndex: number;
   bounds: {
@@ -40,27 +41,27 @@ interface NoirMapProps {
   highlightedSegment?: { start: number; end: number } | null;
 }
 
-// Noir-themed gradient colors (grayscale with blood red for HR)
-function getNoirGradientColor(
+/**
+ * Get gradient color based on value
+ */
+function getGradientColorForMode(
   value: number,
   min: number,
   max: number,
-  mode: "speed" | "hr" | "elevation"
+  mode: ColorMode
 ): string {
-  const normalized = max > min ? (value - min) / (max - min) : 0.5;
-
-  if (mode === "hr") {
-    // Blood red gradient for heart rate
-    const intensity = Math.round(normalized * 139);
-    return `rgb(${intensity + 80}, ${Math.round(normalized * 20)}, ${Math.round(normalized * 20)})`;
+  if (mode === "gradient") {
+    // Special color scale for gradient (grade %)
+    // Red for steep uphill, green for flat, blue for downhill
+    if (value > 5) return `rgb(255, ${Math.max(0, 100 - (value - 5) * 10)}, 50)`;
+    if (value > 0) return `rgb(${200 + value * 11}, ${200 - value * 20}, 50)`;
+    if (value > -5) return `rgb(50, ${200 + value * 20}, ${150 - value * 30})`;
+    return `rgb(50, 100, ${Math.min(255, 200 + Math.abs(value) * 10)})`;
   }
-
-  // Grayscale for speed and elevation
-  const gray = Math.round(100 + normalized * 155);
-  return `rgb(${gray}, ${gray}, ${gray})`;
+  return getGradientColor(value, min, max, mode === "hr" ? "hr" : mode === "elevation" ? "elevation" : "speed");
 }
 
-export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
+export const CyclingMap = forwardRef<CyclingMapRef, CyclingMapProps>(function CyclingMap({
   dataPoints,
   currentIndex,
   bounds,
@@ -104,13 +105,13 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/dark-v11",
+      style: "mapbox://styles/mapbox/satellite-streets-v12",
       center: [
         (bounds.east + bounds.west) / 2,
         (bounds.north + bounds.south) / 2,
       ],
       zoom: 13,
-      pitch: 45,
+      pitch: 50,
       bearing: 0,
     });
 
@@ -135,7 +136,7 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
     };
   }, [bounds]);
 
-  // Add 3D terrain with moody atmosphere
+  // Add 3D terrain with exaggeration ~2.0
   useEffect(() => {
     if (!map.current || !mapLoaded || !styleReady) return;
 
@@ -151,33 +152,22 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
 
       map.current.setTerrain({ source: "mapbox-dem", exaggeration: 2.0 });
 
-      // Moody, dark sky atmosphere
       if (!map.current.getLayer("sky")) {
         map.current.addLayer({
           id: "sky",
           type: "sky",
           paint: {
             "sky-type": "atmosphere",
-            "sky-atmosphere-sun": [0.0, 10.0], // Low sun angle for dramatic shadows
-            "sky-atmosphere-sun-intensity": 5, // Lower intensity for darker mood
+            "sky-atmosphere-sun": [0.0, 90.0],
+            "sky-atmosphere-sun-intensity": 15,
           },
         });
       }
-
-      // Add fog for atmospheric depth
-      map.current.setFog({
-        color: "#1a1a1a",
-        "high-color": "#0a0a0a",
-        "horizon-blend": 0.1,
-        "space-color": "#000000",
-        "star-intensity": 0.15,
-      });
     } else {
       map.current.setTerrain(null);
       if (map.current.getLayer("sky")) {
         map.current.removeLayer("sky");
       }
-      map.current.setFog(null);
     }
   }, [terrain3D, mapLoaded, styleReady]);
 
@@ -187,7 +177,7 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
 
     const styleUrl = mapStyle === "satellite"
       ? "mapbox://styles/mapbox/satellite-streets-v12"
-      : "mapbox://styles/mapbox/dark-v11";
+      : "mapbox://styles/mapbox/outdoors-v12";
 
     // Check if style is different
     const currentStyle = map.current.getStyle();
@@ -227,7 +217,7 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
 
     const allCoordinates = dataPoints.map((p) => [p.lon, p.lat]);
 
-    // Base route - dark gray
+    // Base route
     map.current.addSource("route-base", {
       type: "geojson",
       data: {
@@ -242,7 +232,7 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
       type: "line",
       source: "route-base",
       layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": "#333333", "line-width": 5, "line-opacity": 0.4 },
+      paint: { "line-color": "#0066cc", "line-width": 5, "line-opacity": 0.3 },
     });
 
     // Calculate color values
@@ -251,6 +241,8 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
       values = dataPoints.map((p) => p.speed).filter((v): v is number => v !== undefined);
     } else if (colorMode === "hr" && hasHeartRate) {
       values = dataPoints.map((p) => p.hr).filter((v): v is number => v !== undefined);
+    } else if (colorMode === "gradient") {
+      values = dataPoints.map((p) => p.grade).filter((v): v is number => v !== undefined);
     } else {
       values = dataPoints.map((p) => p.elevation).filter((v): v is number => v !== undefined);
     }
@@ -258,7 +250,7 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
     const minVal = values.length > 0 ? Math.min(...values) : 0;
     const maxVal = values.length > 0 ? Math.max(...values) : 1;
 
-    // Colored segments with noir gradient
+    // Colored segments
     const features: GeoJSON.Feature[] = [];
     for (let i = 0; i < dataPoints.length - 1; i++) {
       const p1 = dataPoints[i];
@@ -267,14 +259,10 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
       let value = 0;
       if (colorMode === "speed") value = p1.speed ?? 0;
       else if (colorMode === "hr" && hasHeartRate) value = p1.hr ?? 0;
+      else if (colorMode === "gradient") value = p1.grade ?? 0;
       else value = p1.elevation ?? 0;
 
-      const color = getNoirGradientColor(
-        value,
-        minVal,
-        maxVal,
-        colorMode === "hr" ? "hr" : colorMode === "elevation" ? "elevation" : "speed"
-      );
+      const color = getGradientColorForMode(value, minVal, maxVal, colorMode);
 
       features.push({
         type: "Feature",
@@ -320,6 +308,8 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
       values = dataPoints.map((p) => p.speed).filter((v): v is number => v !== undefined);
     } else if (colorMode === "hr" && hasHeartRate) {
       values = dataPoints.map((p) => p.hr).filter((v): v is number => v !== undefined);
+    } else if (colorMode === "gradient") {
+      values = dataPoints.map((p) => p.grade).filter((v): v is number => v !== undefined);
     } else {
       values = dataPoints.map((p) => p.elevation).filter((v): v is number => v !== undefined);
     }
@@ -335,14 +325,10 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
       let value = 0;
       if (colorMode === "speed") value = p1.speed ?? 0;
       else if (colorMode === "hr" && hasHeartRate) value = p1.hr ?? 0;
+      else if (colorMode === "gradient") value = p1.grade ?? 0;
       else value = p1.elevation ?? 0;
 
-      const color = getNoirGradientColor(
-        value,
-        minVal,
-        maxVal,
-        colorMode === "hr" ? "hr" : colorMode === "elevation" ? "elevation" : "speed"
-      );
+      const color = getGradientColorForMode(value, minVal, maxVal, colorMode);
 
       progressFeatures.push({
         type: "Feature",
@@ -367,13 +353,25 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
     if (!marker.current) {
       const el = document.createElement("div");
       el.style.cssText = `
-        width: 18px;
-        height: 18px;
-        background: #ffffff;
-        border: 3px solid #8b0000;
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+        border: 3px solid white;
         border-radius: 50%;
-        box-shadow: 0 0 20px rgba(139, 0, 0, 0.6), 0 2px 8px rgba(0,0,0,0.5);
+        box-shadow: 0 2px 10px rgba(255, 107, 53, 0.5);
+        position: relative;
       `;
+
+      // Add inner pulse effect
+      const inner = document.createElement("div");
+      inner.style.cssText = `
+        position: absolute;
+        inset: 4px;
+        background: white;
+        border-radius: 50%;
+        opacity: 0.3;
+      `;
+      el.appendChild(inner);
 
       marker.current = new mapboxgl.Marker({ element: el })
         .setLngLat([currentPoint.lon, currentPoint.lat])
@@ -429,33 +427,16 @@ export const NoirMap = forwardRef<NoirMapRef, NoirMapProps>(function NoirMap({
 
   return (
     <div className="relative w-full h-full">
-      <div ref={mapContainer} className="w-full h-full" style={{ filter: mapStyle === "dark" ? "grayscale(30%) contrast(1.1)" : "grayscale(60%) contrast(1.2)" }} />
+      <div ref={mapContainer} className="w-full h-full" />
 
-      {/* Film grain overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.08]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-      />
-
-      {/* Vignette effect */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)",
-        }}
-      />
-
-      {/* Info overlay - film noir style */}
-      <div className="absolute top-3 left-3 flex items-center gap-3 bg-black/80 backdrop-blur-sm rounded px-4 py-2 text-white shadow-lg border border-white/10">
-        <span className="font-serif text-sm tracking-wider uppercase" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-          Replay Studio
-        </span>
+      {/* Cycling-style info overlay */}
+      <div className="absolute top-3 left-3 flex items-center gap-2 bg-[#1a1a2e]/90 backdrop-blur-sm rounded-lg px-3 py-2 text-white shadow-lg border border-[#0066cc]/30">
+        <div className="w-2 h-2 bg-[#ff6b35] rounded-full animate-pulse" />
+        <span className="font-semibold text-sm tracking-wide">CYCLING MODE</span>
         {temperature !== undefined && (
           <>
-            <span className="text-white/30">|</span>
-            <span className="font-mono text-sm text-[#8b0000]">{temperature}F</span>
+            <span className="text-white/40">|</span>
+            <span className="text-[#ff6b35] font-mono text-sm">{temperature}F</span>
           </>
         )}
       </div>

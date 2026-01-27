@@ -1,8 +1,8 @@
 /**
- * Athletic Map - Mapbox GL map for Athletic player style (ESPN Broadcast)
+ * Running Map - 3D terrain map for Running player style
  *
- * Color scheme: Bold Red (#dc2626) + White + Dark Charcoal (#1f2937)
- * Sports broadcast aesthetic with satellite view and 3D terrain
+ * Sporty, energetic color scheme inspired by Nike/Strava running apps
+ * Color scheme: Electric orange (#ff6b35), Neon green (#00d084), Deep charcoal (#1a1a2e)
  */
 
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
@@ -13,15 +13,15 @@ import { getGradientColor } from "@/lib/activity-data-parser";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || "";
 
-export type ColorMode = "speed" | "hr" | "elevation";
+export type ColorMode = "pace" | "hr" | "elevation";
 export type CameraMode = "follow" | "overview" | "firstPerson";
 export type MapStyle = "satellite" | "outdoors";
 
-export interface AthleticMapRef {
+export interface RunningMapRef {
   flyToSegment: (startIndex: number, endIndex: number) => void;
 }
 
-interface AthleticMapProps {
+interface RunningMapProps {
   dataPoints: ActivityDataPoint[];
   currentIndex: number;
   bounds: {
@@ -39,7 +39,7 @@ interface AthleticMapProps {
   highlightedSegment?: { start: number; end: number } | null;
 }
 
-export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function AthleticMap({
+export const RunningMap = forwardRef<RunningMapRef, RunningMapProps>(function RunningMap({
   dataPoints,
   currentIndex,
   bounds,
@@ -89,7 +89,7 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
         (bounds.north + bounds.south) / 2,
       ],
       zoom: 13,
-      pitch: 45,
+      pitch: 50,
       bearing: 0,
     });
 
@@ -114,7 +114,7 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
     };
   }, [bounds]);
 
-  // Add 3D terrain with sky atmosphere
+  // Add 3D terrain with exaggeration ~2.0
   useEffect(() => {
     if (!map.current || !mapLoaded || !styleReady) return;
 
@@ -128,7 +128,7 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
         });
       }
 
-      map.current.setTerrain({ source: "mapbox-dem", exaggeration: 1.8 });
+      map.current.setTerrain({ source: "mapbox-dem", exaggeration: 2.0 });
 
       if (!map.current.getLayer("sky")) {
         map.current.addLayer({
@@ -195,7 +195,7 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
 
     const allCoordinates = dataPoints.map((p) => [p.lon, p.lat]);
 
-    // Base route - Athletic red with white border effect
+    // Base route - dark shadow
     map.current.addSource("route-base", {
       type: "geojson",
       data: {
@@ -210,12 +210,13 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
       type: "line",
       source: "route-base",
       layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": "#ffffff", "line-width": 7, "line-opacity": 0.4 },
+      paint: { "line-color": "#1a1a2e", "line-width": 6, "line-opacity": 0.4 },
     });
 
-    // Calculate color values
+    // Calculate color values based on colorMode
     let values: number[] = [];
-    if (colorMode === "speed") {
+    if (colorMode === "pace") {
+      // Use speed for pace coloring
       values = dataPoints.map((p) => p.speed).filter((v): v is number => v !== undefined);
     } else if (colorMode === "hr" && hasHeartRate) {
       values = dataPoints.map((p) => p.hr).filter((v): v is number => v !== undefined);
@@ -233,7 +234,7 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
       const p2 = dataPoints[i + 1];
 
       let value = 0;
-      if (colorMode === "speed") value = p1.speed ?? 0;
+      if (colorMode === "pace") value = p1.speed ?? 0;
       else if (colorMode === "hr" && hasHeartRate) value = p1.hr ?? 0;
       else value = p1.elevation ?? 0;
 
@@ -284,7 +285,7 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
     if (!map.current || !mapLoaded || !map.current.getSource("route-progress")) return;
 
     let values: number[] = [];
-    if (colorMode === "speed") {
+    if (colorMode === "pace") {
       values = dataPoints.map((p) => p.speed).filter((v): v is number => v !== undefined);
     } else if (colorMode === "hr" && hasHeartRate) {
       values = dataPoints.map((p) => p.hr).filter((v): v is number => v !== undefined);
@@ -301,7 +302,7 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
       const p2 = dataPoints[i + 1];
 
       let value = 0;
-      if (colorMode === "speed") value = p1.speed ?? 0;
+      if (colorMode === "pace") value = p1.speed ?? 0;
       else if (colorMode === "hr" && hasHeartRate) value = p1.hr ?? 0;
       else value = p1.elevation ?? 0;
 
@@ -332,17 +333,27 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
     const currentPoint = dataPoints[currentIndex];
     if (!currentPoint) return;
 
-    // Athletic-styled marker - bold red with white border
     if (!marker.current) {
       const el = document.createElement("div");
       el.style.cssText = `
         width: 24px;
         height: 24px;
-        background: #dc2626;
-        border: 4px solid white;
+        background: linear-gradient(135deg, #ff6b35 0%, #00d084 100%);
+        border: 3px solid white;
         border-radius: 50%;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 2px #dc2626;
+        box-shadow: 0 0 20px rgba(255, 107, 53, 0.6), 0 4px 12px rgba(0,0,0,0.4);
+        animation: pulse 1.5s ease-in-out infinite;
       `;
+
+      // Add pulse animation
+      const style = document.createElement("style");
+      style.textContent = `
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 107, 53, 0.6), 0 4px 12px rgba(0,0,0,0.4); }
+          50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(255, 107, 53, 0.8), 0 4px 16px rgba(0,0,0,0.5); }
+        }
+      `;
+      document.head.appendChild(style);
 
       marker.current = new mapboxgl.Marker({ element: el })
         .setLngLat([currentPoint.lon, currentPoint.lat])
@@ -360,20 +371,15 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
     lastCameraUpdate.current = now;
 
     if (cameraMode === "follow") {
-      // Follow mode: smooth pan to keep marker centered
-      map.current.easeTo({
-        center: [currentPoint.lon, currentPoint.lat],
-        zoom: 15.5,
+      map.current.panTo([currentPoint.lon, currentPoint.lat], {
         duration: 200,
-        easing: (t) => 1 - Math.pow(1 - t, 3), // ease-out cubic
+        easing: (t) => t,
       });
     } else if (cameraMode === "firstPerson") {
-      // First-person mode: look ahead in direction of travel
       const nextIndex = Math.min(currentIndex + 5, dataPoints.length - 1);
       const nextPoint = dataPoints[nextIndex];
 
       if (nextPoint && (nextPoint.lat !== currentPoint.lat || nextPoint.lon !== currentPoint.lon)) {
-        // Calculate bearing to next point
         const dLon = (nextPoint.lon - currentPoint.lon) * Math.PI / 180;
         const lat1 = currentPoint.lat * Math.PI / 180;
         const lat2 = nextPoint.lat * Math.PI / 180;
@@ -381,7 +387,6 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
         const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
         const targetBearing = Math.atan2(y, x) * 180 / Math.PI;
 
-        // Smooth bearing transitions
         const bearingDiff = targetBearing - lastBearing.current;
         const normalizedDiff = ((bearingDiff + 540) % 360) - 180;
         lastBearing.current = lastBearing.current + normalizedDiff * 0.08;
@@ -390,9 +395,9 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
           center: [currentPoint.lon, currentPoint.lat],
           bearing: lastBearing.current,
           pitch: 70,
-          zoom: 14,
+          zoom: 16,
           duration: 200,
-          easing: (t) => 1 - Math.pow(1 - t, 3), // ease-out cubic
+          easing: (t) => t,
         });
       }
     }
@@ -402,28 +407,18 @@ export const AthleticMap = forwardRef<AthleticMapRef, AthleticMapProps>(function
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
 
-      {/* ESPN-style broadcast badge */}
-      <div className="absolute top-3 left-3 flex items-center gap-3">
-        {/* Live indicator */}
-        <div className="flex items-center gap-2 bg-[#dc2626] px-3 py-1.5 rounded">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-          </span>
-          <span className="font-bold text-white text-xs tracking-wider">LIVE</span>
-        </div>
-
-        {/* Temperature badge */}
+      {/* Info overlay with running-themed branding */}
+      <div className="absolute top-3 left-3 flex items-center gap-2 bg-gradient-to-r from-[#1a1a2e]/90 to-[#16213e]/90 backdrop-blur-sm rounded-xl px-4 py-2 text-white shadow-lg border border-white/10">
+        <div className="w-2 h-2 rounded-full bg-[#00d084] animate-pulse" />
+        <span className="font-bold text-sm tracking-wide bg-gradient-to-r from-[#ff6b35] to-[#00d084] bg-clip-text text-transparent">
+          RUN MODE
+        </span>
         {temperature !== undefined && (
-          <div className="bg-[#1f2937]/90 backdrop-blur-sm px-3 py-1.5 rounded">
-            <span className="font-mono font-bold text-white text-sm">{temperature}°F</span>
-          </div>
+          <>
+            <span className="text-white/30">|</span>
+            <span className="text-[#ff6b35] font-mono text-sm font-semibold">{temperature}°F</span>
+          </>
         )}
-      </div>
-
-      {/* Bottom ESPN-style label */}
-      <div className="absolute bottom-3 left-3 bg-[#1f2937]/90 backdrop-blur-sm rounded px-3 py-1.5">
-        <span className="font-bold text-white text-xs tracking-wide">REPLAY STUDIO</span>
       </div>
     </div>
   );

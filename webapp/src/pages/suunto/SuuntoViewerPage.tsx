@@ -21,12 +21,11 @@ import { EditorialPlayer } from "@/components/suunto/players/EditorialPlayer";
 import { TopographicPlayer } from "@/components/suunto/players/TopographicPlayer";
 import { CockpitPlayer } from "@/components/suunto/players/CockpitPlayer";
 import { BlueprintPlayer } from "@/components/suunto/players/BlueprintPlayer";
-import { FieldJournalPlayer } from "@/components/suunto/players/FieldJournalPlayer";
-import { NoirPlayer } from "@/components/suunto/players/NoirPlayer";
 import { CommandPlayer } from "@/components/suunto/players/CommandPlayer";
 import { ExpeditionPlayer } from "@/components/suunto/players/ExpeditionPlayer";
-import { AthleticPlayer } from "@/components/suunto/players/AthleticPlayer";
 import { RetroPlayer } from "@/components/suunto/players/RetroPlayer";
+import { RunningPlayer } from "@/components/suunto/players/RunningPlayer";
+import { CyclingPlayer } from "@/components/suunto/players/CyclingPlayer";
 import type { SuuntoParseResult } from "@/lib/suunto-parser";
 
 export type PlayerStyle =
@@ -39,12 +38,11 @@ export type PlayerStyle =
   | "topographic"
   | "cockpit"
   | "blueprint"
-  | "fieldjournal"
-  | "noir"
   | "command"
   | "expedition"
-  | "athletic"
-  | "retro";
+  | "retro"
+  | "running"
+  | "cycling";
 
 interface ActivityData {
   shareId?: string;
@@ -135,18 +133,16 @@ export function SuuntoViewerPage() {
         return <CockpitPlayer data={activityData.parsedData} />;
       case "blueprint":
         return <BlueprintPlayer data={activityData.parsedData} />;
-      case "fieldjournal":
-        return <FieldJournalPlayer data={activityData.parsedData} />;
-      case "noir":
-        return <NoirPlayer data={activityData.parsedData} />;
       case "command":
         return <CommandPlayer data={activityData.parsedData} />;
       case "expedition":
         return <ExpeditionPlayer data={activityData.parsedData} />;
-      case "athletic":
-        return <AthleticPlayer data={activityData.parsedData} />;
       case "retro":
         return <RetroPlayer data={activityData.parsedData} />;
+      case "running":
+        return <RunningPlayer data={activityData.parsedData} />;
+      case "cycling":
+        return <CyclingPlayer data={activityData.parsedData} />;
       default:
         return <ClassicPlayer data={activityData.parsedData} />;
     }

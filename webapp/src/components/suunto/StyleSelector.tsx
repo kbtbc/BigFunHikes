@@ -1,5 +1,5 @@
 /**
- * Style Selector - Choose between 10 Activity Player visual styles
+ * Style Selector - Choose between 14 Activity Player visual styles
  */
 
 import { Button } from "@/components/ui/button";
@@ -22,12 +22,11 @@ import {
   Map,
   Plane,
   Ruler,
-  BookOpen,
-  Contrast,
   Compass,
   Shield,
-  Trophy,
   Radio,
+  Footprints,
+  Bike,
 } from "lucide-react";
 import type { PlayerStyle } from "@/pages/suunto/SuuntoViewerPage";
 
@@ -92,18 +91,6 @@ const styles: { id: PlayerStyle; label: string; icon: React.ReactNode; descripti
     description: "Technical drawing",
   },
   {
-    id: "fieldjournal",
-    label: "Field Journal",
-    icon: <BookOpen className="h-4 w-4" />,
-    description: "Naturalist notebook",
-  },
-  {
-    id: "noir",
-    label: "Noir",
-    icon: <Contrast className="h-4 w-4" />,
-    description: "Film noir cinematic",
-  },
-  {
     id: "expedition",
     label: "Expedition",
     icon: <Compass className="h-4 w-4" />,
@@ -116,16 +103,22 @@ const styles: { id: PlayerStyle; label: string; icon: React.ReactNode; descripti
     description: "Military tactical ops",
   },
   {
-    id: "athletic",
-    label: "Athletic",
-    icon: <Trophy className="h-4 w-4" />,
-    description: "ESPN sports broadcast",
-  },
-  {
     id: "retro",
     label: "Retro",
     icon: <Radio className="h-4 w-4" />,
     description: "70s analog gauges",
+  },
+  {
+    id: "running",
+    label: "Running",
+    icon: <Footprints className="h-4 w-4" />,
+    description: "Nike/Strava running style",
+  },
+  {
+    id: "cycling",
+    label: "Cycling",
+    icon: <Bike className="h-4 w-4" />,
+    description: "Wahoo/Garmin bike computer",
   },
 ];
 
