@@ -56,3 +56,33 @@ This workspace contains a web app and backend server.
   4. Always include 2-3 creative new feature suggestions at the bottom of PROJECT_PLAN.md under "NEXT STEPS"
   5. Feature suggestions should be practical, build on existing functionality, and inspire future development
 </documentation_rules>
+
+<session_notes>
+  ## Session: January 27, 2026 - Suunto Replay Studio v3.13
+
+  ### What was completed:
+  - Built 10 visual player styles for Suunto Replay Studio (was 4, now 10)
+  - Styles: Classic, Cinematic, Minimal, Dashboard, Strava, Polaroid, Terminal, Neon, Editorial, Topographic
+  - Fixed camera jitter/clipping with ease-out easing, fog layer, reduced terrain exaggeration (1.8x)
+  - Adjusted camera distances: Follow mode closer (zoom 15.5), First Person further (zoom 14.0)
+  - Fixed coral button styling (gradient from-coral-500 to-amber-500)
+  - Renamed sub-project to "BigFun's Suunto Replay Studio"
+  - Database seeded with 11 entries (10 trail + 1 training with Suunto data)
+
+  ### Key files for Replay Studio:
+  - Landing: webapp/src/pages/suunto/SuuntoLandingPage.tsx
+  - Viewer: webapp/src/pages/suunto/SuuntoViewerPage.tsx (imports all 10 players)
+  - Style Selector: webapp/src/components/suunto/StyleSelector.tsx
+  - Players: webapp/src/components/suunto/players/{Classic,Cinematic,Minimal,Dashboard,Strava,Polaroid,Terminal,Neon,Editorial,Topographic}Player/
+  - Camera logic: webapp/src/components/ActivityPlayer/ActivityMap.tsx
+  - Sub-project docs: docs/ACTIVITY_REPLAY_STUDIO.md
+
+  ### Next session priorities:
+  - User wants to make style-specific changes to each player (deferred)
+  - Test all 10 styles thoroughly
+  - Consider: photo popup on hover, playback speed indicator, elevation-aware camera
+
+  ### Demo data:
+  - Backend demo file: backend/data/suwaneetrek-1.json
+  - Routes: /suunto (landing), /suunto/demo, /suunto/view/:shareId
+</session_notes>
