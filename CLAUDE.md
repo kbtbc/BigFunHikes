@@ -58,29 +58,36 @@ This workspace contains a web app and backend server.
 </documentation_rules>
 
 <session_notes>
-  ## Session: January 27, 2026 - Suunto Replay Studio v3.13
+  ## Session: January 27, 2026 - Suunto Replay Studio v3.15
 
   ### What was completed:
-  - Built 10 visual player styles for Suunto Replay Studio (was 4, now 10)
-  - Styles: Classic, Cinematic, Minimal, Dashboard, Strava, Polaroid, Terminal, Neon, Editorial, Topographic
-  - Fixed camera jitter/clipping with ease-out easing, fog layer, reduced terrain exaggeration (1.8x)
-  - Adjusted camera distances: Follow mode closer (zoom 15.5), First Person further (zoom 14.0)
-  - Fixed coral button styling (gradient from-coral-500 to-amber-500)
-  - Renamed sub-project to "BigFun's Suunto Replay Studio"
-  - Database seeded with 11 entries (10 trail + 1 training with Suunto data)
+  - Expanded to 15 visual player styles for Suunto Replay Studio
+  - Fixed demo data loading (copied to backend/data/suwaneetrek-1.json)
+  - Rebuilt 6 new 2D-focused styles replacing Strava, Polaroid, Neon:
+    - Terminal, Editorial, Topographic, Cockpit, Blueprint, Field Journal
+  - Added 5 new 3D terrain styles with full satellite/outdoors toggle:
+    - Athletic (ESPN sports broadcast), Expedition (National Geographic),
+    - Retro (70s analog gauges), Noir (film noir cinematic), Command (military tactical)
+  - Style selector button updated (orange gradient, better visibility)
+
+  ### Current 15 Styles:
+  - Original 4: Classic, Cinematic, Minimal, Dashboard
+  - 6 New 2D-focused: Terminal, Editorial, Topographic, Cockpit, Blueprint, Field Journal
+  - 5 New 3D terrain: Athletic, Expedition, Retro, Noir, Command
 
   ### Key files for Replay Studio:
   - Landing: webapp/src/pages/suunto/SuuntoLandingPage.tsx
-  - Viewer: webapp/src/pages/suunto/SuuntoViewerPage.tsx (imports all 10 players)
+  - Viewer: webapp/src/pages/suunto/SuuntoViewerPage.tsx (imports all 15 players)
   - Style Selector: webapp/src/components/suunto/StyleSelector.tsx
-  - Players: webapp/src/components/suunto/players/{Classic,Cinematic,Minimal,Dashboard,Strava,Polaroid,Terminal,Neon,Editorial,Topographic}Player/
-  - Camera logic: webapp/src/components/ActivityPlayer/ActivityMap.tsx
+  - Players: webapp/src/components/suunto/players/*/
   - Sub-project docs: docs/ACTIVITY_REPLAY_STUDIO.md
 
-  ### Next session priorities:
-  - User wants to make style-specific changes to each player (deferred)
-  - Test all 10 styles thoroughly
-  - Consider: photo popup on hover, playback speed indicator, elevation-aware camera
+  ### 3D Terrain Implementation (for new styles):
+  - Uses mapbox-dem source with terrain exaggeration (1.8-2.8x)
+  - Sky layer with atmosphere
+  - Camera modes: follow, overview, firstPerson
+  - Map style toggle: satellite/outdoors (or dark for Noir)
+  - Bearing calculation for firstPerson mode
 
   ### Demo data:
   - Backend demo file: backend/data/suwaneetrek-1.json

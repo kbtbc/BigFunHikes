@@ -22,6 +22,11 @@ import { TopographicPlayer } from "@/components/suunto/players/TopographicPlayer
 import { CockpitPlayer } from "@/components/suunto/players/CockpitPlayer";
 import { BlueprintPlayer } from "@/components/suunto/players/BlueprintPlayer";
 import { FieldJournalPlayer } from "@/components/suunto/players/FieldJournalPlayer";
+import { NoirPlayer } from "@/components/suunto/players/NoirPlayer";
+import { CommandPlayer } from "@/components/suunto/players/CommandPlayer";
+import { ExpeditionPlayer } from "@/components/suunto/players/ExpeditionPlayer";
+import { AthleticPlayer } from "@/components/suunto/players/AthleticPlayer";
+import { RetroPlayer } from "@/components/suunto/players/RetroPlayer";
 import type { SuuntoParseResult } from "@/lib/suunto-parser";
 
 export type PlayerStyle =
@@ -34,7 +39,12 @@ export type PlayerStyle =
   | "topographic"
   | "cockpit"
   | "blueprint"
-  | "fieldjournal";
+  | "fieldjournal"
+  | "noir"
+  | "command"
+  | "expedition"
+  | "athletic"
+  | "retro";
 
 interface ActivityData {
   shareId?: string;
@@ -127,6 +137,16 @@ export function SuuntoViewerPage() {
         return <BlueprintPlayer data={activityData.parsedData} />;
       case "fieldjournal":
         return <FieldJournalPlayer data={activityData.parsedData} />;
+      case "noir":
+        return <NoirPlayer data={activityData.parsedData} />;
+      case "command":
+        return <CommandPlayer data={activityData.parsedData} />;
+      case "expedition":
+        return <ExpeditionPlayer data={activityData.parsedData} />;
+      case "athletic":
+        return <AthleticPlayer data={activityData.parsedData} />;
+      case "retro":
+        return <RetroPlayer data={activityData.parsedData} />;
       default:
         return <ClassicPlayer data={activityData.parsedData} />;
     }

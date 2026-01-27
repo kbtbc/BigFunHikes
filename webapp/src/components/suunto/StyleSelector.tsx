@@ -23,6 +23,11 @@ import {
   Plane,
   Ruler,
   BookOpen,
+  Contrast,
+  Compass,
+  Shield,
+  Trophy,
+  Radio,
 } from "lucide-react";
 import type { PlayerStyle } from "@/pages/suunto/SuuntoViewerPage";
 
@@ -91,6 +96,36 @@ const styles: { id: PlayerStyle; label: string; icon: React.ReactNode; descripti
     label: "Field Journal",
     icon: <BookOpen className="h-4 w-4" />,
     description: "Naturalist notebook",
+  },
+  {
+    id: "noir",
+    label: "Noir",
+    icon: <Contrast className="h-4 w-4" />,
+    description: "Film noir cinematic",
+  },
+  {
+    id: "expedition",
+    label: "Expedition",
+    icon: <Compass className="h-4 w-4" />,
+    description: "National Geographic style",
+  },
+  {
+    id: "command",
+    label: "Command",
+    icon: <Shield className="h-4 w-4" />,
+    description: "Military tactical ops",
+  },
+  {
+    id: "athletic",
+    label: "Athletic",
+    icon: <Trophy className="h-4 w-4" />,
+    description: "ESPN sports broadcast",
+  },
+  {
+    id: "retro",
+    label: "Retro",
+    icon: <Radio className="h-4 w-4" />,
+    description: "70s analog gauges",
   },
 ];
 

@@ -2,7 +2,7 @@
 
 ## Project Plan & Documentation
 
-**Version**: 3.14 (10 Visual Styles - New Set)
+**Version**: 3.15 (15 Visual Styles - Added 5 New 3D Styles)
 **Status**: Production Ready
 **Route**: `/suunto/*`
 
@@ -128,6 +128,57 @@ BigFun's Suunto Replay Studio is a standalone sub-application within the BigFun 
 - **Botanical corner decorations** - leaf/flower SVG flourishes
 - **Compass rose** and sketched button styling
 
+### New 5 3D Terrain Styles (v3.15)
+
+#### 11. Athletic
+**Color Palette**: Bold red (#dc2626) + White + Dark charcoal (#1f2937)
+- **ESPN sports broadcast aesthetic** - scoreboard-style stats
+- **LIVE indicator** with pulsing red dot
+- **Live ticker/crawl** at bottom showing real-time metrics
+- **Split times** displayed like race results
+- **Full 3D terrain** with satellite view
+- Camera modes: follow, overview, firstPerson
+
+#### 12. Expedition
+**Color Palette**: Aged tan (#d4a574) + Deep brown (#4a3728) + Gold (#b8860b)
+- **National Geographic explorer style** - adventure documentary feel
+- **Large brass compass** decoration
+- **Expedition log format** for stats display
+- **"Day X of Expedition"** header
+- **Full 3D terrain** with dramatic exaggeration (2.8x)
+- Camera modes: follow, overview, firstPerson
+
+#### 13. Retro
+**Color Palette**: Wood brown (#8b4513) + Orange (#ff6b00) + Cream (#f5deb3)
+- **70s/80s analog equipment aesthetic** - hi-fi/car dashboard
+- **Analog needle gauges** for speed and heart rate (SVG)
+- **VU meter** style intensity indicator
+- **Nixie tube displays** for numbers
+- **Wood grain panel** backgrounds
+- **Full 3D terrain** with satellite view
+- Camera modes: follow, overview, firstPerson
+
+#### 14. Noir
+**Color Palette**: Pure black (#000000) + White (#ffffff) + Blood red (#8b0000)
+- **Film noir cinematic** - high contrast black and white
+- **Playfair Display** serif typography
+- **Film grain overlay** effect
+- **Vignette** around edges
+- **Grayscale filter** on map (except blood red for HR)
+- **Full 3D terrain** with moody atmosphere
+- Camera modes: follow, overview, firstPerson
+
+#### 15. Command
+**Color Palette**: Military olive (#556b2f) + Warning amber (#ffa500) + Alert red (#ff4444)
+- **Military tactical operations center** aesthetic
+- **Grid-based tactical display** with three-panel layout
+- **Mission briefing style stats** (OBJECTIVE, DISTANCE TO TARGET)
+- **Status indicators** with military terminology
+- **Radar sweep animation** effect
+- **Grid overlay** on map
+- **Full 3D terrain** with satellite view
+- Camera modes: follow, overview, firstPerson
+
 ---
 
 ## Architecture
@@ -158,7 +209,12 @@ webapp/src/
 │       ├── TopographicPlayer/
 │       ├── CockpitPlayer/
 │       ├── BlueprintPlayer/
-│       └── FieldJournalPlayer/
+│       ├── FieldJournalPlayer/
+│       ├── AthleticPlayer/
+│       ├── ExpeditionPlayer/
+│       ├── RetroPlayer/
+│       ├── NoirPlayer/
+│       └── CommandPlayer/
 
 backend/
 ├── data/suwaneetrek-1.json     # Demo data

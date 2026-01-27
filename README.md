@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.14)
+## Current Features (v3.15)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -65,10 +65,10 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Relocated Activity Player (v3.11)**: Player now positioned below journal content, closer to photo carousel
   - **Map Info Overlay (v3.11)**: "BigFun Hikes!" branding and temperature display in upper-left corner
   - **Default 3D + Satellite (v3.11)**: Activity Player now starts with 3D terrain and satellite view enabled
-- **BigFun's Suunto Replay Studio (v3.12-3.14)**: Standalone sub-application for viewing Suunto data
+- **BigFun's Suunto Replay Studio (v3.12-3.15)**: Standalone sub-application for viewing Suunto data
   - **Drag-and-Drop Upload**: Upload Suunto JSON files directly to get shareable replay URLs
-  - **10 Visual Styles**: Diverse Activity Player themes to choose from
-    - **Classic**: Navy + Coral with clean familiar layout
+  - **15 Visual Styles**: Diverse Activity Player themes to choose from
+    - **Classic**: Navy + Coral with clean familiar layout (3D terrain)
     - **Cinematic**: Full-screen immersive with gold accents, letterbox bars, auto-hiding controls
     - **Minimal**: Typography-focused Scandinavian design with large hero stats
     - **Dashboard**: Professional multi-panel analytics with live updating stats
@@ -78,6 +78,11 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
     - **Cockpit**: Aviation HUD style with circular gauges, altitude tape, heading indicator
     - **Blueprint**: Technical drawing aesthetic with cyan lines on navy, dimension annotations
     - **Field Journal**: Naturalist notebook with handwritten Caveat font, botanical decorations
+    - **Athletic**: ESPN sports broadcast with scoreboard stats, live ticker, 3D terrain
+    - **Expedition**: National Geographic explorer with brass compass, expedition log, 3D terrain
+    - **Retro**: 70s analog gauges, wood grain panels, VU meters, nixie tubes, 3D terrain
+    - **Noir**: Film noir cinematic with high contrast B&W, film grain, vignette, 3D terrain
+    - **Command**: Military tactical ops center with grid overlay, radar sweep, 3D terrain
   - **No Login Required**: Public access for easy sharing
   - **Separate Data**: Uses own database table (ReplayStudioUpload), self-contained for future extraction
   - **Demo Mode**: Try the player with sample data before uploading
