@@ -195,8 +195,8 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
         });
       }
 
-      // Increased exaggeration for more dramatic terrain
-      map.current.setTerrain({ source: "mapbox-dem", exaggeration: 2.5 });
+      // Moderate exaggeration - less dramatic to reduce clipping
+      map.current.setTerrain({ source: "mapbox-dem", exaggeration: 1.8 });
 
       // Add sky layer for better 3D effect
       if (!map.current.getLayer("sky")) {
@@ -211,10 +211,20 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
         });
       }
 
+      // Add fog to soften distant terrain and hide clipping artifacts
+      map.current.setFog({
+        color: "rgb(186, 210, 235)", // Light blue-gray fog
+        "high-color": "rgb(135, 180, 220)", // Sky color at horizon
+        "horizon-blend": 0.1, // Blend fog into horizon
+        "space-color": "rgb(200, 220, 240)", // Color above horizon
+        "star-intensity": 0, // No stars during day
+      });
+
       setTerrainLoaded(true);
     } else {
       // Remove terrain
       map.current.setTerrain(null);
+      map.current.setFog(null);
       if (map.current.getLayer("sky")) {
         map.current.removeLayer("sky");
       }
@@ -559,8 +569,12 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
 
       // Only move if we've drifted more than a small threshold
       if (distanceToPoint > 0.0002) {
+        // Use lower pitch to reduce terrain clipping
+        const followPitch = terrain3D ? 45 : 40;
+
         map.current.easeTo({
           center: [currentPoint.lon, currentPoint.lat],
+          pitch: followPitch,
           duration: 400,
           easing: smoothEasing,
         });
@@ -582,16 +596,23 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
         const smoothedBearing = lastBearing.current + bearingDiff * 0.05;
         lastBearing.current = ((smoothedBearing % 360) + 360) % 360;
 
+        // Calculate dynamic pitch based on elevation change to reduce clipping
+        // When going uphill, reduce pitch; when going downhill, can use higher pitch
+        const elevationDiff = (lookAheadPoint.elevation ?? 0) - (currentPoint.elevation ?? 0);
+        const basePitch = terrain3D ? 55 : 45;
+        // Reduce pitch when climbing (negative diff means looking up into terrain)
+        const dynamicPitch = Math.max(35, Math.min(basePitch, basePitch - elevationDiff * 0.3));
+
         // Use flyTo only occasionally for major adjustments, otherwise just pan
         const currentZoom = map.current.getZoom();
-        const targetZoom = 15.5;
+        const targetZoom = 14.5; // Zoom out slightly to keep camera higher
         const needsZoomAdjust = Math.abs(currentZoom - targetZoom) > 0.5;
 
         if (needsZoomAdjust) {
           map.current.easeTo({
             center: [currentPoint.lon, currentPoint.lat],
             bearing: lastBearing.current,
-            pitch: terrain3D ? 70 : 55,
+            pitch: dynamicPitch,
             zoom: targetZoom,
             duration: 500,
             easing: smoothEasing,
@@ -601,6 +622,7 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
           map.current.easeTo({
             center: [currentPoint.lon, currentPoint.lat],
             bearing: lastBearing.current,
+            pitch: dynamicPitch,
             duration: 400,
             easing: smoothEasing,
           });
