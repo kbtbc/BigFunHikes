@@ -33,6 +33,7 @@ interface ActivityMapProps {
   photos?: ActivityPhoto[];
   highlightedSegment?: { start: number; end: number } | null;
   onPhotoClick?: (photo: ActivityPhoto) => void;
+  temperature?: number; // Average temperature in Celsius
 }
 
 export interface ActivityMapRef {
@@ -52,6 +53,7 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
     photos = [],
     highlightedSegment,
     onPhotoClick,
+    temperature,
   },
   ref
 ) {
@@ -665,11 +667,29 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
     };
   }, [photos, mapLoaded, onPhotoClick, currentIndex, dataPoints]);
 
+  // Convert Celsius to Fahrenheit
+  const tempFahrenheit = temperature !== undefined
+    ? Math.round(temperature * 9/5 + 32)
+    : undefined;
+
   return (
-    <div
-      ref={mapContainer}
-      className="w-full h-full rounded-lg overflow-hidden"
-      style={{ minHeight: "300px" }}
-    />
+    <div className="relative w-full h-full">
+      <div
+        ref={mapContainer}
+        className="w-full h-full rounded-lg overflow-hidden"
+        style={{ minHeight: "300px" }}
+      />
+
+      {/* Info overlay - upper left */}
+      <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 text-white shadow-lg">
+        <span className="font-semibold text-sm tracking-wide">BigFun Hikes!</span>
+        {tempFahrenheit !== undefined && (
+          <>
+            <span className="text-white/40">|</span>
+            <span className="text-amber-400 font-mono text-sm">{tempFahrenheit}°F</span>
+          </>
+        )}
+      </div>
+    </div>
   );
 });
