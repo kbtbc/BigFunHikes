@@ -20,7 +20,7 @@
     "@hono/zod-validator": "^0.7.6",
     "@prisma/client": "6",
     "@vibecodeapp/backend-sdk": "^1.0.1",
-    "@vibecodeapp/cloud-studio": "^0.2.3",
+    "@vibecodeapp/cloud-studio": "^0.2.4",
     "@vibecodeapp/proxy": "^2.0.3",
     "better-auth": "^1.4.15",
     "hono": "4.6.0",

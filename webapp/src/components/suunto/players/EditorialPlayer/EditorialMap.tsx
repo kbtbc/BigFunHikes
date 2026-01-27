@@ -1,17 +1,20 @@
 /**
  * Editorial Map - Elegant sidebar/background map for magazine layout
  *
- * Color scheme: Off-white (#FAFAFA) + Rich black (#1A1A1A) + Deep red accent (#C41E3A)
- * Artistic, secondary element - clean outdoors style with minimal controls
+ * Color scheme: Off-white (#faf8f5) + Deep red accent (#991b1b) + Warm grays
+ * Artistic, secondary element - outdoors style with elegant, minimal aesthetic
+ * Supports color modes for route visualization (speed, elevation, heart rate)
  */
 
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { ActivityDataPoint } from "@/lib/activity-data-parser";
+import { getGradientColor } from "@/lib/activity-data-parser";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || "";
 
+export type ColorMode = "speed" | "hr" | "elevation";
 export type CameraMode = "follow" | "overview";
 
 export interface EditorialMapRef {
@@ -29,6 +32,8 @@ interface EditorialMapProps {
     west: number;
   };
   cameraMode: CameraMode;
+  colorMode: ColorMode;
+  hasHeartRate: boolean;
 }
 
 export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(function EditorialMap({
@@ -36,6 +41,8 @@ export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(funct
   currentIndex,
   bounds,
   cameraMode,
+  colorMode,
+  hasHeartRate,
 }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -71,13 +78,13 @@ export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(funct
     }
   }));
 
-  // Initialize map with light, elegant style
+  // Initialize map with outdoors style for editorial feel
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: "mapbox://styles/mapbox/outdoors-v12",
       center: [
         (bounds.east + bounds.west) / 2,
         (bounds.north + bounds.south) / 2,
@@ -88,7 +95,7 @@ export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(funct
       attributionControl: false,
     });
 
-    // Minimal control - just zoom
+    // Minimal control - just zoom, positioned elegantly
     map.current.addControl(
       new mapboxgl.NavigationControl({ showCompass: false, visualizePitch: false }),
       "bottom-right"
@@ -112,21 +119,21 @@ export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(funct
     };
   }, [bounds]);
 
-  // Add route layers - elegant, single-color aesthetic
+  // Add route layers with color mode support
   useEffect(() => {
     if (!map.current || !mapLoaded || dataPoints.length < 2) return;
 
     // Remove existing layers
-    ["route-progress", "route-base", "route-glow"].forEach((layer) => {
+    ["route-progress", "route-segments", "route-base", "route-glow"].forEach((layer) => {
       if (map.current?.getLayer(layer)) map.current.removeLayer(layer);
     });
-    ["route-progress", "route-base", "route-glow"].forEach((source) => {
+    ["route-progress", "route-segments", "route-base", "route-glow"].forEach((source) => {
       if (map.current?.getSource(source)) map.current.removeSource(source);
     });
 
     const allCoordinates = dataPoints.map((p) => [p.lon, p.lat]);
 
-    // Base route - subtle, elegant gray
+    // Base route - subtle, elegant warm gray
     map.current.addSource("route-base", {
       type: "geojson",
       data: {
@@ -136,7 +143,7 @@ export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(funct
       },
     });
 
-    // Subtle glow effect
+    // Subtle glow effect for depth
     map.current.addSource("route-glow", {
       type: "geojson",
       data: {
@@ -151,7 +158,7 @@ export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(funct
       type: "line",
       source: "route-glow",
       layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": "#1A1A1A", "line-width": 6, "line-opacity": 0.08 },
+      paint: { "line-color": "#4a4035", "line-width": 6, "line-opacity": 0.08 },
     });
 
     map.current.addLayer({
@@ -159,10 +166,61 @@ export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(funct
       type: "line",
       source: "route-base",
       layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": "#9CA3AF", "line-width": 2, "line-opacity": 0.6 },
+      paint: { "line-color": "#d4cfc7", "line-width": 3, "line-opacity": 0.5 },
     });
 
-    // Progress layer - deep red accent color
+    // Calculate color values for gradient
+    let values: number[] = [];
+    if (colorMode === "speed") {
+      values = dataPoints.map((p) => p.speed).filter((v): v is number => v !== undefined);
+    } else if (colorMode === "hr" && hasHeartRate) {
+      values = dataPoints.map((p) => p.hr).filter((v): v is number => v !== undefined);
+    } else {
+      values = dataPoints.map((p) => p.elevation).filter((v): v is number => v !== undefined);
+    }
+
+    const minVal = values.length > 0 ? Math.min(...values) : 0;
+    const maxVal = values.length > 0 ? Math.max(...values) : 1;
+
+    // Colored segments based on color mode
+    const features: GeoJSON.Feature[] = [];
+    for (let i = 0; i < dataPoints.length - 1; i++) {
+      const p1 = dataPoints[i];
+      const p2 = dataPoints[i + 1];
+
+      let value = 0;
+      if (colorMode === "speed") value = p1.speed ?? 0;
+      else if (colorMode === "hr" && hasHeartRate) value = p1.hr ?? 0;
+      else value = p1.elevation ?? 0;
+
+      const color = getGradientColor(
+        value,
+        minVal,
+        maxVal,
+        colorMode === "hr" ? "hr" : colorMode === "elevation" ? "elevation" : "speed"
+      );
+
+      features.push({
+        type: "Feature",
+        properties: { color },
+        geometry: { type: "LineString", coordinates: [[p1.lon, p1.lat], [p2.lon, p2.lat]] },
+      });
+    }
+
+    map.current.addSource("route-segments", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features },
+    });
+
+    map.current.addLayer({
+      id: "route-segments",
+      type: "line",
+      source: "route-segments",
+      layout: { "line-join": "round", "line-cap": "round" },
+      paint: { "line-color": ["get", "color"], "line-width": 3, "line-opacity": 0.35 },
+    });
+
+    // Progress layer - deep red accent color for traveled path
     map.current.addSource("route-progress", {
       type: "geojson",
       data: { type: "FeatureCollection", features: [] },
@@ -173,9 +231,9 @@ export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(funct
       type: "line",
       source: "route-progress",
       layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": "#C41E3A", "line-width": 3, "line-opacity": 1 },
+      paint: { "line-color": "#991b1b", "line-width": 3.5, "line-opacity": 0.9 },
     });
-  }, [mapLoaded, dataPoints]);
+  }, [mapLoaded, dataPoints, colorMode, hasHeartRate]);
 
   // Update progress line
   useEffect(() => {
@@ -206,10 +264,10 @@ export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(funct
       el.style.cssText = `
         width: 12px;
         height: 12px;
-        background: #C41E3A;
-        border: 2px solid #FAFAFA;
+        background: #991b1b;
+        border: 2px solid #faf8f5;
         border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(196, 30, 58, 0.4);
+        box-shadow: 0 2px 8px rgba(153, 27, 27, 0.4);
         transition: transform 0.2s ease;
       `;
 
@@ -231,18 +289,18 @@ export const EditorialMap = forwardRef<EditorialMapRef, EditorialMapProps>(funct
     // Smooth pan for follow mode
     map.current.panTo([currentPoint.lon, currentPoint.lat], {
       duration: 350,
-      easing: (t) => t * (2 - t),
+      easing: (t) => t * (2 - t), // Ease out quad
     });
   }, [currentIndex, mapLoaded, dataPoints, cameraMode]);
 
   return (
     <div className="relative w-full h-full overflow-hidden">
       <div ref={mapContainer} className="w-full h-full" />
-      {/* Subtle vignette overlay for editorial feel */}
+      {/* Subtle vignette overlay for editorial/print feel */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse at center, transparent 50%, rgba(250, 250, 250, 0.3) 100%)"
+          background: "radial-gradient(ellipse at center, transparent 60%, rgba(250, 248, 245, 0.4) 100%)"
         }}
       />
     </div>

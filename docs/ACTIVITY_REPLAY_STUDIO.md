@@ -2,7 +2,7 @@
 
 ## Project Plan & Documentation
 
-**Version**: 2.0 (10 Visual Styles Complete)
+**Version**: 3.14 (10 Visual Styles - New Set)
 **Status**: Production Ready
 **Route**: `/suunto/*`
 
@@ -78,23 +78,9 @@ BigFun's Suunto Replay Studio is a standalone sub-application within the BigFun 
 - **Lap splits table** if available
 - **All charts visible** simultaneously
 
-### New 6 Styles (v3.13)
+### New 6 Styles (v3.14)
 
-#### 5. Strava
-**Color Palette**: White + Strava orange (#FC4C02) + Dark gray (#242428)
-- **Activity feed card style** - looks like viewing on Strava
-- **HR zones bar** - visual breakdown of time in each zone
-- **Per-mile splits table** with best mile highlighted
-- **Effort-based route coloring** on map
-
-#### 6. Polaroid
-**Color Palette**: Warm cream (#FDF8F3) + Sepia tones + Vintage browns (#8B7355)
-- **Polaroid-framed map** with white border and tilt effect
-- **Handwritten font** (Caveat) for labels
-- **Tape/pushpin decorations** - scrapbook feel
-- **Film strip progress bar** with sprocket holes
-
-#### 7. Terminal
+#### 5. Terminal
 **Color Palette**: Black (#0D0D0D) + Green (#00FF00) + Amber (#FFB000)
 - **Monospace font everywhere** (JetBrains Mono)
 - **ASCII art header** with "GPS FEED" banner
@@ -102,27 +88,45 @@ BigFun's Suunto Replay Studio is a standalone sub-application within the BigFun 
 - **Scrolling data log** showing real-time values
 - **CRT scan lines** and blinking cursor
 
-#### 8. Neon
-**Color Palette**: Deep purple (#0a0014) + Neon pink (#FF00FF) + Cyan (#00FFFF)
-- **Heavy glow effects** on all accent elements
-- **XP/Level progress bar** - distance as experience points
-- **Achievement notifications** for distance milestones
-- **Animated gradients** and perspective grid background
-
-#### 9. Editorial
-**Color Palette**: Off-white (#FAFAFA) + Rich black (#1A1A1A) + Deep red (#C41E3A)
+#### 6. Editorial
+**Color Palette**: Off-white (#faf8f5) + Deep red (#991b1b) + Warm grays
 - **Serif headlines** (Playfair Display)
 - **Asymmetric editorial grid** - 7-column + 5-column sidebar
-- **Pull quote style** for large stats
+- **Pull quote style** for large stats with decorative letter badges
 - **Drop caps** on summary text
+- **Diamond divider** and ornamental elements
 
-#### 10. Topographic
+#### 7. Topographic
 **Color Palette**: Cream/tan (#F5E6D3) + Contour browns (#8B6914) + Forest greens (#2D5016)
 - **Map is hero** - 500px+ height, prominent
 - **Compass rose** decoration in header
-- **Coordinate display** in degrees/minutes/seconds
+- **Coordinate display** in degrees/minutes/seconds (DMS format)
 - **Legend-style stats panel**
 - **Contour line styling** on route
+
+#### 8. Cockpit
+**Color Palette**: Dark gray/black (#1a1a1a) + Amber (#f59e0b) + Cyan (#06b6d4)
+- **Aviation HUD aesthetic** - circular gauges for speed and heart rate
+- **Altitude tape** - vertical elevation display
+- **Heading indicator** - compass rose showing bearing
+- **HUD overlays on map** - distance readout, coordinates, crosshairs
+- **Glass cockpit feel** with digital readouts and glow effects
+
+#### 9. Blueprint
+**Color Palette**: Navy blue (#1e3a5f) + Cyan (#22d3ee) + White text
+- **Technical drawing aesthetic** - grid pattern background
+- **Dimension lines** with arrows for distance display
+- **Technical specification layout** for stats
+- **Ruler-style progress bar** with tick marks
+- **Crosshair marker** and corner bracket decorations
+
+#### 10. Field Journal
+**Color Palette**: Cream paper (#faf6ed) + Forest green (#2d5016) + Brown (#6b4423)
+- **Naturalist notebook style** - handwritten Caveat font
+- **Lined paper texture** background
+- **Stats as journal entries** with icons
+- **Botanical corner decorations** - leaf/flower SVG flourishes
+- **Compass rose** and sketched button styling
 
 ---
 
@@ -149,12 +153,12 @@ webapp/src/
 │       ├── CinematicPlayer/
 │       ├── MinimalPlayer/
 │       ├── DashboardPlayer/
-│       ├── StravaPlayer/
-│       ├── PolaroidPlayer/
 │       ├── TerminalPlayer/
-│       ├── NeonPlayer/
 │       ├── EditorialPlayer/
-│       └── TopographicPlayer/
+│       ├── TopographicPlayer/
+│       ├── CockpitPlayer/
+│       ├── BlueprintPlayer/
+│       └── FieldJournalPlayer/
 
 backend/
 ├── data/suwaneetrek-1.json     # Demo data

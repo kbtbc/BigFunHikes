@@ -17,12 +17,12 @@ import {
   Film,
   BarChart3,
   Zap,
-  Timer,
-  Camera,
   Terminal,
-  Tv2,
   Newspaper,
-  Map
+  Map,
+  Plane,
+  Ruler,
+  BookOpen,
 } from "lucide-react";
 import type { PlayerStyle } from "@/pages/suunto/SuuntoViewerPage";
 
@@ -57,28 +57,10 @@ const styles: { id: PlayerStyle; label: string; icon: React.ReactNode; descripti
     description: "Data-rich analytics",
   },
   {
-    id: "strava",
-    label: "Strava",
-    icon: <Timer className="h-4 w-4" />,
-    description: "Athletic performance",
-  },
-  {
-    id: "polaroid",
-    label: "Polaroid",
-    icon: <Camera className="h-4 w-4" />,
-    description: "Vintage photo aesthetic",
-  },
-  {
     id: "terminal",
     label: "Terminal",
     icon: <Terminal className="h-4 w-4" />,
     description: "Hacker CLI style",
-  },
-  {
-    id: "neon",
-    label: "Neon",
-    icon: <Tv2 className="h-4 w-4" />,
-    description: "Cyberpunk gaming",
   },
   {
     id: "editorial",
@@ -92,6 +74,24 @@ const styles: { id: PlayerStyle; label: string; icon: React.ReactNode; descripti
     icon: <Map className="h-4 w-4" />,
     description: "Cartography focused",
   },
+  {
+    id: "cockpit",
+    label: "Cockpit",
+    icon: <Plane className="h-4 w-4" />,
+    description: "Aviation HUD style",
+  },
+  {
+    id: "blueprint",
+    label: "Blueprint",
+    icon: <Ruler className="h-4 w-4" />,
+    description: "Technical drawing",
+  },
+  {
+    id: "fieldjournal",
+    label: "Field Journal",
+    icon: <BookOpen className="h-4 w-4" />,
+    description: "Naturalist notebook",
+  },
 ];
 
 export function StyleSelector({ selected, onSelect }: StyleSelectorProps) {
@@ -102,7 +102,7 @@ export function StyleSelector({ selected, onSelect }: StyleSelectorProps) {
       <DropdownMenuTrigger asChild>
         <Button
           size="sm"
-          className="bg-gradient-to-r from-coral-500 to-amber-500 text-white border-0 hover:from-coral-600 hover:to-amber-600 shadow-md gap-2"
+          className="bg-gradient-to-r from-orange-500 to-amber-500 text-white border-0 hover:from-orange-600 hover:to-amber-600 shadow-lg gap-2 font-semibold"
         >
           <Palette className="h-4 w-4" />
           <span className="hidden sm:inline">{currentStyle.label}</span>
