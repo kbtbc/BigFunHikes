@@ -194,24 +194,26 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
   - Activity Player now starts with 3D terrain enabled
   - Satellite map style enabled by default
 
-### BigFun's Suunto Replay Studio (NEW v3.12 - 100% Complete)
+### BigFun's Suunto Replay Studio (v3.12-3.13 - 100% Complete)
 - **Standalone Sub-Application**: Self-contained project at `/suunto/*` routes
 - **Drag-and-Drop Upload**: Upload Suunto JSON files directly with react-dropzone
 - **Shareable URLs**: Get unique share links like `/suunto/view/abc123`
-- **4 Visual Styles**: Four distinct Activity Player themes
-  - **Classic**: Navy (#1a365d) + Coral (#f56565) color scheme with cream backgrounds
-  - **Cinematic**: Full-screen immersive with gold accents (placeholder)
-  - **Minimal**: Typography-focused Scandinavian design (placeholder)
-  - **Dashboard**: Professional analytics multi-panel view (placeholder)
+- **10 Visual Styles** (v3.13): Ten distinct Activity Player themes
+  - **Classic**: Navy (#1a365d) + Coral (#f56565) with cream backgrounds
+  - **Cinematic**: Full-screen immersive with gold accents, letterbox bars, auto-hiding controls
+  - **Minimal**: Typography-focused Scandinavian design, white/blue, large hero stats
+  - **Dashboard**: Professional analytics multi-panel view with charts, live stats, lap splits
+  - **Strava** (NEW): Athletic/performance focused with HR zones bar, splits table, orange accent
+  - **Polaroid** (NEW): Vintage photo aesthetic with handwritten fonts, film strip progress
+  - **Terminal** (NEW): Hacker CLI style with ASCII art, green/amber on black, scrolling data log
+  - **Neon** (NEW): Cyberpunk gaming with glow effects, XP bar, achievement notifications
+  - **Editorial** (NEW): Magazine layout with serif headlines, pull quotes, asymmetric grid
+  - **Topographic** (NEW): Cartography focused with compass rose, coordinate display, legend stats
 - **Demo Mode**: Try the player with sample data before uploading
 - **No Authentication**: Public access for easy sharing
 - **Separate Database**: Uses own `ReplayStudioUpload` table (no parent app dependencies)
+- **Camera Improvements**: Smoother motion with ease-out easing, dynamic pitch, reduced terrain clipping
 - **Extraction Ready**: Designed for future standalone deployment
-  - All code in dedicated directories (`webapp/src/pages/suunto/`, `webapp/src/components/suunto/`)
-  - Separate API namespace (`/api/replay-studio/*`)
-  - Full extraction guide in `docs/ACTIVITY_REPLAY_STUDIO.md`
-- **Backend Routes**: Upload, demo data, and retrieval by share ID
-- **Classic Player**: Full implementation with Mapbox GL, terrain, playback controls
 
 ### Enhanced Statistics (100% Complete)
 - 7-day moving average pace

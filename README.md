@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.12)
+## Current Features (v3.13)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -65,12 +65,23 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Relocated Activity Player (v3.11)**: Player now positioned below journal content, closer to photo carousel
   - **Map Info Overlay (v3.11)**: "BigFun Hikes!" branding and temperature display in upper-left corner
   - **Default 3D + Satellite (v3.11)**: Activity Player now starts with 3D terrain and satellite view enabled
-- **BigFun's Suunto Replay Studio (v3.12)**: Standalone sub-application for viewing Suunto data
+- **BigFun's Suunto Replay Studio (v3.12-3.13)**: Standalone sub-application for viewing Suunto data
   - **Drag-and-Drop Upload**: Upload Suunto JSON files directly to get shareable replay URLs
-  - **4 Visual Styles**: Classic (navy/coral), Cinematic, Minimal, and Dashboard player styles
+  - **10 Visual Styles**: Diverse Activity Player themes to choose from
+    - **Classic**: Navy + Coral with clean familiar layout
+    - **Cinematic**: Full-screen immersive with gold accents, letterbox bars, auto-hiding controls
+    - **Minimal**: Typography-focused Scandinavian design with large hero stats
+    - **Dashboard**: Professional multi-panel analytics with live updating stats
+    - **Strava**: Athletic performance focused with HR zones bar and splits table
+    - **Polaroid**: Vintage photo aesthetic with handwritten fonts and film strip progress
+    - **Terminal**: Hacker CLI style with ASCII art, green/amber, scrolling data log
+    - **Neon**: Cyberpunk gaming with glow effects and XP progress bar
+    - **Editorial**: Magazine layout with serif headlines and asymmetric grid
+    - **Topographic**: Cartography focused with compass rose and coordinate display
   - **No Login Required**: Public access for easy sharing
   - **Separate Data**: Uses own database table (ReplayStudioUpload), self-contained for future extraction
   - **Demo Mode**: Try the player with sample data before uploading
+  - **Camera Improvements**: Smoother motion with ease-out easing, reduced terrain clipping
   - **Routes**: `/suunto` (landing), `/suunto/demo`, `/suunto/view/:shareId`
 - **Improved Entry Layout**: Title and content appear above photos for better readability
 - **Photo Uploads**: Add and caption multiple photos per entry with carousel display
