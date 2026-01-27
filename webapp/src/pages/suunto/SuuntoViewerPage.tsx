@@ -13,6 +13,9 @@ import { ArrowLeft, Share2, Check, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { StyleSelector } from "@/components/suunto/StyleSelector";
 import { ClassicPlayer } from "@/components/suunto/players/ClassicPlayer";
+import { CinematicPlayer } from "@/components/suunto/players/CinematicPlayer";
+import { MinimalPlayer } from "@/components/suunto/players/MinimalPlayer";
+import { DashboardPlayer } from "@/components/suunto/players/DashboardPlayer";
 import type { SuuntoParseResult } from "@/lib/suunto-parser";
 
 export type PlayerStyle = "classic" | "cinematic" | "minimal" | "dashboard";
@@ -87,16 +90,15 @@ export function SuuntoViewerPage() {
   const renderPlayer = () => {
     if (!activityData) return null;
 
-    // For now, all styles use ClassicPlayer - we'll implement others later
     switch (selectedStyle) {
       case "classic":
         return <ClassicPlayer data={activityData.parsedData} />;
       case "cinematic":
-        return <ClassicPlayer data={activityData.parsedData} />; // TODO: CinematicPlayer
+        return <CinematicPlayer data={activityData.parsedData} />;
       case "minimal":
-        return <ClassicPlayer data={activityData.parsedData} />; // TODO: MinimalPlayer
+        return <MinimalPlayer data={activityData.parsedData} />;
       case "dashboard":
-        return <ClassicPlayer data={activityData.parsedData} />; // TODO: DashboardPlayer
+        return <DashboardPlayer data={activityData.parsedData} />;
       default:
         return <ClassicPlayer data={activityData.parsedData} />;
     }
