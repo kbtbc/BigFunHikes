@@ -58,38 +58,30 @@ This workspace contains a web app and backend server.
 </documentation_rules>
 
 <session_notes>
-  ## Session: January 27, 2026 - Suunto Replay Studio v3.15
+  ## Session: January 27, 2026 - Photo EXIF Extraction v3.16
 
   ### What was completed:
-  - Expanded to 15 visual player styles for Suunto Replay Studio
-  - Fixed demo data loading (copied to backend/data/suwaneetrek-1.json)
-  - Rebuilt 6 new 2D-focused styles replacing Strava, Polaroid, Neon:
-    - Terminal, Editorial, Topographic, Cockpit, Blueprint, Field Journal
-  - Added 5 new 3D terrain styles with full satellite/outdoors toggle:
-    - Athletic (ESPN sports broadcast), Expedition (National Geographic),
-    - Retro (70s analog gauges), Noir (film noir cinematic), Command (military tactical)
-  - Style selector button updated (orange gradient, better visibility)
+  - Added EXIF extraction for photo uploads using exifr library
+  - GPS coordinates (latitude/longitude) extracted from phone photos
+  - Date taken (DateTimeOriginal, CreateDate, ModifyDate) extracted
+  - Photos snapped to closest point on trail route within 500m
+  - Improved distance calculation using approximate meters
+  - Updated entries routes to include takenAt in responses
 
-  ### Current 15 Styles:
-  - Original 4: Classic, Cinematic, Minimal, Dashboard
-  - 6 New 2D-focused: Terminal, Editorial, Topographic, Cockpit, Blueprint, Field Journal
-  - 5 New 3D terrain: Athletic, Expedition, Retro, Noir, Command
+  ### Key files modified:
+  - backend/src/routes/photos.ts - Added extractExifData() function
+  - backend/src/routes/entries.ts - Added takenAt to photo responses
+  - webapp/src/components/ActivityPlayer/index.tsx - Improved GPS snapping logic
 
-  ### Key files for Replay Studio:
-  - Landing: webapp/src/pages/suunto/SuuntoLandingPage.tsx
-  - Viewer: webapp/src/pages/suunto/SuuntoViewerPage.tsx (imports all 15 players)
-  - Style Selector: webapp/src/components/suunto/StyleSelector.tsx
-  - Players: webapp/src/components/suunto/players/*/
-  - Sub-project docs: docs/ACTIVITY_REPLAY_STUDIO.md
+  ### How photo-to-route matching works:
+  1. On upload: EXIF GPS and timestamp extracted from image
+  2. On playback: Photo GPS compared to all route points
+  3. Closest point found using Haversine-like distance (meters)
+  4. If within 500m, photo snapped to that route point
+  5. Photo displays at route position during playback
 
-  ### 3D Terrain Implementation (for new styles):
-  - Uses mapbox-dem source with terrain exaggeration (1.8-2.8x)
-  - Sky layer with atmosphere
-  - Camera modes: follow, overview, firstPerson
-  - Map style toggle: satellite/outdoors (or dark for Noir)
-  - Bearing calculation for firstPerson mode
-
-  ### Demo data:
-  - Backend demo file: backend/data/suwaneetrek-1.json
+  ### Previous session context (v3.15):
+  - Suunto Replay Studio has 15 visual player styles
+  - Demo data: backend/data/suwaneetrek-1.json
   - Routes: /suunto (landing), /suunto/demo, /suunto/view/:shareId
 </session_notes>

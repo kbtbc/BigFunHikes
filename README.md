@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.15)
+## Current Features (v3.16)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -53,7 +53,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Auto-Detection**: Works with both Suunto JSON and GPX data sources
   - **Photo Markers**: Photos displayed on map at GPS locations along the route
   - Expandable section on entry detail pages (only shows when GPS data available)
-- **Activity Player Enhancements (v3.9-3.11)**:
+- **Activity Player Enhancements (v3.9-3.11, v3.16)**:
   - **3D Terrain Mode**: Toggle Mapbox GL terrain extrusion (2.5x) for immersive flyover views with sky atmosphere
   - **Camera Modes**: Follow (tracks marker), Overview (user-controlled), First-Person (looks ahead in direction of travel)
   - **Photo Timestamps**: Photos matched to GPS coordinates, appear during playback with fade-in effect
@@ -65,6 +65,10 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Relocated Activity Player (v3.11)**: Player now positioned below journal content, closer to photo carousel
   - **Map Info Overlay (v3.11)**: "BigFun Hikes!" branding and temperature display in upper-left corner
   - **Default 3D + Satellite (v3.11)**: Activity Player now starts with 3D terrain and satellite view enabled
+  - **Photo EXIF Extraction (v3.16)**: GPS coordinates and timestamps automatically extracted from uploaded photos
+    - Photos taken with phone camera are geotagged on the Activity Playback map
+    - Photo positions snapped to closest point on the trail route (within 500m)
+    - Supports DateTimeOriginal, CreateDate, and ModifyDate EXIF fields
 - **BigFun's Suunto Replay Studio (v3.12-3.15)**: Standalone sub-application for viewing Suunto data
   - **Drag-and-Drop Upload**: Upload Suunto JSON files directly to get shareable replay URLs
   - **15 Visual Styles**: Diverse Activity Player themes to choose from

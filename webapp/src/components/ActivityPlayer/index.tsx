@@ -217,7 +217,7 @@ export function ActivityPlayer({
       photosCount: photos.length,
       activityStartTime,
       activityEndTime,
-      photos: photos.map(p => ({ id: p.id, lat: p.latitude, lon: p.longitude }))
+      photos: photos.map(p => ({ id: p.id, lat: p.latitude, lon: p.longitude, timestamp: p.timestamp }))
     });
 
     const mapped = photos.map((photo) => {
@@ -225,18 +225,19 @@ export function ActivityPlayer({
       let photoLat: number | undefined;
       let photoLon: number | undefined;
 
-      // If photo has GPS coordinates, use them directly
+      // If photo has GPS coordinates, snap to closest point on the route
       if (photo.latitude != null && photo.longitude != null) {
-        photoLat = photo.latitude;
-        photoLon = photo.longitude;
-
-        // Find closest data point by GPS
+        // Find closest data point by GPS distance
         let closestDist = Infinity;
         let closestPoint: typeof activityData.dataPoints[0] | null = null;
 
         for (const point of activityData.dataPoints) {
+          // Use Haversine-like distance (simplified for small distances)
+          const latDiff = point.lat - photo.latitude;
+          const lonDiff = point.lon - photo.longitude;
+          // Approximate meters: 1 degree lat ~= 111km, 1 degree lon ~= 85km at mid-latitudes
           const dist = Math.sqrt(
-            Math.pow(point.lat - photoLat, 2) + Math.pow(point.lon - photoLon, 2)
+            Math.pow(latDiff * 111000, 2) + Math.pow(lonDiff * 85000, 2)
           );
           if (dist < closestDist) {
             closestDist = dist;
@@ -244,17 +245,36 @@ export function ActivityPlayer({
           }
         }
 
-        if (closestPoint) {
+        // Snap photo to the closest point on the route (within 500 meters)
+        if (closestPoint && closestDist < 500) {
+          photoLat = closestPoint.lat;
+          photoLon = closestPoint.lon;
           photoTimestamp = closestPoint.timestamp;
-        }
 
-        console.log("[ActivityPlayer] Photo with GPS:", {
-          id: photo.id,
-          photoLat,
-          photoLon,
-          closestDist,
-          photoTimestamp
-        });
+          console.log("[ActivityPlayer] Photo snapped to route:", {
+            id: photo.id,
+            originalLat: photo.latitude,
+            originalLon: photo.longitude,
+            snappedLat: photoLat,
+            snappedLon: photoLon,
+            distanceMeters: Math.round(closestDist),
+            timestamp: photoTimestamp
+          });
+        } else {
+          // Photo is too far from route, use original coordinates but still find timestamp
+          photoLat = photo.latitude;
+          photoLon = photo.longitude;
+          if (closestPoint) {
+            photoTimestamp = closestPoint.timestamp;
+          }
+
+          console.log("[ActivityPlayer] Photo too far from route, using original GPS:", {
+            id: photo.id,
+            lat: photoLat,
+            lon: photoLon,
+            distanceMeters: closestDist ? Math.round(closestDist) : "N/A"
+          });
+        }
       }
 
       // If photo has a timestamp, try to match it to activity timeline

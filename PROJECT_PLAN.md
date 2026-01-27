@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.12 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.16 COMPLETE)
 
 ### Overview
 
@@ -19,6 +19,7 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - **CRUD Routes**: All journal entry and photo management endpoints
 - **Statistics**: Enhanced stats with pace analytics, projections, elevation profile
 - **Photo Management**: Upload, caption editing, deletion
+- **Photo EXIF Extraction**: GPS coordinates and timestamps automatically extracted from uploaded photos (NEW v3.16)
 - **Entry Types**: Support for "trail" and "training" entry types
 - **GPS/Weather Fields**: latitude, longitude, locationName, weather in schema
 - **Suunto Data**: Full fitness watch data storage and retrieval
@@ -151,7 +152,7 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - Only shows when GPS track data is available
 - Components: ActivityMap, ActivityCharts, PlaybackControls
 
-### Activity Player Enhancements (v3.9-3.11 - 100% Complete)
+### Activity Player Enhancements (v3.9-3.11, v3.16 - 100% Complete)
 - **3D Terrain Mode**: Toggle Mapbox GL terrain extrusion with 2.5x exaggeration
   - Sky atmosphere layer for realistic horizon
   - Adjusts pitch automatically when enabled
@@ -186,6 +187,11 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - **Relocated Activity Player (v3.11)**: Better integration with entry page
   - Moved player directly below journal content
   - Closer proximity to photo carousel for linked interaction
+- **Photo EXIF Extraction (v3.16)**: Automatic GPS from phone photos
+  - EXIF GPS coordinates extracted on upload using exifr library
+  - DateTimeOriginal/CreateDate extracted for timestamp matching
+  - Photos snapped to closest point on trail route (within 500m)
+  - Better distance calculation using approximate meters
 - **Map Info Overlay (v3.11)**: Branding and temperature on map
   - "BigFun Hikes!" logo text in upper-left corner
   - Temperature displayed in amber next to logo
