@@ -84,9 +84,9 @@ export function ActivityPlayer({
   const [colorMode, setColorMode] = useState<ColorMode>("speed");
 
   // Phase 1 Enhancement states
-  const [terrain3D, setTerrain3D] = useState(false);
+  const [terrain3D, setTerrain3D] = useState(true);
   const [cameraMode, setCameraMode] = useState<CameraMode>("follow");
-  const [mapStyle, setMapStyle] = useState<MapStyle>("outdoors");
+  const [mapStyle, setMapStyle] = useState<MapStyle>("satellite");
   const [highlightedSegment, setHighlightedSegment] = useState<{ start: number; end: number } | null>(null);
 
   const animationRef = useRef<number | null>(null);
