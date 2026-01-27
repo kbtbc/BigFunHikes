@@ -5,7 +5,7 @@
  * Color Palette: Deep navy (#1a365d) + Coral accent (#f56565) + Cream (#faf5f0)
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,9 @@ import {
   Mountain,
   Gauge,
   Palette,
+  Video,
+  Eye,
+  Navigation,
 } from "lucide-react";
 import {
   parseActivityData,
@@ -36,7 +39,8 @@ import {
   type ActivityData,
 } from "@/lib/activity-data-parser";
 import type { SuuntoParseResult } from "@/lib/suunto-parser";
-import { ClassicMap } from "./ClassicMap";
+import { ClassicMap, type ClassicMapRef, type CameraMode, type MapStyle } from "./ClassicMap";
+import { ActivityCharts } from "@/components/ActivityPlayer/ActivityCharts";
 
 interface ClassicPlayerProps {
   data: SuuntoParseResult;
@@ -51,9 +55,13 @@ export function ClassicPlayer({ data }: ClassicPlayerProps) {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [colorMode, setColorMode] = useState<ColorMode>("speed");
   const [terrain3D, setTerrain3D] = useState(true);
+  const [cameraMode, setCameraMode] = useState<CameraMode>("follow");
+  const [mapStyle, setMapStyle] = useState<MapStyle>("satellite");
+  const [highlightedSegment, setHighlightedSegment] = useState<{ start: number; end: number } | null>(null);
 
   const animationRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
+  const mapRef = useRef<ClassicMapRef>(null);
 
   // Parse activity data on mount
   useEffect(() => {
@@ -140,6 +148,22 @@ export function ClassicPlayer({ data }: ClassicPlayerProps) {
     lastUpdateRef.current = 0;
   }, [activityData]);
 
+  // Handle direct seek from charts (takes index directly)
+  const handleChartSeek = useCallback((index: number) => {
+    setCurrentIndex(index);
+    lastUpdateRef.current = 0;
+  }, []);
+
+  // Handle segment highlighting from chart
+  const handleHighlightSegment = useCallback((segment: { start: number; end: number } | null) => {
+    setHighlightedSegment(segment);
+
+    // Fly to the segment on the map
+    if (segment && mapRef.current) {
+      mapRef.current.flyToSegment(segment.start, segment.end);
+    }
+  }, []);
+
   const currentPoint = activityData?.dataPoints[currentIndex] || null;
   const progress = activityData
     ? (currentIndex / (activityData.dataPoints.length - 1)) * 100
@@ -168,13 +192,17 @@ export function ClassicPlayer({ data }: ClassicPlayerProps) {
       <Card className="classic-player-card overflow-hidden">
         <div className="relative" style={{ height: "450px" }}>
           <ClassicMap
+            ref={mapRef}
             dataPoints={activityData.dataPoints}
             currentIndex={currentIndex}
             bounds={activityData.bounds}
             colorMode={colorMode}
+            cameraMode={cameraMode}
+            mapStyle={mapStyle}
             terrain3D={terrain3D}
             hasHeartRate={activityData.hasHeartRate}
             temperature={tempFahrenheit}
+            highlightedSegment={highlightedSegment}
           />
         </div>
       </Card>
@@ -297,6 +325,39 @@ export function ClassicPlayer({ data }: ClassicPlayerProps) {
               </Select>
             </div>
 
+            {/* Camera Mode */}
+            <div className="flex items-center gap-2">
+              <Video className="h-4 w-4 text-muted-foreground" />
+              <Select
+                value={cameraMode}
+                onValueChange={(val) => setCameraMode(val as CameraMode)}
+              >
+                <SelectTrigger className="w-32 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="follow">
+                    <div className="flex items-center gap-2">
+                      <Navigation className="h-3 w-3" />
+                      Follow
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="overview">
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-3 w-3" />
+                      Overview
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="firstPerson">
+                    <div className="flex items-center gap-2">
+                      <Video className="h-3 w-3" />
+                      First Person
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* 3D Toggle */}
             <div className="flex items-center gap-2">
               <Mountain className="h-4 w-4 text-muted-foreground" />
@@ -305,6 +366,16 @@ export function ClassicPlayer({ data }: ClassicPlayerProps) {
                 id="terrain-toggle"
                 checked={terrain3D}
                 onCheckedChange={setTerrain3D}
+              />
+            </div>
+
+            {/* Satellite Toggle */}
+            <div className="flex items-center gap-2">
+              <Label htmlFor="satellite-toggle" className="text-sm">Satellite</Label>
+              <Switch
+                id="satellite-toggle"
+                checked={mapStyle === "satellite"}
+                onCheckedChange={(checked) => setMapStyle(checked ? "satellite" : "outdoors")}
               />
             </div>
 
@@ -328,6 +399,20 @@ export function ClassicPlayer({ data }: ClassicPlayerProps) {
             </div>
           </div>
         </div>
+      </Card>
+
+      {/* Charts */}
+      <Card className="classic-player-card p-4">
+        <ActivityCharts
+          dataPoints={activityData.dataPoints}
+          currentIndex={currentIndex}
+          hasHeartRate={activityData.hasHeartRate}
+          hasCadence={activityData.hasCadence}
+          hasSpeed={activityData.hasSpeed}
+          onSeek={handleChartSeek}
+          onHighlightSegment={handleHighlightSegment}
+          duration={activityData.summary.duration}
+        />
       </Card>
 
       {/* Styles for Classic theme */}

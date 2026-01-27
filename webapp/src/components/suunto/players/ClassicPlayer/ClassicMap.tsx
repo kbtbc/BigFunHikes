@@ -4,7 +4,7 @@
  * Color scheme: Navy (#1a365d) + Coral (#f56565)
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { ActivityDataPoint } from "@/lib/activity-data-parser";
@@ -12,7 +12,13 @@ import { getGradientColor } from "@/lib/activity-data-parser";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || "";
 
-type ColorMode = "speed" | "hr" | "elevation";
+export type ColorMode = "speed" | "hr" | "elevation";
+export type CameraMode = "follow" | "overview" | "firstPerson";
+export type MapStyle = "satellite" | "outdoors";
+
+export interface ClassicMapRef {
+  flyToSegment: (startIndex: number, endIndex: number) => void;
+}
 
 interface ClassicMapProps {
   dataPoints: ActivityDataPoint[];
@@ -24,26 +30,51 @@ interface ClassicMapProps {
     west: number;
   };
   colorMode: ColorMode;
+  cameraMode: CameraMode;
+  mapStyle: MapStyle;
   terrain3D: boolean;
   hasHeartRate: boolean;
   temperature?: number;
+  highlightedSegment?: { start: number; end: number } | null;
 }
 
-export function ClassicMap({
+export const ClassicMap = forwardRef<ClassicMapRef, ClassicMapProps>(function ClassicMap({
   dataPoints,
   currentIndex,
   bounds,
   colorMode,
+  cameraMode,
+  mapStyle,
   terrain3D,
   hasHeartRate,
   temperature,
-}: ClassicMapProps) {
+  highlightedSegment,
+}, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [styleReady, setStyleReady] = useState(false);
   const lastCameraUpdate = useRef<number>(0);
+  const lastBearing = useRef<number>(0);
+
+  // Expose flyToSegment method
+  useImperativeHandle(ref, () => ({
+    flyToSegment: (startIndex: number, endIndex: number) => {
+      if (!map.current) return;
+
+      const segmentPoints = dataPoints.slice(startIndex, endIndex + 1);
+      if (segmentPoints.length < 2) return;
+
+      const lngs = segmentPoints.map(p => p.lon);
+      const lats = segmentPoints.map(p => p.lat);
+
+      map.current.fitBounds([
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)],
+      ], { padding: 80, maxZoom: 16, duration: 1000 });
+    }
+  }));
 
   // Initialize map
   useEffect(() => {
@@ -116,6 +147,38 @@ export function ClassicMap({
       }
     }
   }, [terrain3D, mapLoaded, styleReady]);
+
+  // Handle map style changes
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    const styleUrl = mapStyle === "satellite"
+      ? "mapbox://styles/mapbox/satellite-streets-v12"
+      : "mapbox://styles/mapbox/outdoors-v12";
+
+    // Check if style is different
+    const currentStyle = map.current.getStyle();
+    if (currentStyle?.sprite?.includes(mapStyle)) return;
+
+    // Save current view
+    const center = map.current.getCenter();
+    const zoom = map.current.getZoom();
+    const pitch = map.current.getPitch();
+    const bearing = map.current.getBearing();
+
+    setStyleReady(false);
+
+    map.current.setStyle(styleUrl);
+
+    map.current.once("style.load", () => {
+      setStyleReady(true);
+      // Restore view
+      map.current?.setCenter(center);
+      map.current?.setZoom(zoom);
+      map.current?.setPitch(pitch);
+      map.current?.setBearing(bearing);
+    });
+  }, [mapStyle, mapLoaded]);
 
   // Add route layers
   useEffect(() => {
@@ -286,16 +349,50 @@ export function ClassicMap({
       marker.current.setLngLat([currentPoint.lon, currentPoint.lat]);
     }
 
-    // Camera follow
+    // Skip camera updates in overview mode
+    if (cameraMode === "overview") return;
+
+    // Throttle camera updates
     const now = Date.now();
     if (now - lastCameraUpdate.current < 150) return;
     lastCameraUpdate.current = now;
 
-    map.current.panTo([currentPoint.lon, currentPoint.lat], {
-      duration: 200,
-      easing: (t) => t,
-    });
-  }, [currentIndex, mapLoaded, dataPoints]);
+    if (cameraMode === "follow") {
+      // Follow mode: smooth pan to keep marker centered
+      map.current.panTo([currentPoint.lon, currentPoint.lat], {
+        duration: 200,
+        easing: (t) => t,
+      });
+    } else if (cameraMode === "firstPerson") {
+      // First-person mode: look ahead in direction of travel
+      const nextIndex = Math.min(currentIndex + 5, dataPoints.length - 1);
+      const nextPoint = dataPoints[nextIndex];
+
+      if (nextPoint && (nextPoint.lat !== currentPoint.lat || nextPoint.lon !== currentPoint.lon)) {
+        // Calculate bearing to next point
+        const dLon = (nextPoint.lon - currentPoint.lon) * Math.PI / 180;
+        const lat1 = currentPoint.lat * Math.PI / 180;
+        const lat2 = nextPoint.lat * Math.PI / 180;
+        const y = Math.sin(dLon) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        const targetBearing = Math.atan2(y, x) * 180 / Math.PI;
+
+        // Smooth bearing transitions
+        const bearingDiff = targetBearing - lastBearing.current;
+        const normalizedDiff = ((bearingDiff + 540) % 360) - 180;
+        lastBearing.current = lastBearing.current + normalizedDiff * 0.08;
+
+        map.current.easeTo({
+          center: [currentPoint.lon, currentPoint.lat],
+          bearing: lastBearing.current,
+          pitch: 70,
+          zoom: 16,
+          duration: 200,
+          easing: (t) => t,
+        });
+      }
+    }
+  }, [currentIndex, mapLoaded, dataPoints, cameraMode]);
 
   return (
     <div className="relative w-full h-full">
@@ -313,4 +410,4 @@ export function ClassicMap({
       </div>
     </div>
   );
-}
+});
