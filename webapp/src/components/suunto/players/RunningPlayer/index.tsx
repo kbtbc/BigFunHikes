@@ -283,6 +283,83 @@ export function RunningPlayer({ data }: RunningPlayerProps) {
             highlightedSegment={highlightedSegment}
           />
         </div>
+
+        {/* Map Controls - directly below map */}
+        <div className="p-3 border-t border-white/10 flex flex-wrap items-center justify-center gap-4">
+          {/* Color Mode */}
+          <div className="flex items-center gap-2">
+            <Palette className="h-4 w-4 text-white/60" />
+            <Select
+              value={colorMode}
+              onValueChange={(val) => setColorMode(val as ColorMode)}
+            >
+              <SelectTrigger className="w-28 h-8 bg-white/5 border-white/10 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pace">Pace</SelectItem>
+                {activityData.hasHeartRate && (
+                  <SelectItem value="hr">Heart Rate</SelectItem>
+                )}
+                <SelectItem value="elevation">Elevation</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Camera Mode */}
+          <div className="flex items-center gap-2">
+            <Video className="h-4 w-4 text-white/60" />
+            <Select
+              value={cameraMode}
+              onValueChange={(val) => setCameraMode(val as CameraMode)}
+            >
+              <SelectTrigger className="w-32 h-8 bg-white/5 border-white/10 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="follow">
+                  <div className="flex items-center gap-2">
+                    <Navigation className="h-3 w-3" />
+                    Follow
+                  </div>
+                </SelectItem>
+                <SelectItem value="overview">
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-3 w-3" />
+                    Overview
+                  </div>
+                </SelectItem>
+                <SelectItem value="firstPerson">
+                  <div className="flex items-center gap-2">
+                    <Video className="h-3 w-3" />
+                    First Person
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 3D Toggle */}
+          <div className="flex items-center gap-2">
+            <Mountain className="h-4 w-4 text-white/60" />
+            <Label htmlFor="terrain-toggle" className="text-sm text-white/80">3D</Label>
+            <Switch
+              id="terrain-toggle"
+              checked={terrain3D}
+              onCheckedChange={setTerrain3D}
+            />
+          </div>
+
+          {/* Satellite Toggle */}
+          <div className="flex items-center gap-2">
+            <Label htmlFor="satellite-toggle" className="text-sm text-white/80">Satellite</Label>
+            <Switch
+              id="satellite-toggle"
+              checked={mapStyle === "satellite"}
+              onCheckedChange={(checked) => setMapStyle(checked ? "satellite" : "outdoors")}
+            />
+          </div>
+        </div>
       </Card>
 
       {/* Running Stats Panel */}
@@ -494,7 +571,7 @@ export function RunningPlayer({ data }: RunningPlayerProps) {
           />
         </div>
 
-        {/* Control Buttons & Options */}
+        {/* Control Buttons & Speed */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Playback Controls */}
           <div className="flex items-center gap-2">
@@ -530,100 +607,23 @@ export function RunningPlayer({ data }: RunningPlayerProps) {
             </Button>
           </div>
 
-          {/* Options */}
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Color Mode */}
-            <div className="flex items-center gap-2">
-              <Palette className="h-4 w-4 text-white/60" />
-              <Select
-                value={colorMode}
-                onValueChange={(val) => setColorMode(val as ColorMode)}
-              >
-                <SelectTrigger className="w-28 h-8 bg-white/5 border-white/10 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pace">Pace</SelectItem>
-                  {activityData.hasHeartRate && (
-                    <SelectItem value="hr">Heart Rate</SelectItem>
-                  )}
-                  <SelectItem value="elevation">Elevation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Camera Mode */}
-            <div className="flex items-center gap-2">
-              <Video className="h-4 w-4 text-white/60" />
-              <Select
-                value={cameraMode}
-                onValueChange={(val) => setCameraMode(val as CameraMode)}
-              >
-                <SelectTrigger className="w-32 h-8 bg-white/5 border-white/10 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="follow">
-                    <div className="flex items-center gap-2">
-                      <Navigation className="h-3 w-3" />
-                      Follow
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="overview">
-                    <div className="flex items-center gap-2">
-                      <Eye className="h-3 w-3" />
-                      Overview
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="firstPerson">
-                    <div className="flex items-center gap-2">
-                      <Video className="h-3 w-3" />
-                      First Person
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* 3D Toggle */}
-            <div className="flex items-center gap-2">
-              <Mountain className="h-4 w-4 text-white/60" />
-              <Label htmlFor="terrain-toggle" className="text-sm text-white/80">3D</Label>
-              <Switch
-                id="terrain-toggle"
-                checked={terrain3D}
-                onCheckedChange={setTerrain3D}
-              />
-            </div>
-
-            {/* Satellite Toggle */}
-            <div className="flex items-center gap-2">
-              <Label htmlFor="satellite-toggle" className="text-sm text-white/80">Satellite</Label>
-              <Switch
-                id="satellite-toggle"
-                checked={mapStyle === "satellite"}
-                onCheckedChange={(checked) => setMapStyle(checked ? "satellite" : "outdoors")}
-              />
-            </div>
-
-            {/* Speed */}
-            <div className="flex items-center gap-2">
-              <Gauge className="h-4 w-4 text-white/60" />
-              <Select
-                value={playbackSpeed.toString()}
-                onValueChange={(val) => setPlaybackSpeed(parseFloat(val))}
-              >
-                <SelectTrigger className="w-20 h-8 bg-white/5 border-white/10 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0.5">0.5x</SelectItem>
-                  <SelectItem value="1">1x</SelectItem>
-                  <SelectItem value="2">2x</SelectItem>
-                  <SelectItem value="4">4x</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Playback Speed */}
+          <div className="flex items-center gap-2">
+            <Gauge className="h-4 w-4 text-white/60" />
+            <Select
+              value={playbackSpeed.toString()}
+              onValueChange={(val) => setPlaybackSpeed(parseFloat(val))}
+            >
+              <SelectTrigger className="w-20 h-8 bg-white/5 border-white/10 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0.5">0.5x</SelectItem>
+                <SelectItem value="1">1x</SelectItem>
+                <SelectItem value="2">2x</SelectItem>
+                <SelectItem value="4">4x</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </Card>
