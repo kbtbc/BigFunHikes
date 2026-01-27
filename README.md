@@ -65,7 +65,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Relocated Activity Player (v3.11)**: Player now positioned below journal content, closer to photo carousel
   - **Map Info Overlay (v3.11)**: "BigFun Hikes!" branding and temperature display in upper-left corner
   - **Default 3D + Satellite (v3.11)**: Activity Player now starts with 3D terrain and satellite view enabled
-- **BigFun's Activity Replay Studio (v3.12)**: Standalone sub-application for viewing Suunto data
+- **BigFun's Suunto Replay Studio (v3.12)**: Standalone sub-application for viewing Suunto data
   - **Drag-and-Drop Upload**: Upload Suunto JSON files directly to get shareable replay URLs
   - **4 Visual Styles**: Classic (navy/coral), Cinematic, Minimal, and Dashboard player styles
   - **No Login Required**: Public access for easy sharing
@@ -195,7 +195,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 │   │   │   ├── NewEntryPage.tsx       # Create new entry
 │   │   │   ├── EditEntryPage.tsx      # Edit existing entry
 │   │   │   ├── LoginPage.tsx          # Admin authentication
-│   │   │   └── suunto/                # Activity Replay Studio (NEW v3.12)
+│   │   │   └── suunto/                # Suunto Replay Studio (NEW v3.12)
 │   │   │       ├── SuuntoLandingPage.tsx  # Upload + demo landing
 │   │   │       └── SuuntoViewerPage.tsx   # Viewer with style selector
 │   │   ├── hooks/
@@ -230,7 +230,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
     │   │   ├── entries.ts             # Journal CRUD endpoints
     │   │   ├── photos.ts              # Photo upload endpoints
     │   │   ├── stats.ts               # Statistics endpoints
-    │   │   └── replay-studio.ts       # Activity Replay Studio API (NEW v3.12)
+    │   │   └── replay-studio.ts       # Suunto Replay Studio API (NEW v3.12)
     │   ├── middleware/
     │   │   └── adminAuth.ts           # Admin session middleware
     │   ├── types.ts                   # Zod schemas for API contracts
@@ -269,7 +269,7 @@ All endpoints follow the `{ data: ... }` envelope pattern.
 - `POST /api/admin/logout` - Admin logout
 - `GET /api/admin/session` - Check authentication status
 
-**Activity Replay Studio** (no auth required):
+**Suunto Replay Studio** (no auth required):
 - `POST /api/replay-studio/upload` - Upload Suunto JSON file (multipart/form-data)
 - `GET /api/replay-studio/demo` - Get demo activity data
 - `GET /api/replay-studio/:shareId` - Get uploaded activity by share ID

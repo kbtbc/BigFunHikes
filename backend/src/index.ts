@@ -110,7 +110,7 @@ app.route("/api/entries", entriesRouter);
 app.route("/api/entries", photosRouter);
 app.route("/api/stats", statsRouter);
 
-// Activity Replay Studio sub-project routes
+// Suunto Replay Studio sub-project routes
 app.route("/api/replay-studio", replayStudioRoutes);
 
 const port = Number(process.env.PORT) || 3000;

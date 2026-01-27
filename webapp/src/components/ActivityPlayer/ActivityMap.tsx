@@ -541,9 +541,12 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
     const now = Date.now();
     const timeSinceLastUpdate = now - lastCameraUpdate.current;
 
-    // Throttle camera updates but not too aggressively
-    if (timeSinceLastUpdate < 150) return;
+    // Throttle camera updates more aggressively to prevent jitter
+    if (timeSinceLastUpdate < 250) return;
     lastCameraUpdate.current = now;
+
+    // Smooth easing function (ease-out cubic)
+    const smoothEasing = (t: number) => 1 - Math.pow(1 - t, 3);
 
     if (cameraMode === "follow") {
       // Follow mode: pan smoothly without changing zoom
@@ -555,33 +558,34 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
       );
 
       // Only move if we've drifted more than a small threshold
-      if (distanceToPoint > 0.0001) {
-        map.current.panTo([currentPoint.lon, currentPoint.lat], {
-          duration: 200,
-          easing: (t) => t, // Linear for smooth continuous motion
+      if (distanceToPoint > 0.0002) {
+        map.current.easeTo({
+          center: [currentPoint.lon, currentPoint.lat],
+          duration: 400,
+          easing: smoothEasing,
         });
       }
     } else if (cameraMode === "firstPerson") {
       // First-person mode: look ahead in direction of travel with smoothed bearing
-      const lookAheadIndex = Math.min(currentIndex + 15, dataPoints.length - 1);
+      const lookAheadIndex = Math.min(currentIndex + 20, dataPoints.length - 1);
       const lookAheadPoint = dataPoints[lookAheadIndex];
 
       if (lookAheadPoint && lookAheadPoint !== currentPoint) {
         const targetBearing = calculateBearing(currentPoint, lookAheadPoint);
 
-        // Smooth bearing transition
+        // Smooth bearing transition with gentler interpolation
         let bearingDiff = targetBearing - lastBearing.current;
         if (bearingDiff > 180) bearingDiff -= 360;
         if (bearingDiff < -180) bearingDiff += 360;
 
-        // Ease toward target bearing
-        const smoothedBearing = lastBearing.current + bearingDiff * 0.08;
+        // Ease toward target bearing more gently
+        const smoothedBearing = lastBearing.current + bearingDiff * 0.05;
         lastBearing.current = ((smoothedBearing % 360) + 360) % 360;
 
         // Use flyTo only occasionally for major adjustments, otherwise just pan
         const currentZoom = map.current.getZoom();
         const targetZoom = 15.5;
-        const needsZoomAdjust = Math.abs(currentZoom - targetZoom) > 0.3;
+        const needsZoomAdjust = Math.abs(currentZoom - targetZoom) > 0.5;
 
         if (needsZoomAdjust) {
           map.current.easeTo({
@@ -589,16 +593,16 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
             bearing: lastBearing.current,
             pitch: terrain3D ? 70 : 55,
             zoom: targetZoom,
-            duration: 300,
-            easing: (t) => t,
+            duration: 500,
+            easing: smoothEasing,
           });
         } else {
           // Just update position and bearing smoothly
           map.current.easeTo({
             center: [currentPoint.lon, currentPoint.lat],
             bearing: lastBearing.current,
-            duration: 200,
-            easing: (t) => t,
+            duration: 400,
+            easing: smoothEasing,
           });
         }
       }

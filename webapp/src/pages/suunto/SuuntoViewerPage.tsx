@@ -1,5 +1,5 @@
 /**
- * Activity Replay Studio - Viewer Page
+ * Suunto Replay Studio - Viewer Page
  *
  * Displays uploaded or demo activity with style selector.
  * Supports 4 unique visual styles for the Activity Player.

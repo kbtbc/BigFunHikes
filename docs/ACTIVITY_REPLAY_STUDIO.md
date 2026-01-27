@@ -1,4 +1,4 @@
-# BigFun's Activity Replay Studio
+# BigFun's Suunto Replay Studio
 
 ## Project Plan & Documentation
 
@@ -53,7 +53,7 @@ Sample Suunto JSON file: `backend/data/suwaneetrek-1.json`
 
 ## Overview
 
-BigFun's Activity Replay Studio is a standalone sub-application within the BigFun Hikes! ecosystem. It allows users to upload Suunto JSON files and view their activities with beautiful, animated playback in **4 distinct visual styles**.
+BigFun's Suunto Replay Studio is a standalone sub-application within the BigFun Hikes! ecosystem. It allows users to upload Suunto JSON files and view their activities with beautiful, animated playback in **4 distinct visual styles**.
 
 ### Key Features
 - **Drag-and-drop Suunto JSON upload**

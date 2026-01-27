@@ -1,5 +1,5 @@
 /**
- * Activity Replay Studio - Backend API Routes
+ * Suunto Replay Studio - Backend API Routes
  *
  * This is a self-contained route file for the Replay Studio sub-project.
  * All endpoints are namespaced under /api/replay-studio/*

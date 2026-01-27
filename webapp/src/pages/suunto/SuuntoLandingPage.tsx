@@ -1,5 +1,5 @@
 /**
- * Activity Replay Studio - Landing Page
+ * Suunto Replay Studio - Landing Page
  *
  * Main entry point for the Replay Studio sub-application.
  * Provides drag-and-drop upload and demo access.
@@ -69,7 +69,7 @@ export function SuuntoLandingPage() {
               <Zap className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">BigFun's Activity Replay Studio</h1>
+              <h1 className="text-xl font-bold text-white">BigFun's Suunto Replay Studio</h1>
               <p className="text-sm text-white/60">Transform your Suunto data into cinematic replays</p>
             </div>
           </div>
@@ -140,9 +140,8 @@ export function SuuntoLandingPage() {
               <div className="mt-6 text-center">
                 <p className="text-white/50 text-sm mb-3">Don't have a file? Try our demo</p>
                 <Button
-                  variant="outline"
                   onClick={handleDemo}
-                  className="border-white/20 text-white hover:bg-white/10"
+                  className="bg-gradient-to-r from-coral-500 to-amber-500 text-white border-0 hover:from-coral-600 hover:to-amber-600 shadow-lg"
                 >
                   <Play className="mr-2 h-4 w-4" />
                   View Demo Activity

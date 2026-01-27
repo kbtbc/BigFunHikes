@@ -48,7 +48,7 @@ model Photo {
 }
 
 // =============================================================================
-// Activity Replay Studio (Sub-Project)
+// Suunto Replay Studio (Sub-Project)
 // This model is separate from the parent app and used only by the Replay Studio
 // =============================================================================
 

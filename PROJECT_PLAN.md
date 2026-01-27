@@ -194,7 +194,7 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
   - Activity Player now starts with 3D terrain enabled
   - Satellite map style enabled by default
 
-### BigFun's Activity Replay Studio (NEW v3.12 - 100% Complete)
+### BigFun's Suunto Replay Studio (NEW v3.12 - 100% Complete)
 - **Standalone Sub-Application**: Self-contained project at `/suunto/*` routes
 - **Drag-and-Drop Upload**: Upload Suunto JSON files directly with react-dropzone
 - **Shareable URLs**: Get unique share links like `/suunto/view/abc123`
