@@ -62,6 +62,7 @@ interface ActivityPlayerProps {
   gpxData?: string | null;
   photos?: Photo[];
   entryDate?: string;
+  onPhotoClick?: (photoId: string) => void;
 }
 
 export function ActivityPlayer({
@@ -69,6 +70,7 @@ export function ActivityPlayer({
   gpxData,
   photos = [],
   entryDate,
+  onPhotoClick,
 }: ActivityPlayerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
@@ -457,6 +459,7 @@ export function ActivityPlayer({
                     hasHeartRate={activityData.hasHeartRate}
                     photos={activityPhotos}
                     highlightedSegment={highlightedSegment}
+                    onPhotoClick={(photo) => onPhotoClick?.(photo.id)}
                   />
                 </div>
 

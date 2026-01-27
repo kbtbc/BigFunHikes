@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { JournalEntry } from "@/components/JournalEntry";
+import { JournalEntry, type JournalEntryRef } from "@/components/JournalEntry";
 import { EntryMap } from "@/components/EntryMap";
 import { EditableCoordinates } from "@/components/EditableCoordinates";
 import { SuuntoStatsDisplay } from "@/components/SuuntoStatsDisplay";
@@ -89,7 +89,19 @@ export function EntryDetailPage() {
   const updateMutation = useUpdateEntry();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  // Ref to control the photo carousel from Activity Player
+  const journalEntryRef = useRef<JournalEntryRef>(null);
+
   const entry = apiEntry ? transformApiEntryToComponent(apiEntry) : null;
+
+  // Handler for when a photo is clicked in Activity Player
+  const handleActivityPhotoClick = useCallback((photoId: string) => {
+    // Find the index of the photo by matching the id
+    const photoIndex = apiEntry?.photos?.findIndex(p => p.id === photoId) ?? -1;
+    if (photoIndex >= 0) {
+      journalEntryRef.current?.scrollToPhoto(photoIndex);
+    }
+  }, [apiEntry?.photos]);
 
   // Find previous and next entries based on day number
   let prevEntry: { id: string; dayNumber: number; title: string; latitude?: number | null; longitude?: number | null } | null = null;
@@ -256,7 +268,25 @@ export function EntryDetailPage() {
           )}
 
           {/* Main Journal Entry Card */}
-          <JournalEntry entry={entry} showFullContent={true} />
+          <JournalEntry ref={journalEntryRef} entry={entry} showFullContent={true} />
+
+          {/* Activity Player - Relive style playback (placed near photo carousel) */}
+          <div className="mt-8">
+            <ActivityPlayer
+              suuntoData={apiEntry?.suuntoData}
+              gpxData={apiEntry?.gpxData}
+              photos={apiEntry?.photos?.map(p => ({
+                id: p.id,
+                url: p.url,
+                caption: p.caption,
+                latitude: p.latitude,
+                longitude: p.longitude,
+                timestamp: p.takenAt,
+              }))}
+              entryDate={entry.date}
+              onPhotoClick={handleActivityPhotoClick}
+            />
+          </div>
 
           {/* Location & Weather Section */}
           {(entry.locationName || entry.weather || (entry.coordinates.start[0] !== 34.6266)) && (
@@ -327,23 +357,6 @@ export function EntryDetailPage() {
               <SuuntoStatsDisplay suuntoData={entry.suuntoData} />
             </div>
           )}
-
-          {/* Activity Player - Relive style playback */}
-          <div className="mt-8">
-            <ActivityPlayer
-              suuntoData={apiEntry?.suuntoData}
-              gpxData={apiEntry?.gpxData}
-              photos={apiEntry?.photos?.map(p => ({
-                id: p.id,
-                url: p.url,
-                caption: p.caption,
-                latitude: p.latitude,
-                longitude: p.longitude,
-                timestamp: p.takenAt,
-              }))}
-              entryDate={entry.date}
-            />
-          </div>
 
           {/* Map Section */}
           <div className="mt-8">

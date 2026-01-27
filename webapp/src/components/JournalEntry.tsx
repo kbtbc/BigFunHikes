@@ -9,7 +9,7 @@ import { LazyImage } from "@/components/ui/lazy-image";
 import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight, Dumbbell } from "lucide-react";
 import { type JournalEntry as JournalEntryType } from "@/data/journalEntries";
 import useEmblaCarousel from "embla-carousel-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, forwardRef, useImperativeHandle } from "react";
 
 interface JournalEntryProps {
   entry: JournalEntryType;
@@ -17,11 +17,15 @@ interface JournalEntryProps {
   className?: string;
 }
 
-export function JournalEntry({
+export interface JournalEntryRef {
+  scrollToPhoto: (photoIndex: number) => void;
+}
+
+export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(function JournalEntry({
   entry,
   showFullContent = false,
   className = "",
-}: JournalEntryProps) {
+}, ref) {
   const formattedDate = format(new Date(entry.date), "MMMM d, yyyy");
   const previewContent = entry.content.split("\n").slice(0, 3).join("\n");
   const isTraining = entry.entryType === "training";
@@ -34,6 +38,18 @@ export function JournalEntry({
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
   const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi]);
+
+  // Expose scrollToPhoto method for external control (e.g., from Activity Player)
+  useImperativeHandle(ref, () => ({
+    scrollToPhoto: (photoIndex: number) => {
+      if (photoIndex >= 0 && photoIndex < entry.photos.length && emblaApi) {
+        emblaApi.scrollTo(photoIndex);
+        // Scroll the carousel into view
+        const carouselElement = document.querySelector('[data-photo-carousel]');
+        carouselElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    },
+  }), [emblaApi, entry.photos.length]);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -99,7 +115,7 @@ export function JournalEntry({
 
         {/* Photos carousel - below content */}
         {entry.photos.length > 0 ? (
-          <div className="relative">
+          <div className="relative" data-photo-carousel>
             {/* Main carousel */}
             <div className="overflow-hidden" ref={showFullContent && hasMultiplePhotos ? emblaRef : undefined}>
               <div className={showFullContent && hasMultiplePhotos ? "flex" : ""}>
@@ -210,7 +226,7 @@ export function JournalEntry({
       </CardContent>
     </Card>
   );
-}
+});
 
 interface StatProps {
   icon: React.ReactNode;
