@@ -1,0 +1,317 @@
+================================================================================
+COMPONENT INVENTORY - /home/user/workspace/webapp/src/components
+Generated: January 27, 2026
+================================================================================
+
+================================================================================
+MAIN COMPONENTS
+================================================================================
+
+JournalEntry (components/JournalEntry.tsx)
+- Imported by: HomePage.tsx, EntryDetailPage.tsx, EditEntryPage.tsx, NewEntryPage.tsx, Timeline.tsx, TrailMap.tsx, transformEntries.ts, offline-storage.ts
+
+Timeline (components/Timeline.tsx)
+- Imported by: TimelinePage.tsx, App.tsx
+
+Navbar (components/Navbar.tsx)
+- Imported by: App.tsx
+
+EntryMap (components/EntryMap.tsx)
+- Imported by: EntryDetailPage.tsx
+
+SuuntoStatsDisplay (components/SuuntoStatsDisplay.tsx)
+- Imported by: EntryDetailPage.tsx
+
+Stats (components/Stats.tsx)
+- Imported by: HomePage.tsx, EntryDetailPage.tsx, EnhancedStats.tsx
+
+EnhancedStats (components/EnhancedStats.tsx)
+- Imported by: HomePage.tsx
+
+EditableCoordinates (components/EditableCoordinates.tsx)
+- Imported by: EntryDetailPage.tsx
+
+GpxFileUpload (components/GpxFileUpload.tsx)
+- Imported by: NewEntryPage.tsx, EditEntryPage.tsx
+
+SuuntoFileUpload (components/SuuntoFileUpload.tsx)
+- Imported by: NewEntryPage.tsx, EditEntryPage.tsx
+
+TrailMap (components/TrailMap.tsx)
+- Imported by: HomePage.tsx
+
+PendingEntriesPanel (components/PendingEntriesPanel.tsx)
+- Imported by: TimelinePage.tsx
+
+OfflineIndicator (components/OfflineIndicator.tsx)
+- Imported by: Navbar.tsx
+
+ErrorBoundary (components/ErrorBoundary.tsx)
+- Imported by: App.tsx
+
+ProtectedRoute (components/ProtectedRoute.tsx)
+- Imported by: App.tsx
+
+RoutePreviewMap (components/RoutePreviewMap.tsx)
+- N/A (not imported anywhere)
+
+NavLink (components/NavLink.tsx)
+- N/A (not imported anywhere)
+
+================================================================================
+ACTIVITY PLAYER COMPONENTS
+================================================================================
+
+ActivityPlayer (components/ActivityPlayer/index.tsx)
+- Imported by: EntryDetailPage.tsx
+
+ActivityMap (components/ActivityPlayer/ActivityMap.tsx)
+- Imported by: ActivityPlayer/index.tsx
+
+ActivityCharts (components/ActivityPlayer/ActivityCharts.tsx)
+- Imported by: ActivityPlayer/index.tsx, ClassicPlayer, DashboardPlayer, NeonPlayer, RetroPlayer, ExpeditionPlayer
+
+PlaybackControls (components/ActivityPlayer/PlaybackControls.tsx)
+- Imported by: ActivityPlayer/index.tsx
+
+================================================================================
+SUUNTO PLAYER COMPONENTS
+================================================================================
+
+StyleSelector (components/suunto/StyleSelector.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+ClassicPlayer (components/suunto/players/ClassicPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+CinematicPlayer (components/suunto/players/CinematicPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+MinimalPlayer (components/suunto/players/MinimalPlayer/index.tsx)
+- N/A (not imported in SuuntoViewerPage)
+
+DashboardPlayer (components/suunto/players/DashboardPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+TerminalPlayer (components/suunto/players/TerminalPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+TopographicPlayer (components/suunto/players/TopographicPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+EditorialPlayer (components/suunto/players/EditorialPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+CockpitPlayer (components/suunto/players/CockpitPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+BlueprintPlayer (components/suunto/players/BlueprintPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+NeonPlayer (components/suunto/players/NeonPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+StravaPlayer (components/suunto/players/StravaPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+PolaroidPlayer (components/suunto/players/PolaroidPlayer/index.tsx)
+- N/A (not imported in SuuntoViewerPage)
+
+ExpeditionPlayer (components/suunto/players/ExpeditionPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+RetroPlayer (components/suunto/players/RetroPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+CommandPlayer (components/suunto/players/CommandPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+RunningPlayer (components/suunto/players/RunningPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+CyclingPlayer (components/suunto/players/CyclingPlayer/index.tsx)
+- Imported by: SuuntoViewerPage.tsx
+
+================================================================================
+UI COMPONENTS (shadcn/ui library)
+================================================================================
+
+button (components/ui/button.tsx)
+- Imported by: 37+ files (most used)
+
+card (components/ui/card.tsx)
+- Imported by: 37+ files (most used)
+
+badge (components/ui/badge.tsx)
+- Imported by: 14+ files
+
+input (components/ui/input.tsx)
+- Imported by: 15+ files
+
+label (components/ui/label.tsx)
+- Imported by: 15+ files
+
+textarea (components/ui/textarea.tsx)
+- Imported by: 6+ files
+
+select (components/ui/select.tsx)
+- Imported by: 15+ files
+
+checkbox (components/ui/checkbox.tsx)
+- Imported by: 5+ files
+
+slider (components/ui/slider.tsx)
+- Imported by: 15+ files
+
+switch (components/ui/switch.tsx)
+- Imported by: 15+ files
+
+alert (components/ui/alert.tsx)
+- Imported by: 5+ files
+
+toast (components/ui/toast.tsx)
+- Imported by: hooks/use-toast.ts
+
+toaster (components/ui/toaster.tsx)
+- Imported by: App.tsx
+
+sonner (components/ui/sonner.tsx)
+- Imported by: 2 files
+
+alert-dialog (components/ui/alert-dialog.tsx)
+- Imported by: EntryDetailPage.tsx, EditEntryPage.tsx
+
+dialog (components/ui/dialog.tsx)
+- Imported by: 5+ files
+
+sheet (components/ui/sheet.tsx)
+- Imported by: 3 files
+
+drawer (components/ui/drawer.tsx)
+- Imported by: SuuntoStatsDisplay.tsx
+
+dropdown-menu (components/ui/dropdown-menu.tsx)
+- Imported by: 3 files
+
+popover (components/ui/popover.tsx)
+- Imported by: 3 files
+
+tooltip (components/ui/tooltip.tsx)
+- Imported by: 2 files
+
+tabs (components/ui/tabs.tsx)
+- Imported by: SuuntoStatsDisplay.tsx
+
+accordion (components/ui/accordion.tsx)
+- Imported by: 2 files
+
+collapsible (components/ui/collapsible.tsx)
+- Imported by: ActivityPlayer/index.tsx, SuuntoStatsDisplay.tsx
+
+scroll-area (components/ui/scroll-area.tsx)
+- Imported by: SuuntoStatsDisplay.tsx
+
+separator (components/ui/separator.tsx)
+- Imported by: 5 files
+
+progress (components/ui/progress.tsx)
+- Imported by: 5 files
+
+skeleton (components/ui/skeleton.tsx)
+- Imported by: EntryDetailPage.tsx, TimelinePage.tsx
+
+avatar (components/ui/avatar.tsx)
+- Imported by: 4 files
+
+carousel (components/ui/carousel.tsx)
+- Imported by: JournalEntry.tsx (PhotoCarousel)
+
+aspect-ratio (components/ui/aspect-ratio.tsx)
+- Imported by: 8 files
+
+calendar (components/ui/calendar.tsx)
+- Imported by: 2 files
+
+radio-group (components/ui/radio-group.tsx)
+- Imported by: 2 files
+
+toggle (components/ui/toggle.tsx)
+- Imported by: 5 files
+
+sidebar (components/ui/sidebar.tsx)
+- Imported by: 3 files
+
+lazy-image (components/ui/lazy-image.tsx)
+- N/A (not imported anywhere)
+
+chart (components/ui/chart.tsx)
+- Imported by: ActivityCharts.tsx
+
+pagination (components/ui/pagination.tsx)
+- N/A (not imported anywhere)
+
+breadcrumb (components/ui/breadcrumb.tsx)
+- N/A (not imported anywhere)
+
+hover-card (components/ui/hover-card.tsx)
+- N/A (not imported anywhere)
+
+command (components/ui/command.tsx)
+- N/A (not imported anywhere)
+
+input-otp (components/ui/input-otp.tsx)
+- N/A (not imported anywhere)
+
+menubar (components/ui/menubar.tsx)
+- N/A (not imported anywhere)
+
+navigation-menu (components/ui/navigation-menu.tsx)
+- N/A (not imported anywhere)
+
+resizable (components/ui/resizable.tsx)
+- N/A (not imported anywhere)
+
+table (components/ui/table.tsx)
+- N/A (not imported anywhere)
+
+toggle-group (components/ui/toggle-group.tsx)
+- N/A (not imported anywhere)
+
+context-menu (components/ui/context-menu.tsx)
+- N/A (not imported anywhere)
+
+================================================================================
+SUMMARY
+================================================================================
+
+Total Components: 80+
+Main Custom Components: 17
+Activity Player Components: 4
+Suunto Player Components: 18 (including StyleSelector)
+UI Library Components: 40+
+
+UNUSED COMPONENTS (N/A):
+- RoutePreviewMap.tsx
+- NavLink.tsx
+- MinimalPlayer
+- PolaroidPlayer
+- lazy-image.tsx
+- pagination.tsx
+- breadcrumb.tsx
+- hover-card.tsx
+- command.tsx
+- input-otp.tsx
+- menubar.tsx
+- navigation-menu.tsx
+- resizable.tsx
+- table.tsx
+- toggle-group.tsx
+- context-menu.tsx
+
+MOST IMPORTED (by count):
+1. button, card - 37+ files
+2. badge - 14+ files
+3. select, switch, slider - 15+ files
+4. JournalEntry - 8 files
+
+================================================================================
