@@ -186,10 +186,13 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - **Relocated Activity Player (v3.11)**: Better integration with entry page
   - Moved player directly below journal content
   - Closer proximity to photo carousel for linked interaction
-- **Live Temperature Display (v3.11)**: Real-time temperature in stats
-  - Shows temperature from watch sensor during playback
-  - Displayed in Fahrenheit with amber color styling
-  - Temperature data parsed from Suunto time samples
+- **Map Info Overlay (v3.11)**: Branding and temperature on map
+  - "BigFun Hikes!" logo text in upper-left corner
+  - Temperature displayed in amber next to logo
+  - Semi-transparent dark background with blur effect
+- **Default 3D + Satellite (v3.11)**: Better initial experience
+  - Activity Player now starts with 3D terrain enabled
+  - Satellite map style enabled by default
 
 ### Enhanced Statistics (100% Complete)
 - 7-day moving average pace
@@ -467,7 +470,8 @@ bun run seed  # Creates 11 sample entries including training hike with Suunto da
 - [x] **Photo Markers Fix** (NEW v3.10) - Correct GPS coordinate matching for photos
 - [x] **Clickable Photo Markers** (NEW v3.11) - Click map photos to scroll carousel
 - [x] **Relocated Activity Player** (NEW v3.11) - Moved below journal content for better UX
-- [x] **Live Temperature Display** (NEW v3.11) - Real-time temperature in playback stats
+- [x] **Map Info Overlay** (NEW v3.11) - "BigFun Hikes!" branding + temperature on map
+- [x] **Default 3D + Satellite** (NEW v3.11) - Activity Player starts with 3D terrain and satellite enabled
 
 ---
 

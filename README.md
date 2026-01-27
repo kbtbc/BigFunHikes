@@ -63,7 +63,8 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Photo Marker Fix (v3.10)**: Photos now correctly placed along GPS route with proper coordinate matching
   - **Clickable Photo Markers (v3.11)**: Click photo icons on map to scroll carousel to that photo
   - **Relocated Activity Player (v3.11)**: Player now positioned below journal content, closer to photo carousel
-  - **Live Temperature Display (v3.11)**: Real-time temperature from watch sensor shown in stats during playback
+  - **Map Info Overlay (v3.11)**: "BigFun Hikes!" branding and temperature display in upper-left corner
+  - **Default 3D + Satellite (v3.11)**: Activity Player now starts with 3D terrain and satellite view enabled
 - **Improved Entry Layout**: Title and content appear above photos for better readability
 - **Photo Uploads**: Add and caption multiple photos per entry with carousel display
 - **Photo Caption Editing**: Edit captions on existing photos directly from the edit page
