@@ -46,3 +46,22 @@ model Photo {
 
   @@index([journalEntryId])
 }
+
+// =============================================================================
+// Activity Replay Studio (Sub-Project)
+// This model is separate from the parent app and used only by the Replay Studio
+// =============================================================================
+
+model ReplayStudioUpload {
+  id          String    @id @default(uuid())
+  shareId     String    @unique @default(cuid())
+  filename    String
+  suuntoJson  String    // Raw JSON as uploaded
+  parsedData  String    // Normalized data for player
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime? // Optional auto-cleanup
+  viewCount   Int       @default(0)
+
+  @@index([shareId])
+  @@index([createdAt])
+}

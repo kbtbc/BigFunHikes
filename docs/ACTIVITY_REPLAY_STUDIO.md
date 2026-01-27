@@ -8,6 +8,49 @@
 
 ---
 
+## Quick Start Guide for Sub-Agents
+
+This section provides essential context for any AI agent working on this sub-project.
+
+### What This Is
+A standalone sub-application for uploading and viewing Suunto fitness watch data with 4 unique visual styles. It lives within the BigFun Hikes! project but is designed to be easily extractable.
+
+### Key Principles
+1. **Self-contained**: All sub-project code lives in specific directories (see File Structure)
+2. **Separate data**: Uses `ReplayStudioUpload` table - NO access to parent app tables
+3. **Shared utilities only**: Import parsers and UI components, NOT parent app business logic
+4. **No auth required**: Public access for uploads and viewing
+
+### Directory Locations
+- **Frontend pages**: `webapp/src/pages/suunto/`
+- **Frontend components**: `webapp/src/components/suunto/`
+- **Backend routes**: `backend/src/routes/replay-studio.ts`
+- **Documentation**: `docs/ACTIVITY_REPLAY_STUDIO.md` (this file)
+
+### API Namespace
+All backend routes use `/api/replay-studio/*` prefix.
+
+### What You CAN Import
+```typescript
+// OK - Stateless utilities
+import { parseActivityData } from "@/lib/activity-data-parser";
+import { parseSuuntoJson } from "@/lib/suunto-parser";
+import { Button, Card, Slider } from "@/components/ui/*";
+```
+
+### What You CANNOT Import
+```typescript
+// NOT OK - Parent app specific
+import { useEntries } from "@/hooks/use-entries";  // ❌
+import { JournalEntry } from "@/components/JournalEntry";  // ❌
+import { EntryDetailPage } from "@/pages/EntryDetailPage";  // ❌
+```
+
+### Demo Data Location
+Sample Suunto JSON file: `backend/data/suwaneetrek-1.json`
+
+---
+
 ## Overview
 
 BigFun's Activity Replay Studio is a standalone sub-application within the BigFun Hikes! ecosystem. It allows users to upload Suunto JSON files and view their activities with beautiful, animated playback in **4 distinct visual styles**.
@@ -350,27 +393,90 @@ The sub-project imports these **stateless utilities** from the parent app:
 
 ## Future: Extraction to Standalone Project
 
-When ready to extract this sub-project:
+When ready to extract this sub-project into its own repository:
 
-1. **Copy these directories**:
-   - `webapp/src/pages/suunto/`
-   - `webapp/src/components/suunto/`
-   - `backend/src/routes/replay-studio.ts`
-   - `docs/ACTIVITY_REPLAY_STUDIO.md`
+### Step 1: Create New Project Structure
+```bash
+mkdir activity-replay-studio
+cd activity-replay-studio
+mkdir -p webapp/src/{pages,components,lib}
+mkdir -p backend/src/{routes,prisma}
+mkdir docs
+```
 
-2. **Copy shared utilities** (or install as package):
-   - `webapp/src/lib/suunto-parser.ts`
-   - `webapp/src/lib/activity-data-parser.ts`
-   - `webapp/src/lib/gpx-parser.ts`
+### Step 2: Copy Sub-Project Files
+```bash
+# Frontend
+cp -r [parent]/webapp/src/pages/suunto/* webapp/src/pages/
+cp -r [parent]/webapp/src/components/suunto/* webapp/src/components/
+cp -r [parent]/webapp/src/components/ui/* webapp/src/components/ui/
 
-3. **Copy UI components** (or use shadcn/ui directly):
-   - `webapp/src/components/ui/*`
+# Backend
+cp [parent]/backend/src/routes/replay-studio.ts backend/src/routes/
+cp [parent]/backend/prisma/schema.prisma backend/prisma/  # Then trim to just ReplayStudioUpload
 
-4. **Update imports** to relative paths
+# Shared utilities
+cp [parent]/webapp/src/lib/suunto-parser.ts webapp/src/lib/
+cp [parent]/webapp/src/lib/activity-data-parser.ts webapp/src/lib/
+cp [parent]/webapp/src/lib/gpx-parser.ts webapp/src/lib/
 
-5. **Create new Prisma schema** with just `ReplayStudioUpload`
+# Docs
+cp [parent]/docs/ACTIVITY_REPLAY_STUDIO.md docs/README.md
+```
 
-6. **Update routing** to use `/` instead of `/suunto`
+### Step 3: Update Imports
+- Change all `@/pages/suunto/` imports to `@/pages/`
+- Change all `@/components/suunto/` imports to `@/components/`
+- Update routing from `/suunto/*` to `/*`
+
+### Step 4: Create Minimal Prisma Schema
+```prisma
+// backend/prisma/schema.prisma
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model ReplayStudioUpload {
+  id          String   @id @default(uuid())
+  shareId     String   @unique @default(cuid())
+  filename    String
+  suuntoJson  String
+  parsedData  String
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime?
+  viewCount   Int      @default(0)
+
+  @@index([shareId])
+  @@index([createdAt])
+}
+```
+
+### Step 5: Create New package.json Files
+Copy and trim dependencies from parent project.
+
+### Step 6: Update Environment Variables
+```env
+# Backend
+DATABASE_URL="file:./dev.db"
+PORT=3000
+
+# Frontend
+VITE_BACKEND_URL=http://localhost:3000
+VITE_MAPBOX_TOKEN=<your-token>
+```
+
+### Extraction Checklist
+- [ ] All pages render without parent app dependencies
+- [ ] All API routes work independently
+- [ ] Database migrations run cleanly
+- [ ] Demo mode works with bundled sample data
+- [ ] All 4 player styles function correctly
+- [ ] Share URLs work (`/view/:shareId`)
 
 ---
 

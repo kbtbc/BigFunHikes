@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.11 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.12 COMPLETE)
 
 ### Overview
 
@@ -193,6 +193,25 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - **Default 3D + Satellite (v3.11)**: Better initial experience
   - Activity Player now starts with 3D terrain enabled
   - Satellite map style enabled by default
+
+### BigFun's Activity Replay Studio (NEW v3.12 - 100% Complete)
+- **Standalone Sub-Application**: Self-contained project at `/suunto/*` routes
+- **Drag-and-Drop Upload**: Upload Suunto JSON files directly with react-dropzone
+- **Shareable URLs**: Get unique share links like `/suunto/view/abc123`
+- **4 Visual Styles**: Four distinct Activity Player themes
+  - **Classic**: Navy (#1a365d) + Coral (#f56565) color scheme with cream backgrounds
+  - **Cinematic**: Full-screen immersive with gold accents (placeholder)
+  - **Minimal**: Typography-focused Scandinavian design (placeholder)
+  - **Dashboard**: Professional analytics multi-panel view (placeholder)
+- **Demo Mode**: Try the player with sample data before uploading
+- **No Authentication**: Public access for easy sharing
+- **Separate Database**: Uses own `ReplayStudioUpload` table (no parent app dependencies)
+- **Extraction Ready**: Designed for future standalone deployment
+  - All code in dedicated directories (`webapp/src/pages/suunto/`, `webapp/src/components/suunto/`)
+  - Separate API namespace (`/api/replay-studio/*`)
+  - Full extraction guide in `docs/ACTIVITY_REPLAY_STUDIO.md`
+- **Backend Routes**: Upload, demo data, and retrieval by share ID
+- **Classic Player**: Full implementation with Mapbox GL, terrain, playback controls
 
 ### Enhanced Statistics (100% Complete)
 - 7-day moving average pace

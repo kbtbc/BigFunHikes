@@ -131,6 +131,33 @@ export const api = {
   delete: <T>(endpoint: string, options?: RequestInit) =>
     request<T>(endpoint, { ...options, method: "DELETE" }),
 
+  // Upload file via FormData (multipart/form-data)
+  upload: async <T>(endpoint: string, formData: FormData): Promise<T> => {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const token = getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    // Don't set Content-Type - browser will set it with boundary for multipart
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+      credentials: "include",
+    });
+    if (!response.ok) {
+      const json = await response.json().catch(() => null);
+      throw new ApiError(
+        json?.error?.message || json?.message || `Upload failed with status ${response.status}`,
+        response.status,
+        json?.error || json
+      );
+    }
+    const json: ApiResponse<T> = await response.json();
+    return json.data;
+  },
+
   // Escape hatch for non-JSON endpoints
   raw: rawRequest,
 };

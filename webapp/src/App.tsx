@@ -14,6 +14,8 @@ import { LoginPage } from "./pages/LoginPage";
 import NewEntryPage from "./pages/NewEntryPage";
 import EditEntryPage from "./pages/EditEntryPage";
 import NotFound from "./pages/NotFound";
+import { SuuntoLandingPage } from "./pages/suunto/SuuntoLandingPage";
+import { SuuntoViewerPage } from "./pages/suunto/SuuntoViewerPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +27,38 @@ const queryClient = new QueryClient({
   },
 });
 
+/** Main app layout with Navbar */
+function MainLayout() {
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/admin" element={<LoginPage />} />
+        <Route path="/entry/new" element={
+          <ProtectedRoute>
+            <NewEntryPage />
+          </ProtectedRoute>
+        } />
+        {/* Keep old route for backwards compatibility */}
+        <Route path="/entries/new" element={
+          <ProtectedRoute>
+            <NewEntryPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/timeline" element={<TimelinePage />} />
+        <Route path="/entry/:id" element={<EntryDetailPage />} />
+        <Route path="/entry/:id/edit" element={
+          <ProtectedRoute>
+            <EditEntryPage />
+          </ProtectedRoute>
+        } />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
+  );
+}
+
 const App = () => {
   return (
     <ErrorBoundary>
@@ -34,32 +68,15 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <div className="min-h-screen bg-background">
-                <Navbar />
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/admin" element={<LoginPage />} />
-                  <Route path="/entry/new" element={
-                    <ProtectedRoute>
-                      <NewEntryPage />
-                    </ProtectedRoute>
-                  } />
-                  {/* Keep old route for backwards compatibility */}
-                  <Route path="/entries/new" element={
-                    <ProtectedRoute>
-                      <NewEntryPage />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/timeline" element={<TimelinePage />} />
-                  <Route path="/entry/:id" element={<EntryDetailPage />} />
-                  <Route path="/entry/:id/edit" element={
-                    <ProtectedRoute>
-                      <EditEntryPage />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </div>
+              <Routes>
+                {/* Suunto sub-project routes (no navbar, self-contained) */}
+                <Route path="/suunto" element={<SuuntoLandingPage />} />
+                <Route path="/suunto/view/:shareId" element={<SuuntoViewerPage />} />
+                <Route path="/suunto/demo" element={<SuuntoViewerPage />} />
+
+                {/* Main app routes with Navbar */}
+                <Route path="/*" element={<MainLayout />} />
+              </Routes>
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>

@@ -12,6 +12,7 @@ import { entriesRouter } from "./routes/entries";
 import { photosRouter } from "./routes/photos";
 import { statsRouter } from "./routes/stats";
 import { adminRouter } from "./routes/admin";
+import { replayStudioRoutes } from "./routes/replay-studio";
 import { logger } from "hono/logger";
 
 const app = new Hono();
@@ -108,6 +109,9 @@ app.route("/api/admin", adminRouter);
 app.route("/api/entries", entriesRouter);
 app.route("/api/entries", photosRouter);
 app.route("/api/stats", statsRouter);
+
+// Activity Replay Studio sub-project routes
+app.route("/api/replay-studio", replayStudioRoutes);
 
 const port = Number(process.env.PORT) || 3000;
 
