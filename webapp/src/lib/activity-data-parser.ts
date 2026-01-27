@@ -246,6 +246,9 @@ function parseSuuntoActivity(suuntoData: SuuntoParseResult): ActivityData {
   const timeSamples = suuntoData.timeSamples || [];
   const hrOverTime = suuntoData.hrOverTime || [];
 
+  // Get average temperature from summary as fallback when per-point data not available
+  const avgTemperature = suuntoData.temperature?.avgCelsius;
+
   if (!gpsTrack.length) {
     throw new Error("No GPS track data found in Suunto file");
   }
@@ -332,7 +335,7 @@ function parseSuuntoActivity(suuntoData: SuuntoParseResult): ActivityData {
       hr: matchedSample?.hr || matchedHr,
       cadence: matchedSample?.cadence,
       distance: distances[i],
-      temperature: matchedSample?.temperature,
+      temperature: matchedSample?.temperature ?? avgTemperature,
     };
 
     // Calculate speed from distance/time if not available from sample
