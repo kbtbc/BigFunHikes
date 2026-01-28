@@ -20,30 +20,32 @@ interface ExifData {
  */
 async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
   try {
-    const result = await exifr.parse(buffer, {
-      gps: true,
-      pick: ["latitude", "longitude", "DateTimeOriginal", "CreateDate", "ModifyDate"],
-    });
+    // First try to get GPS coordinates using exifr.gps() which is optimized for this
+    const gps = await exifr.gps(buffer);
 
-    if (!result) {
-      console.log("[photos] No EXIF data found in image");
-      return {};
-    }
+    // Then get date fields with a separate parse
+    const dates = await exifr.parse(buffer, {
+      pick: ["DateTimeOriginal", "CreateDate", "ModifyDate"],
+    });
 
     const exifData: ExifData = {};
 
     // Extract GPS coordinates
-    if (typeof result.latitude === "number" && typeof result.longitude === "number") {
-      exifData.latitude = result.latitude;
-      exifData.longitude = result.longitude;
+    if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number") {
+      exifData.latitude = gps.latitude;
+      exifData.longitude = gps.longitude;
       console.log("[photos] Extracted GPS:", { lat: exifData.latitude, lon: exifData.longitude });
+    } else {
+      console.log("[photos] No GPS data found in image");
     }
 
     // Extract date taken (try multiple EXIF date fields)
-    const dateField = result.DateTimeOriginal || result.CreateDate || result.ModifyDate;
-    if (dateField) {
-      exifData.takenAt = dateField instanceof Date ? dateField : new Date(dateField);
-      console.log("[photos] Extracted date taken:", exifData.takenAt);
+    if (dates) {
+      const dateField = dates.DateTimeOriginal || dates.CreateDate || dates.ModifyDate;
+      if (dateField) {
+        exifData.takenAt = dateField instanceof Date ? dateField : new Date(dateField);
+        console.log("[photos] Extracted date taken:", exifData.takenAt);
+      }
     }
 
     return exifData;
