@@ -676,9 +676,12 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
         opacity: ${isVisible ? 1 : 0.3};
         transition: opacity 0.3s, transform 0.3s;
         transform: scale(${isVisible ? 1 : 0.8});
+        z-index: 100;
+        pointer-events: auto;
       `;
 
-      el.addEventListener("click", () => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
         onPhotoClick?.(photo);
       });
 

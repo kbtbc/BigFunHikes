@@ -225,13 +225,21 @@ photosRouter.post("/:id/photos/upload", async (c) => {
       );
     }
 
-    // Validate file type
-    const validImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    // Validate file type (including HEIC/HEIF from iPhones and Pixels)
+    const validImageTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "image/heic",
+      "image/heif",
+    ];
     if (!validImageTypes.includes(file.type)) {
+      console.log("[photos] Invalid file type:", file.type, "for file:", file.name);
       return c.json(
         {
           error: {
-            message: "Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed",
+            message: `Invalid file type: ${file.type}. Only JPEG, PNG, WebP, GIF, and HEIC/HEIF images are allowed`,
             code: "INVALID_FILE_TYPE",
           },
         },
