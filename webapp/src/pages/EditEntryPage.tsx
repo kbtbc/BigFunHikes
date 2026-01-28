@@ -18,8 +18,7 @@ import { useEntry, useUpdateEntry } from "@/hooks/use-entries";
 import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud, Info, Watch, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCoordinates } from "@/hooks/use-geolocation";
-import { GpxFileUpload, type GpxUploadResult } from "@/components/GpxFileUpload";
-import { SuuntoFileUpload, type SuuntoUploadResult } from "@/components/SuuntoFileUpload";
+import { ActivityDataUpload, type GpxUploadResult, type SuuntoUploadResult } from "@/components/ActivityDataUpload";
 
 // Photo state interface for new uploads
 interface PhotoUpload {
@@ -644,12 +643,16 @@ export default function EditEntryPage() {
                   <h3 className="text-lg font-semibold font-outfit">Import Watch Data</h3>
                 </div>
 
-                {/* Suunto Upload */}
-                <SuuntoFileUpload
+                {/* Unified Activity Data Upload */}
+                <ActivityDataUpload
+                  onGpxParsed={handleGpxParsed}
                   onSuuntoParsed={handleSuuntoParsed}
+                  existingGpx={!gpxRemoved ? entry.gpxData : null}
                   existingSuuntoData={!suuntoRemoved ? entry.suuntoData : null}
                   disabled={isPending}
                 />
+
+                {/* Info message when new data is imported */}
                 {suuntoData && (
                   <div className="flex items-start gap-2 p-3 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-400">
                     <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -660,30 +663,11 @@ export default function EditEntryPage() {
                   </div>
                 )}
 
-                {/* GPX Upload */}
-                <div className="pt-2">
-                  <GpxFileUpload
-                    onGpxParsed={handleGpxParsed}
-                    existingGpx={!gpxRemoved ? entry.gpxData : null}
-                    disabled={isPending}
-                  />
-                  {gpxData && (
-                    <div className="flex items-start gap-2 p-3 mt-3 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
-                      <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm">
-                        New GPX track imported! {!suuntoData && "Miles have been updated. "}
-                        Your route will be displayed on the entry map.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Combined info when both are present */}
-                {suuntoData && gpxData && (
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                {gpxData && !suuntoData && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
                     <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <p className="text-sm">
-                      Using Suunto metrics (HR, pace, steps) + GPX route for best accuracy.
+                      New GPX track imported! Your route will be displayed on the entry map.
                     </p>
                   </div>
                 )}

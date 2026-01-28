@@ -17,8 +17,7 @@ import { entriesApi, api, type CreateJournalEntryInput, type WeatherData } from 
 import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw, Pencil, Check, Dumbbell, Info, WifiOff, Watch } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGeolocation, formatCoordinates, formatAccuracy } from "@/hooks/use-geolocation";
-import { GpxFileUpload, type GpxUploadResult } from "@/components/GpxFileUpload";
-import { SuuntoFileUpload, type SuuntoUploadResult } from "@/components/SuuntoFileUpload";
+import { ActivityDataUpload, type GpxUploadResult, type SuuntoUploadResult } from "@/components/ActivityDataUpload";
 import { savePendingEntry } from "@/lib/offline-storage";
 import { isOnline } from "@/lib/sync-service";
 import { useOfflineStatus } from "@/hooks/use-offline";
@@ -752,11 +751,14 @@ export default function NewEntryPage() {
                   <h3 className="text-lg font-semibold font-outfit">Import Watch Data</h3>
                 </div>
 
-                {/* Suunto Upload */}
-                <SuuntoFileUpload
+                {/* Unified Activity Data Upload */}
+                <ActivityDataUpload
+                  onGpxParsed={handleGpxParsed}
                   onSuuntoParsed={handleSuuntoParsed}
                   disabled={isPending}
                 />
+
+                {/* Info message when data is imported */}
                 {suuntoData && (
                   <div className="flex items-start gap-2 p-3 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-400">
                     <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -767,29 +769,12 @@ export default function NewEntryPage() {
                   </div>
                 )}
 
-                {/* GPX Upload - separated for flexibility */}
-                <div className="pt-2">
-                  <GpxFileUpload
-                    onGpxParsed={handleGpxParsed}
-                    disabled={isPending}
-                  />
-                  {gpxData && (
-                    <div className="flex items-start gap-2 p-3 mt-3 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
-                      <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm">
-                        GPX track imported! {!suuntoData && "Miles and coordinates have been auto-filled from your GPS data. "}
-                        Your actual route will be displayed on the entry map.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Combined info when both are present */}
-                {suuntoData && gpxData && (
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                {gpxData && !suuntoData && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-400">
                     <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <p className="text-sm">
-                      Using Suunto metrics (HR, pace, steps) + GPX route for best accuracy.
+                      GPX track imported! Miles and coordinates have been auto-filled.
+                      Your route will be displayed on the entry map.
                     </p>
                   </div>
                 )}
