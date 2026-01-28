@@ -63,7 +63,7 @@ const zoneColors = {
   zone5: { bg: "bg-red-500", text: "text-red-500", label: "Maximum" },
 };
 
-// Stat card component
+// Stat card component - compact design for mobile
 function StatCard({
   icon: Icon,
   label,
@@ -78,19 +78,19 @@ function StatCard({
   iconColor?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border">
-      <div className={`p-2.5 rounded-lg bg-background ${iconColor}`}>
-        <Icon className="h-5 w-5" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+    <div className="flex flex-col p-3 rounded-lg bg-muted/50 border">
+      <div className="flex items-center gap-2 mb-1">
+        <div className={`p-1.5 rounded-md bg-background ${iconColor}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
           {label}
         </p>
-        <p className="text-xl font-bold font-outfit truncate">{value}</p>
-        {subValue && (
-          <p className="text-xs text-muted-foreground">{subValue}</p>
-        )}
       </div>
+      <p className="text-lg font-bold font-outfit leading-tight">{value}</p>
+      {subValue && (
+        <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{subValue}</p>
+      )}
     </div>
   );
 }
@@ -401,34 +401,34 @@ export function SuuntoStatsDisplay({ suuntoData }: SuuntoStatsDisplayProps) {
 
       <CollapsibleContent>
         <div className="space-y-6 pt-6">
-          {/* Summary Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {/* Summary Stats Grid - 2x2 on mobile, 4 across on desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <StatCard
           icon={Footprints}
           label="Steps"
           value={suuntoData.stepCount.toLocaleString()}
-          subValue={`${suuntoData.stepsPerMile.toLocaleString()} steps/mi`}
+          subValue={`${suuntoData.stepsPerMile.toLocaleString()}/mi`}
           iconColor="text-violet-500"
         />
         <StatCard
           icon={Flame}
           label="Calories"
           value={suuntoData.caloriesBurned.toLocaleString()}
-          subValue="kcal burned"
+          subValue="kcal"
           iconColor="text-orange-500"
         />
         <StatCard
           icon={Clock}
           label="Duration"
           value={suuntoData.durationFormatted}
-          subValue={`${Math.round(pace.movingTimeSeconds / 60)} min moving`}
+          subValue={`${Math.round(pace.movingTimeSeconds / 60)}m moving`}
           iconColor="text-blue-500"
         />
         <StatCard
           icon={Gauge}
           label="Avg Pace"
           value={formatPace(pace.avgPaceMinPerMile)}
-          subValue={`${pace.avgSpeedMph.toFixed(1)} mph avg`}
+          subValue={`${pace.avgSpeedMph.toFixed(1)} mph`}
           iconColor="text-green-500"
         />
       </div>
