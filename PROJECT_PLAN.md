@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.16 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.17 COMPLETE)
 
 ### Overview
 
@@ -499,6 +499,10 @@ bun run seed  # Creates 11 sample entries including training hike with Suunto da
 - [x] **Relocated Activity Player** (NEW v3.11) - Moved below journal content for better UX
 - [x] **Map Info Overlay** (NEW v3.11) - "BigFun Hikes!" branding + temperature on map
 - [x] **Default 3D + Satellite** (NEW v3.11) - Activity Player starts with 3D terrain and satellite enabled
+- [x] **Unified Watch Data Upload** (NEW v3.17) - Single input auto-detects GPX vs Suunto JSON format
+- [x] **Mobile Health Stats Layout** (NEW v3.17) - Compact card design prevents text truncation on mobile
+- [x] **HEIC/HEIF Photo Support** (NEW v3.17) - iPhone photo format now supported for uploads
+- [x] **Photo Marker Clickability** (NEW v3.17) - Fixed z-index and click handling during playback
 
 ---
 

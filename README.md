@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.16)
+## Current Features (v3.17)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -30,9 +30,11 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - Displays your actual recorded route on the entry map (red line for trail entries, amber for training)
   - Replaces the estimated AT segment with your actual GPS track when present
 - **Suunto Watch Data Import**: Full fitness watch data analysis
-  - Upload UI on entry forms - Import Suunto JSON directly when creating or editing entries
+  - **Unified Watch Data Upload (v3.17)**: Single file input auto-detects GPX vs Suunto JSON format
+  - Upload UI on entry forms - Import watch data directly when creating or editing entries
   - Auto-populate fields - Miles, elevation, date automatically filled from watch data
   - Combined GPX + Suunto - Use GPX for route display and Suunto for fitness metrics together
+  - **Mobile-Optimized Health Stats (v3.17)**: Compact card layout prevents text truncation on mobile
   - Import native Suunto JSON export files with comprehensive fitness metrics
   - **Heart Rate Analytics**: Average, min, max HR with time-in-zone distribution
     - Visual HR zone bar chart (Recovery, Easy, Aerobic, Threshold, Maximum)
@@ -69,6 +71,8 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
     - Photos taken with phone camera are geotagged on the Activity Playback map
     - Photo positions snapped to closest point on the trail route (within 500m)
     - Supports DateTimeOriginal, CreateDate, and ModifyDate EXIF fields
+    - HEIC/HEIF support for iPhone photos (v3.17)
+    - Improved photo marker clickability during playback (v3.17)
 - **BigFun's Suunto Replay Studio (v3.12-3.15)**: Standalone sub-application for viewing Suunto data
   - **Drag-and-Drop Upload**: Upload Suunto JSON files directly to get shareable replay URLs
   - **15 Visual Styles**: Diverse Activity Player themes to choose from
