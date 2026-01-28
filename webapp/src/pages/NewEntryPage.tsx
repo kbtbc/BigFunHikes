@@ -986,6 +986,7 @@ export default function NewEntryPage() {
                           size="icon"
                           className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handlePhotoRemove(photo.id)}
+                          aria-label="Remove photo"
                         >
                           <X className="h-3 w-3" />
                         </Button>

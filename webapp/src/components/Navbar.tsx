@@ -80,7 +80,7 @@ export function Navbar() {
                 size="icon"
                 onClick={logout}
                 className="ml-2"
-                title="Logout"
+                aria-label="Logout"
               >
                 <LogOut className="h-4 w-4" />
               </Button>

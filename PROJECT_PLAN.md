@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.17 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.18 COMPLETE)
 
 ### Overview
 
@@ -39,6 +39,16 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
   - Image lazy loading with error handling
   - Global ErrorBoundary with recovery UI
   - React Query caching configuration (5min stale, 10min gc)
+
+- **Mobile Optimizations (NEW v3.18)**
+  - Safe area insets for notched phones (iPhone, modern Android)
+  - Touch-optimized tap handling (no 300ms delay via touch-action: manipulation)
+  - Browser chrome color matching via theme-color meta tags
+  - Reduced motion support for accessibility (prefers-reduced-motion)
+  - Non-blocking font loading via preload for faster initial render
+  - Dynamic viewport height (100dvh) for mobile browsers
+  - Improved aria-labels on icon-only buttons for screen readers
+  - Lazy-loaded YouTube iframe to reduce initial load time
 
 - **Pages**
   - HomePage: Stats dashboard, full AT trail map, YouTube integration

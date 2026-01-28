@@ -621,7 +621,7 @@ export default function EditEntryPage() {
                         size="icon"
                         onClick={handleLookupLocation}
                         disabled={locationLoading}
-                        title="Look up location from GPS coordinates"
+                        aria-label="Look up location from GPS coordinates"
                         className="h-10 w-10"
                       >
                         <Search className="h-4 w-4" />
@@ -742,6 +742,7 @@ export default function EditEntryPage() {
                           className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleDeletePhoto(photo.id)}
                           disabled={deletingPhotoId === photo.id}
+                          aria-label="Delete photo"
                         >
                           {deletingPhotoId === photo.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -858,6 +859,7 @@ export default function EditEntryPage() {
                           size="icon"
                           className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleNewPhotoRemove(photo.id)}
+                          aria-label="Remove photo"
                         >
                           <X className="h-3 w-3" />
                         </Button>

@@ -2,10 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>BigFun Hikes! - Appalachian Trail Journal</title>
     <meta name="description" content="Follow my journey along the Appalachian Trail - beautiful photography, daily journal entries, and trail statistics." />
     <meta name="author" content="BigFun Hikes" />
+
+    <!-- Theme color for browser chrome - light and dark mode -->
+    <meta name="theme-color" content="#f9f8f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1e2132" media="(prefers-color-scheme: dark)" />
+
+    <!-- Preconnect to font CDN for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preload fonts - loaded via CSS @import but preconnect speeds up connection -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" /></noscript>
 
     <meta property="og:title" content="BigFun Hikes! - Appalachian Trail Journal" />
     <meta property="og:description" content="Follow my journey along the Appalachian Trail - beautiful photography, daily journal entries, and trail statistics." />
