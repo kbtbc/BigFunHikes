@@ -58,7 +58,6 @@ Desktop.ini
 # AI tool skills (user-specific, auto-synced)
 .agent/
 .agents/
-.claude/skills/
 .cline/skills/
 .codebuddy/skills/
 .codex/skills/
