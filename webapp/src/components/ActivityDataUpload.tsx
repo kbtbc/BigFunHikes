@@ -109,8 +109,8 @@ export function ActivityDataUpload({
     if (extension === "json") {
       try {
         const parsed = JSON.parse(content);
-        // Suunto files typically have these fields
-        if (parsed.DeviceName || parsed.Samples || parsed.Header) {
+        // Suunto files have DeviceLog.Header and DeviceLog.Samples structure
+        if (parsed.DeviceLog?.Header && parsed.DeviceLog?.Samples) {
           return "suunto";
         }
       } catch {
