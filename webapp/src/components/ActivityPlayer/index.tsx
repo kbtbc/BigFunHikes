@@ -459,7 +459,7 @@ export function ActivityPlayer({
                   <PhotoReveal
                     photo={revealingPhoto}
                     onComplete={handlePhotoRevealComplete}
-                    displayDuration={2500}
+                    displayDuration={3000}
                   />
                 </div>
 

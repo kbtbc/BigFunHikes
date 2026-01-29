@@ -16,7 +16,7 @@ interface PhotoRevealProps {
 export function PhotoReveal({
   photo,
   onComplete,
-  displayDuration = 2500
+  displayDuration = 3000
 }: PhotoRevealProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
@@ -32,22 +32,22 @@ export function PhotoReveal({
       return;
     }
 
-    // Start enter animation
+    // Start enter animation immediately
     requestAnimationFrame(() => {
       setIsVisible(true);
     });
 
-    // Start exit animation before completing
+    // Start exit animation (fade out takes 500ms)
     const exitTimer = setTimeout(() => {
       setIsExiting(true);
-    }, displayDuration - 400);
+    }, displayDuration);
 
-    // Complete after full duration
+    // Complete after fade out finishes
     const completeTimer = setTimeout(() => {
       setIsVisible(false);
       setIsExiting(false);
       handleComplete();
-    }, displayDuration);
+    }, displayDuration + 500);
 
     return () => {
       clearTimeout(exitTimer);
@@ -59,53 +59,42 @@ export function PhotoReveal({
 
   return (
     <div
-      className={`absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${
+      className={`absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-200 ${
         isVisible && !isExiting ? "opacity-100" : "opacity-0"
       }`}
       style={{ pointerEvents: isVisible ? "auto" : "none" }}
     >
       {/* Backdrop blur */}
       <div
-        className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-200 ${
           isVisible && !isExiting ? "opacity-100" : "opacity-0"
         }`}
       />
 
       {/* Photo container */}
       <div
-        className={`relative z-10 w-[90%] h-[85%] max-w-2xl max-h-[500px] rounded-xl overflow-hidden shadow-2xl transition-all duration-500 ease-out ${
+        className={`relative z-10 w-[90%] h-[85%] max-w-2xl max-h-[500px] rounded-xl overflow-hidden shadow-2xl transition-all ease-out flex items-center justify-center bg-black/50 ${
           isVisible && !isExiting
-            ? "scale-100 opacity-100 translate-y-0"
+            ? "scale-100 opacity-100 translate-y-0 duration-250"
             : isExiting
-            ? "scale-95 opacity-0 -translate-y-8"
-            : "scale-75 opacity-0 translate-y-12"
+            ? "scale-95 opacity-0 -translate-y-8 duration-500"
+            : "scale-85 opacity-0 translate-y-8 duration-250"
         }`}
-        style={{
-          transform: isVisible && !isExiting
-            ? "scale(1) translateY(0) perspective(1000px) rotateX(0deg)"
-            : isExiting
-            ? "scale(0.95) translateY(-32px)"
-            : "scale(0.75) translateY(48px) perspective(1000px) rotateX(10deg)"
-        }}
       >
-        {/* Photo with Ken Burns effect */}
+        {/* Photo - object-contain to show full image without cropping */}
         <img
           src={photo.url}
           alt={photo.caption || "Trail photo"}
-          className="w-full h-full object-cover transition-transform ease-out"
-          style={{
-            transitionDuration: `${displayDuration}ms`,
-            transform: isVisible ? "scale(1)" : "scale(1.1)"
-          }}
+          className="max-w-full max-h-full object-contain"
         />
 
         {/* Gradient overlay at bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/80 to-transparent" />
 
         {/* Caption */}
         {photo.caption && (
           <div
-            className={`absolute bottom-4 left-4 right-4 transition-all duration-300 delay-200 ${
+            className={`absolute bottom-4 left-4 right-4 transition-all duration-200 delay-100 ${
               isVisible && !isExiting
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-2"
@@ -119,7 +108,7 @@ export function PhotoReveal({
 
         {/* Camera icon badge */}
         <div
-          className={`absolute top-3 left-3 bg-white/20 backdrop-blur-md rounded-full p-2 transition-all duration-300 delay-150 ${
+          className={`absolute top-3 left-3 bg-white/20 backdrop-blur-md rounded-full p-2 transition-all duration-200 delay-75 ${
             isVisible && !isExiting
               ? "opacity-100 scale-100"
               : "opacity-0 scale-0"
@@ -133,19 +122,19 @@ export function PhotoReveal({
           className="absolute bottom-0 left-0 h-1 bg-white/90"
           style={{
             width: isVisible && !isExiting ? "100%" : "0%",
-            transition: isVisible ? `width ${displayDuration}ms linear` : "none"
+            transition: isVisible && !isExiting ? `width ${displayDuration}ms linear` : "none"
           }}
         />
       </div>
 
       {/* Decorative blur elements */}
       <div
-        className={`absolute top-1/4 left-1/4 w-32 h-32 bg-primary/30 rounded-full blur-3xl transition-all duration-500 ${
+        className={`absolute top-1/4 left-1/4 w-32 h-32 bg-primary/30 rounded-full blur-3xl transition-all duration-300 ${
           isVisible && !isExiting ? "opacity-50 scale-100" : "opacity-0 scale-0"
         }`}
       />
       <div
-        className={`absolute bottom-1/4 right-1/4 w-24 h-24 bg-white/20 rounded-full blur-2xl transition-all duration-500 delay-100 ${
+        className={`absolute bottom-1/4 right-1/4 w-24 h-24 bg-white/20 rounded-full blur-2xl transition-all duration-300 delay-50 ${
           isVisible && !isExiting ? "opacity-30 scale-100" : "opacity-0 scale-0"
         }`}
       />
