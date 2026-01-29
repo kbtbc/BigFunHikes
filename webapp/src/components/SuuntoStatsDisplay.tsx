@@ -372,14 +372,14 @@ export function SuuntoStatsDisplay({ suuntoData }: SuuntoStatsDisplayProps) {
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full flex items-center justify-between p-0 h-auto hover:bg-transparent"
+          className="w-full flex items-center justify-between p-0 h-auto hover:bg-transparent overflow-hidden"
         >
           {/* Header with Watch Icon */}
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 shrink-0">
               <Watch className="h-5 w-5 text-primary" />
             </div>
-            <div className="text-left min-w-0 flex-1">
+            <div className="text-left min-w-0">
               <h3 className="text-lg font-semibold font-outfit">Fitness Watch Data</h3>
               <p className="text-sm text-muted-foreground truncate">
                 Recorded on {new Date(suuntoData.dateTime).toLocaleDateString("en-US", {
@@ -392,9 +392,9 @@ export function SuuntoStatsDisplay({ suuntoData }: SuuntoStatsDisplayProps) {
             </div>
           </div>
           {isExpanded ? (
-            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            <ChevronUp className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            <ChevronDown className="h-5 w-5 text-muted-foreground shrink-0 ml-2" />
           )}
         </Button>
       </CollapsibleTrigger>
