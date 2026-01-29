@@ -153,10 +153,13 @@ async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
     const exifReaderData = extractExifFromJpeg(nodeBuffer);
 
     if (exifReaderData) {
-      console.log("[photos] exif-reader parsed successfully, has gps:", !!exifReaderData.gps);
+      // Log ALL keys found by exif-reader
+      console.log("[photos] exif-reader keys:", Object.keys(exifReaderData));
+      console.log("[photos] exif-reader has gps:", !!exifReaderData.gps);
 
       // Extract GPS from exif-reader
       if (exifReaderData.gps) {
+        console.log("[photos] exif-reader gps keys:", Object.keys(exifReaderData.gps));
         const gpsResult = parseExifReaderGps(exifReaderData.gps);
         if (gpsResult) {
           latitude = gpsResult.latitude;
@@ -194,6 +197,18 @@ async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
         jfif: false,
         ihdr: false,
       });
+
+      // Log what exifr found for GPS specifically
+      if (fullExif?.GPSLatitude !== undefined || fullExif?.latitude !== undefined) {
+        console.log("[photos] exifr GPS data:", {
+          GPSLatitude: fullExif.GPSLatitude,
+          GPSLongitude: fullExif.GPSLongitude,
+          GPSLatitudeRef: fullExif.GPSLatitudeRef,
+          GPSLongitudeRef: fullExif.GPSLongitudeRef,
+          latitude: fullExif.latitude,
+          longitude: fullExif.longitude,
+        });
+      }
 
       // Try direct latitude/longitude
       if (fullExif?.latitude !== undefined && fullExif?.longitude !== undefined) {
