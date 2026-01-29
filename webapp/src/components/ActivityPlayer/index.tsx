@@ -389,7 +389,6 @@ export function ActivityPlayer({
                     photos={activityPhotos}
                     highlightedSegment={highlightedSegment}
                     onPhotoClick={(photo) => onPhotoClick?.(photo.id)}
-                    temperature={currentPoint?.temperature}
                   />
                 </div>
 
