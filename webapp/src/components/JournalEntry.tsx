@@ -49,13 +49,16 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
       url: photo.url,
       caption: photo.caption,
     })),
-    ...(entry.videos || []).map((video) => ({
-      type: "video" as const,
-      url: video.url,
-      thumbnailUrl: video.thumbnailUrl,
-      caption: video.caption,
-      duration: video.duration,
-    })),
+    ...(entry.videos || []).map((video) => {
+      console.log("[JournalEntry] Video data:", { url: video.url, thumbnailUrl: video.thumbnailUrl });
+      return {
+        type: "video" as const,
+        url: video.url,
+        thumbnailUrl: video.thumbnailUrl,
+        caption: video.caption,
+        duration: video.duration,
+      };
+    }),
   ];
 
   // Carousel setup for multiple media items
@@ -293,33 +296,30 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
         {/* Video player modal */}
         {playingVideo && (
           <div
-            className="fixed inset-0 z-50 bg-black flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 md:p-8"
             onClick={() => setPlayingVideo(null)}
           >
             <button
               onClick={() => setPlayingVideo(null)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10 bg-black/50 rounded-full p-2"
               aria-label="Close video"
             >
-              <X className="h-8 w-8" />
+              <X className="h-6 w-6" />
             </button>
-            <div className="relative w-full h-full flex items-center justify-center">
+            <div
+              className="relative bg-black rounded-lg overflow-hidden shadow-2xl"
+              style={{ maxWidth: '90vw', maxHeight: '80vh' }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <video
                 key={playingVideo.url}
                 controls
                 autoPlay
                 playsInline
-                webkit-playsinline="true"
                 preload="metadata"
                 poster={playingVideo.thumbnailUrl}
-                className="max-w-full max-h-full"
-                style={{
-                  width: 'auto',
-                  height: 'auto',
-                  minWidth: '50vw',
-                  minHeight: '30vh'
-                }}
-                onClick={(e) => e.stopPropagation()}
+                className="block w-full h-auto"
+                style={{ maxHeight: '80vh' }}
               >
                 <source src={playingVideo.url} type="video/mp4" />
                 <source src={playingVideo.url} type="video/quicktime" />
