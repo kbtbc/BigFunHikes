@@ -393,12 +393,14 @@ export default function NewEntryPage() {
       return newEntry;
     },
     onSuccess: async (newEntry) => {
-      // Wait for cache invalidation to complete before navigating
+      // Wait for cache invalidation and refetch to complete before navigating
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["entries"] }),
         queryClient.invalidateQueries({ queryKey: ["entries", newEntry.id] }),
         queryClient.invalidateQueries({ queryKey: ["stats"] }),
       ]);
+      // Refetch the specific entry to ensure photos are loaded
+      await queryClient.refetchQueries({ queryKey: ["entries", newEntry.id] });
       toast({
         title: "Entry created!",
         description: "Your journal entry has been saved successfully.",
