@@ -963,14 +963,14 @@ export default function NewEntryPage() {
                   <Input
                     id="photoUpload"
                     type="file"
-                    accept=".jpg,.jpeg,.png,.heic,.heif,.webp"
+                    accept="*/*"
                     multiple
                     onChange={handlePhotoAdd}
                     disabled={isPending}
                     className="h-10"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Use your file browser (not photo picker) to preserve GPS data
+                    Select images from Files app to preserve GPS data
                   </p>
                 </div>
 
