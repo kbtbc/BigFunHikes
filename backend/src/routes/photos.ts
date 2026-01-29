@@ -41,56 +41,125 @@ function dmsToDecimal(dms: number[], ref: string): number | null {
  */
 async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
   try {
-    // First try to get GPS coordinates using exifr.gps() which is optimized for this
-    const gps = await exifr.gps(buffer);
-
-    // Then get date fields with a separate parse
-    const dates = await exifr.parse(buffer, {
-      pick: ["DateTimeOriginal", "CreateDate", "ModifyDate"],
-    });
-
     const exifData: ExifData = {};
 
-    // Extract GPS coordinates - check for valid numbers (not NaN)
-    if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number"
-        && !isNaN(gps.latitude) && !isNaN(gps.longitude)) {
-      exifData.latitude = gps.latitude;
-      exifData.longitude = gps.longitude;
-      console.log("[photos] Extracted GPS via exifr.gps():", { lat: exifData.latitude, lon: exifData.longitude });
-    } else {
-      // Fallback: try to parse raw GPS tags manually
-      console.log("[photos] exifr.gps() failed, trying manual parse. Raw result:", gps);
+    // Try full EXIF parse first to get all data including GPS
+    const fullExif = await exifr.parse(buffer, {
+      gps: true,
+      tiff: true,
+      xmp: true,
+      icc: false,
+      iptc: false,
+      jfif: false,
+      ihdr: false,
+    });
 
-      try {
-        const rawExif = await exifr.parse(buffer, {
-          pick: ["GPSLatitude", "GPSLongitude", "GPSLatitudeRef", "GPSLongitudeRef"],
-          translateValues: false, // Get raw values
-        });
+    console.log("[photos] Full EXIF parse result keys:", fullExif ? Object.keys(fullExif) : "null");
 
-        console.log("[photos] Raw GPS tags:", rawExif);
+    // Extract GPS - check multiple possible locations
+    let latitude: number | undefined;
+    let longitude: number | undefined;
 
-        if (rawExif?.GPSLatitude && rawExif?.GPSLongitude) {
-          const lat = dmsToDecimal(rawExif.GPSLatitude, rawExif.GPSLatitudeRef || 'N');
-          const lon = dmsToDecimal(rawExif.GPSLongitude, rawExif.GPSLongitudeRef || 'W');
-
-          if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
-            exifData.latitude = lat;
-            exifData.longitude = lon;
-            console.log("[photos] Extracted GPS via manual DMS parse:", { lat, lon });
-          }
-        }
-      } catch (fallbackError) {
-        console.log("[photos] Manual GPS parse also failed:", fallbackError);
+    // Method 1: Direct latitude/longitude from exifr (already converted)
+    if (fullExif?.latitude !== undefined && fullExif?.longitude !== undefined) {
+      if (!isNaN(fullExif.latitude) && !isNaN(fullExif.longitude)) {
+        latitude = fullExif.latitude;
+        longitude = fullExif.longitude;
+        console.log("[photos] GPS from fullExif.latitude/longitude:", { latitude, longitude });
       }
     }
 
-    // Extract date taken (try multiple EXIF date fields)
-    if (dates) {
-      const dateField = dates.DateTimeOriginal || dates.CreateDate || dates.ModifyDate;
-      if (dateField) {
-        exifData.takenAt = dateField instanceof Date ? dateField : new Date(dateField);
-        console.log("[photos] Extracted date taken:", exifData.takenAt);
+    // Method 2: Try exifr.gps() specifically
+    if (latitude === undefined) {
+      try {
+        const gps = await exifr.gps(buffer);
+        if (gps && !isNaN(gps.latitude) && !isNaN(gps.longitude)) {
+          latitude = gps.latitude;
+          longitude = gps.longitude;
+          console.log("[photos] GPS from exifr.gps():", { latitude, longitude });
+        }
+      } catch (gpsErr) {
+        console.log("[photos] exifr.gps() threw:", gpsErr);
       }
+    }
+
+    // Method 3: Manual DMS conversion from raw values
+    if (latitude === undefined && fullExif?.GPSLatitude && fullExif?.GPSLongitude) {
+      console.log("[photos] Trying manual DMS conversion. Raw GPS data:", {
+        GPSLatitude: fullExif.GPSLatitude,
+        GPSLongitude: fullExif.GPSLongitude,
+        GPSLatitudeRef: fullExif.GPSLatitudeRef,
+        GPSLongitudeRef: fullExif.GPSLongitudeRef,
+      });
+
+      // Check if it's already decimal (some cameras store it this way)
+      if (typeof fullExif.GPSLatitude === 'number' && typeof fullExif.GPSLongitude === 'number') {
+        if (!isNaN(fullExif.GPSLatitude) && !isNaN(fullExif.GPSLongitude)) {
+          latitude = fullExif.GPSLatitude;
+          longitude = fullExif.GPSLongitude;
+          // Apply ref direction
+          if (fullExif.GPSLatitudeRef === 'S') latitude = -latitude;
+          if (fullExif.GPSLongitudeRef === 'W') longitude = -longitude;
+          console.log("[photos] GPS from direct decimal values:", { latitude, longitude });
+        }
+      }
+      // Array format (DMS)
+      else if (Array.isArray(fullExif.GPSLatitude) && Array.isArray(fullExif.GPSLongitude)) {
+        const lat = dmsToDecimal(fullExif.GPSLatitude, fullExif.GPSLatitudeRef || 'N');
+        const lon = dmsToDecimal(fullExif.GPSLongitude, fullExif.GPSLongitudeRef || 'W');
+        if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
+          latitude = lat;
+          longitude = lon;
+          console.log("[photos] GPS from DMS array conversion:", { latitude, longitude });
+        }
+      }
+    }
+
+    // Method 4: Try parsing with translateValues: false for raw rational values
+    if (latitude === undefined) {
+      try {
+        const rawExif = await exifr.parse(buffer, {
+          pick: ["GPSLatitude", "GPSLongitude", "GPSLatitudeRef", "GPSLongitudeRef"],
+          translateValues: false,
+          reviveValues: false,
+        });
+
+        console.log("[photos] Raw EXIF (translateValues=false):", rawExif);
+
+        if (rawExif?.GPSLatitude && rawExif?.GPSLongitude) {
+          // If values are rational arrays [[num, denom], [num, denom], [num, denom]]
+          if (Array.isArray(rawExif.GPSLatitude) && Array.isArray(rawExif.GPSLatitude[0])) {
+            const convertRational = (arr: number[][]): number[] => {
+              return arr.map(([num, denom]) => denom ? num / denom : num);
+            };
+            const latDms = convertRational(rawExif.GPSLatitude);
+            const lonDms = convertRational(rawExif.GPSLongitude);
+            const lat = dmsToDecimal(latDms, rawExif.GPSLatitudeRef || 'N');
+            const lon = dmsToDecimal(lonDms, rawExif.GPSLongitudeRef || 'W');
+            if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
+              latitude = lat;
+              longitude = lon;
+              console.log("[photos] GPS from rational conversion:", { latitude, longitude });
+            }
+          }
+        }
+      } catch (rawErr) {
+        console.log("[photos] Raw EXIF parse failed:", rawErr);
+      }
+    }
+
+    if (latitude !== undefined && longitude !== undefined) {
+      exifData.latitude = latitude;
+      exifData.longitude = longitude;
+    } else {
+      console.log("[photos] Could not extract GPS coordinates from image");
+    }
+
+    // Extract date taken (try multiple EXIF date fields)
+    const dateField = fullExif?.DateTimeOriginal || fullExif?.CreateDate || fullExif?.ModifyDate;
+    if (dateField) {
+      exifData.takenAt = dateField instanceof Date ? dateField : new Date(dateField);
+      console.log("[photos] Extracted date taken:", exifData.takenAt);
     }
 
     return exifData;
