@@ -26,6 +26,7 @@ model JournalEntry {
   updatedAt           DateTime @updatedAt
   suuntoData          String?
   photos              Photo[]
+  videos              Video[]
 
   @@index([date])
   @@index([dayNumber])
@@ -36,6 +37,23 @@ model Photo {
   id             String       @id @default(uuid())
   journalEntryId String
   url            String
+  caption        String?
+  order          Int
+  latitude       Float?
+  longitude      Float?
+  takenAt        DateTime?
+  createdAt      DateTime     @default(now())
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+
+  @@index([journalEntryId])
+}
+
+model Video {
+  id             String       @id @default(uuid())
+  journalEntryId String
+  url            String       // Full video file path
+  thumbnailUrl   String       // Extracted frame for preview
+  duration       Int          // Duration in seconds
   caption        String?
   order          Int
   latitude       Float?

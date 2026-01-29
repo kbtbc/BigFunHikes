@@ -27,6 +27,7 @@ import { ActivityMap, type ColorMode, type CameraMode, type MapStyle, type Activ
 import { ActivityCharts } from "./ActivityCharts";
 import { MapOverlayControls } from "./MapOverlayControls";
 import { PhotoReveal } from "./PhotoReveal";
+import { VideoReveal, type ActivityVideo } from "./VideoReveal";
 import {
   parseActivityData,
   hasActivityData,
@@ -44,10 +45,37 @@ interface Photo {
   longitude?: number | null;
 }
 
+interface Video {
+  id: string;
+  url: string;
+  thumbnailUrl: string;
+  duration: number; // seconds
+  caption?: string | null;
+  timestamp?: string | null; // Video creation timestamp
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+// Union type for unified media items in the timeline
+type MediaType = "photo" | "video";
+
+interface ActivityMedia {
+  id: string;
+  type: MediaType;
+  url: string;
+  thumbnailUrl?: string; // Videos have thumbnails, photos use their url
+  caption?: string | null;
+  timestamp?: number; // ms since activity start
+  lat?: number;
+  lon?: number;
+  duration?: number; // Only for videos
+}
+
 interface ActivityPlayerProps {
   suuntoData?: string | null;
   gpxData?: string | null;
   photos?: Photo[];
+  videos?: Video[];
   entryDate?: string;
   onPhotoClick?: (photoId: string) => void;
 }
@@ -56,6 +84,7 @@ export function ActivityPlayer({
   suuntoData,
   gpxData,
   photos = [],
+  videos = [],
   entryDate,
   onPhotoClick,
 }: ActivityPlayerProps) {
@@ -82,6 +111,11 @@ export function ActivityPlayer({
   const [isManualPhotoReveal, setIsManualPhotoReveal] = useState(false);
   const shownPhotoIds = useRef<Set<string>>(new Set());
   const lastSeekIndex = useRef<number>(0);
+
+  // Video reveal state
+  const [revealingVideo, setRevealingVideo] = useState<ActivityVideo | null>(null);
+  const [isManualVideoReveal, setIsManualVideoReveal] = useState(false);
+  const shownVideoIds = useRef<Set<string>>(new Set());
 
   const animationRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
@@ -125,7 +159,7 @@ export function ActivityPlayer({
 
   // Animation loop
   useEffect(() => {
-    if (!isPlaying || !activityData || revealingPhoto) return;
+    if (!isPlaying || !activityData || revealingPhoto || revealingVideo) return;
 
     const animate = (timestamp: number) => {
       if (!lastUpdateRef.current) {
@@ -179,9 +213,10 @@ export function ActivityPlayer({
   }, []);
 
   const handleSeek = useCallback((index: number) => {
-    // If seeking backwards, clear all shown photos so they can re-trigger
+    // If seeking backwards, clear all shown photos and videos so they can re-trigger
     if (index < lastSeekIndex.current) {
       shownPhotoIds.current.clear();
+      shownVideoIds.current.clear();
     }
     lastSeekIndex.current = index;
     setCurrentIndex(index);
@@ -331,9 +366,126 @@ export function ActivityPlayer({
     return mapped;
   }, [activityData, photos, entryDate]);
 
+  // Map videos to activity timeline with GPS matching
+  const activityVideos: ActivityVideo[] = useMemo(() => {
+    if (!activityData || !videos.length) {
+      console.log("[ActivityPlayer] No videos to map:", { hasActivityData: !!activityData, videosCount: videos.length });
+      return [];
+    }
+
+    const activityStartTime = activityData.dataPoints[0]?.timestamp || 0;
+    const activityEndTime = activityData.dataPoints[activityData.dataPoints.length - 1]?.timestamp || 0;
+
+    console.log("[ActivityPlayer] Mapping videos:", {
+      videosCount: videos.length,
+      activityStartTime,
+      activityEndTime,
+      videos: videos.map(v => ({ id: v.id, lat: v.latitude, lon: v.longitude, timestamp: v.timestamp }))
+    });
+
+    const mapped = videos.map((video) => {
+      let videoTimestamp: number | undefined;
+      let videoLat: number | undefined;
+      let videoLon: number | undefined;
+
+      // If video has GPS coordinates, snap to closest point on the route
+      if (video.latitude != null && video.longitude != null) {
+        // Find closest data point by GPS distance
+        let closestDist = Infinity;
+        let closestPoint: typeof activityData.dataPoints[0] | null = null;
+
+        for (const point of activityData.dataPoints) {
+          // Use Haversine-like distance (simplified for small distances)
+          const latDiff = point.lat - video.latitude;
+          const lonDiff = point.lon - video.longitude;
+          // Approximate meters: 1 degree lat ~= 111km, 1 degree lon ~= 85km at mid-latitudes
+          const dist = Math.sqrt(
+            Math.pow(latDiff * 111000, 2) + Math.pow(lonDiff * 85000, 2)
+          );
+          if (dist < closestDist) {
+            closestDist = dist;
+            closestPoint = point;
+          }
+        }
+
+        // Snap video to the closest point on the route (within 500 meters)
+        if (closestPoint && closestDist < 500) {
+          videoLat = closestPoint.lat;
+          videoLon = closestPoint.lon;
+          videoTimestamp = closestPoint.timestamp;
+
+          console.log("[ActivityPlayer] Video snapped to route:", {
+            id: video.id,
+            originalLat: video.latitude,
+            originalLon: video.longitude,
+            snappedLat: videoLat,
+            snappedLon: videoLon,
+            distanceMeters: Math.round(closestDist),
+            timestamp: videoTimestamp
+          });
+        } else {
+          // Video is too far from route, use original coordinates but still find timestamp
+          videoLat = video.latitude;
+          videoLon = video.longitude;
+          if (closestPoint) {
+            videoTimestamp = closestPoint.timestamp;
+          }
+
+          console.log("[ActivityPlayer] Video too far from route, using original GPS:", {
+            id: video.id,
+            lat: videoLat,
+            lon: videoLon,
+            distanceMeters: closestDist ? Math.round(closestDist) : "N/A"
+          });
+        }
+      }
+
+      // If video has a timestamp, try to match it to activity timeline
+      if (!videoTimestamp && video.timestamp && entryDate) {
+        try {
+          const videoTime = new Date(video.timestamp).getTime();
+          const entryTime = new Date(entryDate).getTime();
+
+          // Calculate relative time from entry date
+          const relativeTime = videoTime - entryTime;
+
+          // If within activity duration, use it
+          if (relativeTime >= 0 && relativeTime <= activityEndTime) {
+            videoTimestamp = relativeTime;
+
+            // Find position at this timestamp
+            const matchingPoint = activityData.dataPoints.find(
+              (p) => p.timestamp >= relativeTime
+            );
+            if (matchingPoint) {
+              videoLat = matchingPoint.lat;
+              videoLon = matchingPoint.lon;
+            }
+          }
+        } catch {
+          // Invalid timestamp, skip
+        }
+      }
+
+      return {
+        id: video.id,
+        url: video.url,
+        thumbnailUrl: video.thumbnailUrl,
+        duration: video.duration,
+        caption: video.caption,
+        timestamp: videoTimestamp,
+        lat: videoLat,
+        lon: videoLon,
+      };
+    });
+
+    console.log("[ActivityPlayer] Mapped activity videos:", mapped.filter(v => v.lat && v.lon));
+    return mapped;
+  }, [activityData, videos, entryDate]);
+
   // Detect photo crossings during playback
   useEffect(() => {
-    if (!isPlaying || !activityData || revealingPhoto) return;
+    if (!isPlaying || !activityData || revealingPhoto || revealingVideo) return;
 
     const currentTimestamp = activityData.dataPoints[currentIndex]?.timestamp ?? 0;
 
@@ -350,7 +502,28 @@ export function ActivityPlayer({
         break; // Only show one photo at a time
       }
     }
-  }, [currentIndex, isPlaying, activityData, activityPhotos, revealingPhoto]);
+  }, [currentIndex, isPlaying, activityData, activityPhotos, revealingPhoto, revealingVideo]);
+
+  // Detect video crossings during playback
+  useEffect(() => {
+    if (!isPlaying || !activityData || revealingPhoto || revealingVideo) return;
+
+    const currentTimestamp = activityData.dataPoints[currentIndex]?.timestamp ?? 0;
+
+    // Find videos that should be revealed at current timestamp
+    for (const video of activityVideos) {
+      if (
+        video.timestamp !== undefined &&
+        video.timestamp <= currentTimestamp &&
+        !shownVideoIds.current.has(video.id)
+      ) {
+        // Mark as shown and trigger reveal
+        shownVideoIds.current.add(video.id);
+        setRevealingVideo(video);
+        break; // Only show one video at a time
+      }
+    }
+  }, [currentIndex, isPlaying, activityData, activityVideos, revealingPhoto, revealingVideo]);
 
   // Handle photo reveal completion - resume playback
   const handlePhotoRevealComplete = useCallback(() => {
@@ -366,10 +539,25 @@ export function ActivityPlayer({
     setRevealingPhoto(photo);
   }, [isPlaying]);
 
-  // Reset shown photos when playback restarts from beginning
+  // Handle video reveal completion - resume playback
+  const handleVideoRevealComplete = useCallback(() => {
+    setRevealingVideo(null);
+    setIsManualVideoReveal(false);
+    // Playback will auto-resume since isPlaying is still true and revealingVideo becomes null
+  }, []);
+
+  // Handle video marker click - show video reveal popup
+  const handleVideoMarkerClick = useCallback((video: ActivityVideo) => {
+    // If paused, use manual dismiss mode
+    setIsManualVideoReveal(!isPlaying);
+    setRevealingVideo(video);
+  }, [isPlaying]);
+
+  // Reset shown photos and videos when playback restarts from beginning
   useEffect(() => {
     if (currentIndex === 0) {
       shownPhotoIds.current.clear();
+      shownVideoIds.current.clear();
     }
   }, [currentIndex]);
 
@@ -442,8 +630,10 @@ export function ActivityPlayer({
                     terrain3D={terrain3D}
                     hasHeartRate={activityData.hasHeartRate}
                     photos={activityPhotos}
+                    videos={activityVideos}
                     highlightedSegment={highlightedSegment}
                     onPhotoClick={handlePhotoMarkerClick}
+                    onVideoClick={handleVideoMarkerClick}
                   />
 
                   {/* Overlay Controls */}
@@ -476,6 +666,13 @@ export function ActivityPlayer({
                     onComplete={handlePhotoRevealComplete}
                     displayDuration={3000}
                     manualDismiss={isManualPhotoReveal}
+                  />
+
+                  {/* Video Reveal Animation */}
+                  <VideoReveal
+                    video={revealingVideo}
+                    onComplete={handleVideoRevealComplete}
+                    manualDismiss={isManualVideoReveal}
                   />
                 </div>
 

@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.20 LIVE)
+## Current Project State (Updated: January 2026 - v3.21 LIVE)
 
 ### Overview
 
@@ -18,11 +18,16 @@ Trail Tales (BigFun Hikes!) is a full-featured web application for documenting A
 - **Rate Limiting**: Login attempts limited to 5 per 15 minutes per IP (NEW v3.7)
 - **Secure Tokens**: Cryptographically secure token generation with crypto.randomBytes (NEW v3.7)
 - **Constant-Time Comparison**: Timing-safe password verification (NEW v3.7)
-- **Database**: Prisma SQLite with JournalEntry, Photo models
-- **CRUD Routes**: All journal entry and photo management endpoints
+- **Database**: Prisma SQLite with JournalEntry, Photo, Video models
+- **CRUD Routes**: All journal entry, photo, and video management endpoints
 - **Statistics**: Enhanced stats with pace analytics, projections, elevation profile
 - **Photo Management**: Upload, caption editing, deletion
 - **Photo EXIF Extraction**: GPS coordinates and timestamps automatically extracted from uploaded photos (NEW v3.16)
+- **Video Management (NEW v3.21)**: Upload, thumbnail generation, caption editing, deletion
+  - Auto-generated thumbnails via ffmpeg at 1-second mark
+  - GPS and timestamp extraction from video metadata
+  - Max 100MB file size, 120 second duration limit
+  - Supports MP4, MOV, WebM, M4V formats
 - **Entry Types**: Support for "trail" and "training" entry types
 - **GPS/Weather Fields**: latitude, longitude, locationName, weather in schema
 - **Suunto Data**: Full fitness watch data storage and retrieval
@@ -593,12 +598,17 @@ bun run seed  # Creates 11 sample entries including training hike with Suunto da
 - [ ] **Elevation-Aware Camera**: Adjust camera altitude based on terrain height in first-person mode
 - [ ] **Activity Summary Card**: Show total stats at end of playback (distance, time, elevation, avg HR)
 
-### Phase 2: UX Improvements (Medium Priority)
-- [ ] **Bulk Photo Upload**: Drag-and-drop multiple photos at once with progress indicator
+### Phase 2: Video Enhancements (Medium Priority)
+- [ ] **Video Trimming**: Allow trimming videos before upload (start/end points)
+- [ ] **Video Compression**: Client-side compression to reduce upload times
+- [ ] **Video Playback Speed**: 0.5x-2x playback speed controls in video player
+
+### Phase 3: UX Improvements (Medium Priority)
+- [ ] **Bulk Media Upload**: Drag-and-drop multiple photos/videos at once with progress indicator
 - [ ] **Entry Templates**: Pre-fill common fields based on previous entries
 - [ ] **Quick Entry Mode**: Simplified form for rapid trail logging (just miles + notes)
 
-### Phase 3: Social & Sharing (Future)
+### Phase 4: Social & Sharing (Future)
 - [ ] **Video Export**: Render Activity Player to MP4 for social media sharing
 - [ ] **Share Entry as Image**: Generate shareable image cards from entries
 - [ ] **Public Trail Page**: Shareable link for friends/family to follow progress

@@ -13,8 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { entriesApi, api, type CreateJournalEntryInput, type WeatherData } from "@/lib/api";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw, Pencil, Check, Dumbbell, Info, WifiOff, Watch } from "lucide-react";
+import { entriesApi, api, videosApi, type CreateJournalEntryInput, type WeatherData } from "@/lib/api";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, MapPin, Cloud, RefreshCw, Pencil, Check, Dumbbell, Info, WifiOff, Watch, Video, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGeolocation, formatCoordinates, formatAccuracy } from "@/hooks/use-geolocation";
 import { ActivityDataUpload, type GpxUploadResult, type SuuntoUploadResult } from "@/components/ActivityDataUpload";
@@ -29,6 +29,18 @@ interface PhotoUpload {
   file: File;
   preview: string;
 }
+
+// Video state interface
+interface VideoUpload {
+  id: string;
+  caption: string;
+  file: File;
+  preview: string;
+}
+
+// Allowed video types
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+const MAX_VIDEO_DURATION = 120; // 120 seconds max
 
 // Weather code to description mapping (WMO codes)
 function getWeatherDescription(code: number): string {
@@ -100,7 +112,9 @@ export default function NewEntryPage() {
   });
 
   const [photos, setPhotos] = useState<PhotoUpload[]>([]);
+  const [videos, setVideos] = useState<VideoUpload[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [uploadingVideos, setUploadingVideos] = useState(false);
 
   // GPX data state
   const [gpxData, setGpxData] = useState<GpxUploadResult | null>(null);
@@ -353,6 +367,63 @@ export default function NewEntryPage() {
     );
   };
 
+  // Handle video upload
+  const handleVideoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      // Validate video type
+      if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+        toast({
+          title: "Invalid video format",
+          description: "Please upload MP4, MOV, or WebM videos only.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create video element to check duration
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        if (video.duration > MAX_VIDEO_DURATION) {
+          toast({
+            title: "Video too long",
+            description: `Videos must be ${MAX_VIDEO_DURATION} seconds or less. This video is ${Math.round(video.duration)} seconds.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Read file for preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const newVideo: VideoUpload = {
+            id: Math.random().toString(36).substr(2, 9),
+            caption: "",
+            file: file,
+            preview: e.target?.result as string,
+          };
+          setVideos((prev) => [...prev, newVideo]);
+        };
+        reader.readAsDataURL(file);
+      };
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleVideoRemove = (id: string) => {
+    setVideos((prev) => prev.filter((v) => v.id !== id));
+  };
+
+  const handleVideoCaptionChange = (id: string, caption: string) => {
+    setVideos((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, caption } : v))
+    );
+  };
+
   const createMutation = useMutation({
     mutationFn: async (data: CreateJournalEntryInput) => {
       // First create the entry
@@ -390,6 +461,26 @@ export default function NewEntryPage() {
         setUploadingPhotos(false);
       }
 
+      // Then upload videos if any
+      if (videos.length > 0) {
+        setUploadingVideos(true);
+
+        for (let i = 0; i < videos.length; i++) {
+          const video = videos[i];
+          try {
+            await videosApi.upload(
+              newEntry.id,
+              video.file,
+              photos.length + i, // Order after photos
+              video.caption || undefined
+            );
+          } catch (error) {
+            console.error(`Error uploading video ${i + 1}:`, error);
+          }
+        }
+        setUploadingVideos(false);
+      }
+
       return newEntry;
     },
     onSuccess: async (newEntry) => {
@@ -399,7 +490,7 @@ export default function NewEntryPage() {
         queryClient.invalidateQueries({ queryKey: ["entries", newEntry.id] }),
         queryClient.invalidateQueries({ queryKey: ["stats"] }),
       ]);
-      // Refetch the specific entry to ensure photos are loaded
+      // Refetch the specific entry to ensure photos and videos are loaded
       await queryClient.refetchQueries({ queryKey: ["entries", newEntry.id] });
       toast({
         title: "Entry created!",
@@ -559,7 +650,7 @@ export default function NewEntryPage() {
     }
   };
 
-  const isPending = createMutation.isPending || uploadingPhotos || savingOffline;
+  const isPending = createMutation.isPending || uploadingPhotos || uploadingVideos || savingOffline;
 
   return (
     <div className="min-h-screen bg-muted/30 py-8 md:py-12">
@@ -963,7 +1054,7 @@ export default function NewEntryPage() {
                   <Input
                     id="photoUpload"
                     type="file"
-                    accept="*/*"
+                    accept="image/*"
                     multiple
                     onChange={handlePhotoAdd}
                     disabled={isPending}
@@ -1013,6 +1104,77 @@ export default function NewEntryPage() {
                 )}
               </div>
 
+              {/* Videos Section */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center gap-2">
+                  <Video className="h-5 w-5 text-accent" />
+                  <h3 className="text-lg font-semibold font-outfit">Videos</h3>
+                </div>
+
+                <div>
+                  <Label htmlFor="videoUpload" className="text-sm font-medium block mb-2">
+                    Upload Videos
+                  </Label>
+                  <Input
+                    id="videoUpload"
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/webm"
+                    multiple
+                    onChange={handleVideoAdd}
+                    disabled={isPending}
+                    className="h-10"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    MP4, MOV, or WebM videos up to {MAX_VIDEO_DURATION} seconds
+                  </p>
+                </div>
+
+                {videos.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {videos.map((video) => (
+                      <div
+                        key={video.id}
+                        className="relative group border border-border rounded-lg overflow-hidden bg-muted"
+                      >
+                        <div className="relative">
+                          <video
+                            src={video.preview}
+                            className="w-full h-32 object-cover"
+                          />
+                          {/* Play icon overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="bg-black/50 rounded-full p-2">
+                              <Play className="h-6 w-6 text-white fill-white" />
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleVideoRemove(video.id)}
+                          aria-label="Remove video"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                        <div className="p-2">
+                          <Input
+                            placeholder="Add caption..."
+                            value={video.caption}
+                            onChange={(e) =>
+                              handleVideoCaptionChange(video.id, e.target.value)
+                            }
+                            className="h-7 text-xs"
+                            disabled={isPending}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Error Alert */}
               {createMutation.isError && (
                 <Alert variant="destructive">
@@ -1044,7 +1206,7 @@ export default function NewEntryPage() {
                   {isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {savingOffline ? "Saving offline..." : uploadingPhotos ? "Uploading photos..." : "Saving..."}
+                      {savingOffline ? "Saving offline..." : uploadingVideos ? "Uploading videos..." : uploadingPhotos ? "Uploading photos..." : "Saving..."}
                     </>
                   ) : (
                     <>

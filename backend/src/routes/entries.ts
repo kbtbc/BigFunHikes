@@ -41,7 +41,7 @@ entriesRouter.get(
     try {
       const [entries, total] = await Promise.all([
         prisma.journalEntry.findMany({
-          include: { photos: true },
+          include: { photos: true, videos: true },
           orderBy: { date: "desc" },
           skip,
           take: pageSizeNum,
@@ -49,9 +49,9 @@ entriesRouter.get(
         prisma.journalEntry.count(),
       ]);
 
-      // Helper to normalize photo URLs to relative paths (works with proxy)
+      // Helper to normalize URLs to relative paths (works with proxy)
       // Only normalizes local uploads, leaves external URLs intact
-      const normalizePhotoUrl = (url: string): string => {
+      const normalizeUrl = (url: string): string => {
         // If it's already a relative URL, return as-is
         if (url.startsWith("/")) {
           return url;
@@ -71,9 +71,16 @@ entriesRouter.get(
         updatedAt: entry.updatedAt.toISOString(),
         photos: entry.photos.map((photo) => ({
           ...photo,
-          url: normalizePhotoUrl(photo.url),
+          url: normalizeUrl(photo.url),
           createdAt: photo.createdAt.toISOString(),
           takenAt: photo.takenAt?.toISOString() ?? null,
+        })),
+        videos: entry.videos.map((video) => ({
+          ...video,
+          url: normalizeUrl(video.url),
+          thumbnailUrl: normalizeUrl(video.thumbnailUrl),
+          createdAt: video.createdAt.toISOString(),
+          takenAt: video.takenAt?.toISOString() ?? null,
         })),
       }));
 
@@ -115,7 +122,10 @@ entriesRouter.get("/:id", async (c) => {
   try {
     const entry = await prisma.journalEntry.findUnique({
       where: { id: entryId },
-      include: { photos: { orderBy: { order: "asc" } } },
+      include: {
+        photos: { orderBy: { order: "asc" } },
+        videos: { orderBy: { order: "asc" } },
+      },
     });
 
     if (!entry) {
@@ -130,9 +140,9 @@ entriesRouter.get("/:id", async (c) => {
       );
     }
 
-    // Helper to normalize photo URLs to relative paths (works with proxy)
+    // Helper to normalize URLs to relative paths (works with proxy)
     // Only normalizes local uploads, leaves external URLs intact
-    const normalizePhotoUrl = (url: string): string => {
+    const normalizeUrl = (url: string): string => {
       // If it's already a relative URL, return as-is
       if (url.startsWith("/")) {
         return url;
@@ -152,9 +162,16 @@ entriesRouter.get("/:id", async (c) => {
       updatedAt: entry.updatedAt.toISOString(),
       photos: entry.photos.map((photo) => ({
         ...photo,
-        url: normalizePhotoUrl(photo.url),
+        url: normalizeUrl(photo.url),
         createdAt: photo.createdAt.toISOString(),
         takenAt: photo.takenAt?.toISOString() ?? null,
+      })),
+      videos: entry.videos.map((video) => ({
+        ...video,
+        url: normalizeUrl(video.url),
+        thumbnailUrl: normalizeUrl(video.thumbnailUrl),
+        createdAt: video.createdAt.toISOString(),
+        takenAt: video.takenAt?.toISOString() ?? null,
       })),
     };
 
@@ -262,12 +279,15 @@ entriesRouter.put(
       const entry = await prisma.journalEntry.update({
         where: { id: entryId },
         data: updateData,
-        include: { photos: { orderBy: { order: "asc" } } },
+        include: {
+          photos: { orderBy: { order: "asc" } },
+          videos: { orderBy: { order: "asc" } },
+        },
       });
 
-      // Helper to normalize photo URLs to relative paths (works with proxy)
+      // Helper to normalize URLs to relative paths (works with proxy)
       // Only normalizes local uploads, leaves external URLs intact
-      const normalizePhotoUrl = (url: string): string => {
+      const normalizeUrl = (url: string): string => {
         // If it's already a relative URL, return as-is
         if (url.startsWith("/")) {
           return url;
@@ -287,9 +307,16 @@ entriesRouter.put(
         updatedAt: entry.updatedAt.toISOString(),
         photos: entry.photos.map((photo) => ({
           ...photo,
-          url: normalizePhotoUrl(photo.url),
+          url: normalizeUrl(photo.url),
           createdAt: photo.createdAt.toISOString(),
           takenAt: photo.takenAt?.toISOString() ?? null,
+        })),
+        videos: entry.videos.map((video) => ({
+          ...video,
+          url: normalizeUrl(video.url),
+          thumbnailUrl: normalizeUrl(video.thumbnailUrl),
+          createdAt: video.createdAt.toISOString(),
+          takenAt: video.takenAt?.toISOString() ?? null,
         })),
       };
 
@@ -320,10 +347,10 @@ entriesRouter.delete("/:id", async (c) => {
   const entryId = c.req.param("id");
 
   try {
-    // Check if entry exists and get its photos
+    // Check if entry exists and get its photos and videos
     const existingEntry = await prisma.journalEntry.findUnique({
       where: { id: entryId },
-      include: { photos: true },
+      include: { photos: true, videos: true },
     });
 
     if (!existingEntry) {
@@ -355,12 +382,42 @@ entriesRouter.delete("/:id", async (c) => {
       }
     }
 
-    // Delete entry (photos cascade automatically in DB)
+    // Delete video and thumbnail files from disk
+    for (const video of existingEntry.videos) {
+      if (video.url.includes("/public/uploads/")) {
+        try {
+          const filename = video.url.split("/public/uploads/")[1];
+          if (filename) {
+            const filepath = path.join(uploadsDir, filename);
+            await fs.unlink(filepath).catch((err) => {
+              console.warn(`[entries] Could not delete video file ${filepath}:`, err.message);
+            });
+          }
+        } catch (fileError) {
+          console.warn("[entries] Error deleting video file:", fileError);
+        }
+      }
+      if (video.thumbnailUrl.includes("/public/uploads/")) {
+        try {
+          const filename = video.thumbnailUrl.split("/public/uploads/")[1];
+          if (filename) {
+            const filepath = path.join(uploadsDir, filename);
+            await fs.unlink(filepath).catch((err) => {
+              console.warn(`[entries] Could not delete thumbnail file ${filepath}:`, err.message);
+            });
+          }
+        } catch (fileError) {
+          console.warn("[entries] Error deleting thumbnail file:", fileError);
+        }
+      }
+    }
+
+    // Delete entry (photos and videos cascade automatically in DB)
     await prisma.journalEntry.delete({
       where: { id: entryId },
     });
 
-    console.log(`[entries] Deleted entry ${entryId} and ${existingEntry.photos.length} photo files`);
+    console.log(`[entries] Deleted entry ${entryId} with ${existingEntry.photos.length} photos and ${existingEntry.videos.length} videos`);
 
     return c.body(null, 204);
   } catch (error) {

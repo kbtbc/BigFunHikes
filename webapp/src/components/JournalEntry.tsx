@@ -6,10 +6,19 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LazyImage } from "@/components/ui/lazy-image";
-import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight, Dumbbell } from "lucide-react";
+import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight, Dumbbell, Play, X } from "lucide-react";
 import { type JournalEntry as JournalEntryType } from "@/data/journalEntries";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useState, forwardRef, useImperativeHandle } from "react";
+
+// Media item type for unified carousel
+interface MediaItem {
+  type: "photo" | "video";
+  url: string;
+  thumbnailUrl?: string;
+  caption: string;
+  duration?: number;
+}
 
 interface JournalEntryProps {
   entry: JournalEntryType;
@@ -30,7 +39,26 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
   const previewContent = entry.content.split("\n").slice(0, 3).join("\n");
   const isTraining = entry.entryType === "training";
 
-  // Carousel setup for multiple photos
+  // Video modal state
+  const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
+
+  // Combine photos and videos into unified media array
+  const mediaItems: MediaItem[] = [
+    ...entry.photos.map((photo) => ({
+      type: "photo" as const,
+      url: photo.url,
+      caption: photo.caption,
+    })),
+    ...(entry.videos || []).map((video) => ({
+      type: "video" as const,
+      url: video.url,
+      thumbnailUrl: video.thumbnailUrl,
+      caption: video.caption,
+      duration: video.duration,
+    })),
+  ];
+
+  // Carousel setup for multiple media items
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
@@ -42,14 +70,14 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
   // Expose scrollToPhoto method for external control (e.g., from Activity Player)
   useImperativeHandle(ref, () => ({
     scrollToPhoto: (photoIndex: number) => {
-      if (photoIndex >= 0 && photoIndex < entry.photos.length && emblaApi) {
+      if (photoIndex >= 0 && photoIndex < mediaItems.length && emblaApi) {
         emblaApi.scrollTo(photoIndex);
         // Scroll the carousel into view
         const carouselElement = document.querySelector('[data-photo-carousel]');
         carouselElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     },
-  }), [emblaApi, entry.photos.length]);
+  }), [emblaApi, mediaItems.length]);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -68,7 +96,24 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
     };
   }, [emblaApi]);
 
-  const hasMultiplePhotos = entry.photos.length > 1;
+  const hasMultipleMedia = mediaItems.length > 1;
+
+  // Format video duration as MM:SS
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Media count text for preview mode
+  const getMediaCountText = () => {
+    const photoCount = entry.photos.length;
+    const videoCount = entry.videos?.length || 0;
+    const parts: string[] = [];
+    if (photoCount > 0) parts.push(`${photoCount} photo${photoCount > 1 ? "s" : ""}`);
+    if (videoCount > 0) parts.push(`${videoCount} video${videoCount > 1 ? "s" : ""}`);
+    return parts.join(", ");
+  };
 
   return (
     <Card className={`border-2 shadow-lg hover:shadow-xl transition-shadow ${isTraining ? "hover:border-amber-500" : "hover:border-primary"} ${className}`}>
@@ -113,27 +158,53 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
           </div>
         </div>
 
-        {/* Photos carousel - below content */}
-        {entry.photos.length > 0 ? (
+        {/* Media carousel - below content */}
+        {mediaItems.length > 0 ? (
           <div className="relative" data-photo-carousel>
             {/* Main carousel */}
-            <div className="overflow-hidden" ref={showFullContent && hasMultiplePhotos ? emblaRef : undefined}>
-              <div className={showFullContent && hasMultiplePhotos ? "flex" : ""}>
-                {(showFullContent ? entry.photos : [entry.photos[0]]).map((photo, index) => (
+            <div className="overflow-hidden" ref={showFullContent && hasMultipleMedia ? emblaRef : undefined}>
+              <div className={showFullContent && hasMultipleMedia ? "flex" : ""}>
+                {(showFullContent ? mediaItems : [mediaItems[0]]).map((media, index) => (
                   <div
                     key={index}
-                    className={showFullContent && hasMultiplePhotos ? "flex-[0_0_100%] min-w-0" : ""}
+                    className={showFullContent && hasMultipleMedia ? "flex-[0_0_100%] min-w-0" : ""}
                   >
-                    <div className={`relative w-full overflow-hidden flex items-center justify-center ${showFullContent && hasMultiplePhotos ? "h-[400px] md:h-[500px] bg-black/5" : ""}`}>
-                      <LazyImage
-                        src={photo.url}
-                        alt={photo.caption}
-                        className={`${showFullContent && hasMultiplePhotos ? "h-full w-auto max-w-full object-contain" : "w-full h-auto object-contain"}`}
-                        fallbackClassName={`${showFullContent && hasMultiplePhotos ? "h-full w-full" : "w-full h-48"}`}
-                      />
+                    <div className={`relative w-full overflow-hidden flex items-center justify-center ${showFullContent && hasMultipleMedia ? "h-[400px] md:h-[500px] bg-black/5" : ""}`}>
+                      {media.type === "photo" ? (
+                        <LazyImage
+                          src={media.url}
+                          alt={media.caption}
+                          className={`${showFullContent && hasMultipleMedia ? "h-full w-auto max-w-full object-contain" : "w-full h-auto object-contain"}`}
+                          fallbackClassName={`${showFullContent && hasMultipleMedia ? "h-full w-full" : "w-full h-48"}`}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => setPlayingVideoUrl(media.url)}
+                          className="relative w-full h-full"
+                        >
+                          <LazyImage
+                            src={media.thumbnailUrl || ""}
+                            alt={media.caption}
+                            className={`${showFullContent && hasMultipleMedia ? "h-full w-auto max-w-full object-contain" : "w-full h-auto object-contain"}`}
+                            fallbackClassName={`${showFullContent && hasMultipleMedia ? "h-full w-full" : "w-full h-48"}`}
+                          />
+                          {/* Play button overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="bg-black/60 rounded-full p-4 hover:bg-black/80 transition-colors">
+                              <Play className="h-10 w-10 text-white fill-white" />
+                            </div>
+                          </div>
+                          {/* Duration badge */}
+                          {media.duration !== undefined && (
+                            <div className="absolute bottom-12 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                              {formatDuration(media.duration)}
+                            </div>
+                          )}
+                        </button>
+                      )}
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                         <p className="text-white text-sm text-shadow text-center">
-                          {photo.caption}
+                          {media.caption}
                         </p>
                       </div>
                     </div>
@@ -142,20 +213,20 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
               </div>
             </div>
 
-            {/* Navigation arrows for full content with multiple photos */}
-            {showFullContent && hasMultiplePhotos && (
+            {/* Navigation arrows for full content with multiple media */}
+            {showFullContent && hasMultipleMedia && (
               <>
                 <button
                   onClick={scrollPrev}
                   className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-                  aria-label="Previous photo"
+                  aria-label="Previous media"
                 >
                   <ChevronLeft className="h-6 w-6" />
                 </button>
                 <button
                   onClick={scrollNext}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-                  aria-label="Next photo"
+                  aria-label="Next media"
                 >
                   <ChevronRight className="h-6 w-6" />
                 </button>
@@ -171,43 +242,74 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
                           ? "bg-white"
                           : "bg-white/50 hover:bg-white/75"
                       }`}
-                      aria-label={`Go to photo ${index + 1}`}
+                      aria-label={`Go to media ${index + 1}`}
                     />
                   ))}
                 </div>
               </>
             )}
 
-            {/* Photo count indicator for preview mode */}
-            {!showFullContent && hasMultiplePhotos && (
+            {/* Media count indicator for preview mode */}
+            {!showFullContent && hasMultipleMedia && (
               <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-                {entry.photos.length} photos
+                {getMediaCountText()}
               </div>
             )}
           </div>
         ) : null}
 
-        {/* Thumbnail strip for full content with multiple photos */}
-        {showFullContent && hasMultiplePhotos && (
+        {/* Thumbnail strip for full content with multiple media */}
+        {showFullContent && hasMultipleMedia && (
           <div className="flex gap-2 p-3 bg-muted/50 overflow-x-auto">
-            {entry.photos.map((photo, index) => (
+            {mediaItems.map((media, index) => (
               <button
                 key={index}
                 onClick={() => scrollTo(index)}
-                className={`flex-shrink-0 rounded-md overflow-hidden transition-all ${
+                className={`relative flex-shrink-0 rounded-md overflow-hidden transition-all ${
                   index === selectedIndex
                     ? "ring-2 ring-primary ring-offset-2"
                     : "opacity-60 hover:opacity-100"
                 }`}
               >
                 <LazyImage
-                  src={photo.url}
-                  alt={photo.caption}
+                  src={media.type === "photo" ? media.url : (media.thumbnailUrl || "")}
+                  alt={media.caption}
                   className="w-16 h-12 object-cover"
                   fallbackClassName="w-16 h-12"
                 />
+                {/* Play icon overlay for video thumbnails */}
+                {media.type === "video" && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-black/50 rounded-full p-1">
+                      <Play className="h-4 w-4 text-white fill-white" />
+                    </div>
+                  </div>
+                )}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Video player modal */}
+        {playingVideoUrl && (
+          <div
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+            onClick={() => setPlayingVideoUrl(null)}
+          >
+            <button
+              onClick={() => setPlayingVideoUrl(null)}
+              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+              aria-label="Close video"
+            >
+              <X className="h-8 w-8" />
+            </button>
+            <video
+              src={playingVideoUrl}
+              controls
+              autoPlay
+              className="max-w-full max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         )}
 

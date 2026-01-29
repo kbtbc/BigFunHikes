@@ -13,9 +13,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { entriesApi, photosApi, api, type UpdateJournalEntryInput, type Photo, type WeatherData } from "@/lib/api";
+import { entriesApi, photosApi, videosApi, api, type UpdateJournalEntryInput, type Photo, type Video, type WeatherData } from "@/lib/api";
 import { useEntry, useUpdateEntry } from "@/hooks/use-entries";
-import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud, Info, Watch, Search } from "lucide-react";
+import { ArrowLeft, Loader2, Mountain, Image as ImageIcon, X, Trash2, MapPin, Cloud, Info, Watch, Search, Video as VideoIcon, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCoordinates } from "@/hooks/use-geolocation";
 import { ActivityDataUpload, type GpxUploadResult, type SuuntoUploadResult } from "@/components/ActivityDataUpload";
@@ -27,6 +27,18 @@ interface PhotoUpload {
   file: File;
   preview: string;
 }
+
+// Video state interface for new uploads
+interface VideoUpload {
+  id: string;
+  caption: string;
+  file: File;
+  preview: string;
+}
+
+// Allowed video types
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+const MAX_VIDEO_DURATION = 120; // 120 seconds max
 
 export default function EditEntryPage() {
   const { id } = useParams<{ id: string }>();
@@ -40,8 +52,11 @@ export default function EditEntryPage() {
 
   const updateMutation = useUpdateEntry();
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [uploadingVideos, setUploadingVideos] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
+  const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const [editingCaptionPhotoId, setEditingCaptionPhotoId] = useState<string | null>(null);
+  const [editingCaptionVideoId, setEditingCaptionVideoId] = useState<string | null>(null);
   const [editedCaptions, setEditedCaptions] = useState<Record<string, string>>({});
   const [locationLoading, setLocationLoading] = useState(false);
 
@@ -56,6 +71,7 @@ export default function EditEntryPage() {
   });
 
   const [newPhotos, setNewPhotos] = useState<PhotoUpload[]>([]);
+  const [newVideos, setNewVideos] = useState<VideoUpload[]>([]);
 
   // GPX data state
   const [gpxData, setGpxData] = useState<GpxUploadResult | null>(null);
@@ -207,6 +223,114 @@ export default function EditEntryPage() {
     }
   };
 
+  // Handle new video upload
+  const handleVideoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      // Validate video type
+      if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+        toast({
+          title: "Invalid video format",
+          description: "Please upload MP4, MOV, or WebM videos only.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create video element to check duration
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        if (video.duration > MAX_VIDEO_DURATION) {
+          toast({
+            title: "Video too long",
+            description: `Videos must be ${MAX_VIDEO_DURATION} seconds or less. This video is ${Math.round(video.duration)} seconds.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Read file for preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const newVideo: VideoUpload = {
+            id: Math.random().toString(36).substr(2, 9),
+            caption: "",
+            file: file,
+            preview: e.target?.result as string,
+          };
+          setNewVideos((prev) => [...prev, newVideo]);
+        };
+        reader.readAsDataURL(file);
+      };
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleNewVideoRemove = (id: string) => {
+    setNewVideos((prev) => prev.filter((v) => v.id !== id));
+  };
+
+  const handleNewVideoCaptionChange = (id: string, caption: string) => {
+    setNewVideos((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, caption } : v))
+    );
+  };
+
+  // Delete existing video
+  const handleDeleteVideo = async (videoId: string) => {
+    if (!id || !entry) return;
+
+    setDeletingVideoId(videoId);
+    try {
+      await videosApi.delete(id, videoId);
+      queryClient.invalidateQueries({ queryKey: ["entries", id] });
+      queryClient.invalidateQueries({ queryKey: ["entries"] });
+      toast({
+        title: "Video deleted",
+        description: "The video has been removed from this entry.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete video.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingVideoId(null);
+    }
+  };
+
+  // Update existing video caption
+  const handleUpdateVideoCaption = async (videoId: string, caption: string) => {
+    if (!id) return;
+
+    try {
+      await videosApi.update(id, videoId, { caption: caption || null });
+      queryClient.invalidateQueries({ queryKey: ["entries", id] });
+      queryClient.invalidateQueries({ queryKey: ["entries"] });
+      setEditingCaptionVideoId(null);
+      setEditedCaptions(prev => {
+        const updated = { ...prev };
+        delete updated[videoId];
+        return updated;
+      });
+      toast({
+        title: "Caption updated",
+        description: "The video caption has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update caption.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -307,6 +431,37 @@ export default function EditEntryPage() {
           }
         }
         setUploadingPhotos(false);
+      }
+
+      // Upload new videos if any
+      if (newVideos.length > 0) {
+        setUploadingVideos(true);
+
+        // Get current max order from photos and videos
+        const existingPhotos = entry.photos || [];
+        const existingVideos = entry.videos || [];
+        const maxPhotoOrder = existingPhotos.length > 0
+          ? Math.max(...existingPhotos.map((p) => p.order))
+          : -1;
+        const maxVideoOrder = existingVideos.length > 0
+          ? Math.max(...existingVideos.map((v) => v.order))
+          : -1;
+        const maxOrder = Math.max(maxPhotoOrder, maxVideoOrder, newPhotos.length - 1);
+
+        for (let i = 0; i < newVideos.length; i++) {
+          const video = newVideos[i];
+          try {
+            await videosApi.upload(
+              id,
+              video.file,
+              maxOrder + 1 + i,
+              video.caption || undefined
+            );
+          } catch (error) {
+            console.error(`Error uploading video ${i + 1}:`, error);
+          }
+        }
+        setUploadingVideos(false);
       }
 
       queryClient.invalidateQueries({ queryKey: ["entries"] });
@@ -452,8 +607,9 @@ export default function EditEntryPage() {
     );
   }
 
-  const isPending = updateMutation.isPending || uploadingPhotos;
+  const isPending = updateMutation.isPending || uploadingPhotos || uploadingVideos;
   const existingPhotos = entry.photos || [];
+  const existingVideos = entry.videos || [];
 
   return (
     <div className="min-h-screen bg-muted/30 py-8 md:py-12">
@@ -830,7 +986,7 @@ export default function EditEntryPage() {
                   <Input
                     id="photoUpload"
                     type="file"
-                    accept="*/*"
+                    accept="image/*"
                     multiple
                     onChange={handlePhotoAdd}
                     disabled={isPending}
@@ -880,6 +1036,187 @@ export default function EditEntryPage() {
                 )}
               </div>
 
+              {/* Existing Videos Section */}
+              {existingVideos.length > 0 && (
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <VideoIcon className="h-5 w-5 text-accent" />
+                    <h3 className="text-lg font-semibold font-outfit">
+                      Existing Videos
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {existingVideos.map((video: Video) => (
+                      <div
+                        key={video.id}
+                        className="relative group border border-border rounded-lg overflow-hidden bg-muted"
+                      >
+                        <div className="relative">
+                          <img
+                            src={video.thumbnailUrl}
+                            alt={video.caption || "Video thumbnail"}
+                            className="w-full h-48 object-cover"
+                          />
+                          {/* Play icon overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="bg-black/50 rounded-full p-3">
+                              <Play className="h-8 w-8 text-white fill-white" />
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleDeleteVideo(video.id)}
+                          disabled={deletingVideoId === video.id}
+                          aria-label="Delete video"
+                        >
+                          {deletingVideoId === video.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <div className="p-3 bg-background">
+                          {editingCaptionVideoId === video.id ? (
+                            <div className="flex gap-2">
+                              <Input
+                                value={editedCaptions[video.id] ?? video.caption ?? ""}
+                                onChange={(e) =>
+                                  setEditedCaptions(prev => ({
+                                    ...prev,
+                                    [video.id]: e.target.value
+                                  }))
+                                }
+                                placeholder="Add a caption..."
+                                className="h-8 text-sm"
+                                maxLength={500}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() =>
+                                  handleUpdateVideoCaption(
+                                    video.id,
+                                    editedCaptions[video.id] ?? video.caption ?? ""
+                                  )
+                                }
+                                className="h-8"
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingCaptionVideoId(null);
+                                  setEditedCaptions(prev => {
+                                    const updated = { ...prev };
+                                    delete updated[video.id];
+                                    return updated;
+                                  });
+                                }}
+                                className="h-8"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <p
+                              className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                              onClick={() => {
+                                setEditingCaptionVideoId(video.id);
+                                setEditedCaptions(prev => ({
+                                  ...prev,
+                                  [video.id]: video.caption ?? ""
+                                }));
+                              }}
+                            >
+                              {video.caption || "Click to add caption..."}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New Videos Section */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center gap-2">
+                  <VideoIcon className="h-5 w-5 text-accent" />
+                  <h3 className="text-lg font-semibold font-outfit">Add Videos</h3>
+                </div>
+
+                <div>
+                  <Label htmlFor="videoUpload" className="text-sm font-medium block mb-2">
+                    Upload Videos
+                  </Label>
+                  <Input
+                    id="videoUpload"
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/webm"
+                    multiple
+                    onChange={handleVideoAdd}
+                    disabled={isPending}
+                    className="h-10"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    MP4, MOV, or WebM videos up to {MAX_VIDEO_DURATION} seconds
+                  </p>
+                </div>
+
+                {newVideos.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {newVideos.map((video) => (
+                      <div
+                        key={video.id}
+                        className="relative group border border-border rounded-lg overflow-hidden bg-muted"
+                      >
+                        <div className="relative">
+                          <video
+                            src={video.preview}
+                            className="w-full h-32 object-cover"
+                          />
+                          {/* Play icon overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="bg-black/50 rounded-full p-2">
+                              <Play className="h-6 w-6 text-white fill-white" />
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleNewVideoRemove(video.id)}
+                          aria-label="Remove video"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                        <div className="p-2">
+                          <Input
+                            placeholder="Add caption..."
+                            value={video.caption}
+                            onChange={(e) =>
+                              handleNewVideoCaptionChange(video.id, e.target.value)
+                            }
+                            className="h-7 text-xs"
+                            disabled={isPending}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Error Alert */}
               {updateMutation.isError && (
                 <Alert variant="destructive">
@@ -902,7 +1239,7 @@ export default function EditEntryPage() {
                   {isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {uploadingPhotos ? "Uploading photos..." : "Saving..."}
+                      {uploadingVideos ? "Uploading videos..." : uploadingPhotos ? "Uploading photos..." : "Saving..."}
                     </>
                   ) : (
                     <>

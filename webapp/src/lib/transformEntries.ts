@@ -72,6 +72,14 @@ export function transformApiEntryToComponent(
     caption: photo.caption || "",
   }));
 
+  // Transform videos
+  const videos = (apiEntry.videos || []).map((video) => ({
+    url: video.url,
+    thumbnailUrl: video.thumbnailUrl,
+    duration: video.duration,
+    caption: video.caption || "",
+  }));
+
   // Location name - use stored name or default
   const locationName = apiEntry.locationName || "Appalachian Trail";
 
@@ -114,6 +122,7 @@ export function transformApiEntryToComponent(
       end: endCoords,
     },
     photos,
+    videos,
     gpxTrack,
     weather,
     locationName: apiEntry.locationName || undefined,

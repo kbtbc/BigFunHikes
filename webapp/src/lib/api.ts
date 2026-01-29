@@ -189,6 +189,20 @@ export interface Photo {
   createdAt: string;
 }
 
+export interface Video {
+  id: string;
+  journalEntryId: string;
+  url: string;
+  thumbnailUrl: string;
+  duration: number;
+  caption: string | null;
+  order: number;
+  latitude: number | null;
+  longitude: number | null;
+  takenAt: string | null;
+  createdAt: string;
+}
+
 export interface WeatherData {
   temperature: number;
   temperatureUnit: "F" | "C";
@@ -220,6 +234,7 @@ export interface JournalEntry {
   createdAt: string;
   updatedAt: string;
   photos?: Photo[];
+  videos?: Video[];
 }
 
 export interface CreateJournalEntryInput {
@@ -329,6 +344,24 @@ export const photosApi = {
 
   delete: (entryId: string, photoId: string) =>
     api.delete<void>(`/api/entries/${entryId}/photos/${photoId}`),
+};
+
+export const videosApi = {
+  upload: async (entryId: string, file: File, order: number, caption?: string): Promise<Video> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("order", order.toString());
+    if (caption) {
+      formData.append("caption", caption);
+    }
+    return api.upload<Video>(`/api/entries/${entryId}/videos/upload`, formData);
+  },
+
+  update: (entryId: string, videoId: string, data: { caption?: string | null }) =>
+    api.patch<Video>(`/api/entries/${entryId}/videos/${videoId}`, data),
+
+  delete: (entryId: string, videoId: string) =>
+    api.delete<void>(`/api/entries/${entryId}/videos/${videoId}`),
 };
 
 export { ApiError };

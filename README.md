@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.20)
+## Current Features (v3.21)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -29,6 +29,16 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - Auto-fills miles hiked and GPS coordinates from your track data
   - Displays your actual recorded route on the entry map (red line for trail entries, amber for training)
   - Replaces the estimated AT segment with your actual GPS track when present
+- **Video Uploads (NEW v3.21)**: Upload trail videos alongside photos
+  - **Video Upload**: MP4, MOV, WebM formats supported (max 100MB, 120 seconds)
+  - **Auto-Generated Thumbnails**: Thumbnail extracted automatically at 1-second mark
+  - **GPS & Metadata Extraction**: GPS coordinates and timestamps from video metadata
+  - **Gallery Integration**: Videos displayed alongside photos with play icon overlay
+  - **Activity Player Integration**: Video markers on map with thumbnail preview
+    - Videos reveal as thumbnails during playback (like photos)
+    - Tap to pause playback and watch full video
+    - Resume playback when video ends or dismissed
+  - **Duration Display**: Video length shown as MM:SS badge on thumbnails
 - **Suunto Watch Data Import**: Full fitness watch data analysis
   - **Unified Watch Data Upload (v3.17)**: Single file input auto-detects GPX vs Suunto JSON format
   - Upload UI on entry forms - Import watch data directly when creating or editing entries
@@ -291,10 +301,19 @@ All endpoints follow the `{ data: ... }` envelope pattern.
 
 **Photos**:
 - `POST /api/entries/:id/photos/upload` - Upload photo file (multipart/form-data)
-  - Accepts: JPEG, PNG, WebP, GIF (max 10MB)
-  - Returns: Photo object with URL
+  - Accepts: JPEG, PNG, WebP, GIF, HEIC/HEIF (max 10MB)
+  - Returns: Photo object with URL, GPS coordinates, and timestamp from EXIF
 - `PATCH /api/entries/:id/photos/:photoId` - Update photo caption (admin)
 - `DELETE /api/entries/:id/photos/:photoId` - Delete photo (admin)
+
+**Videos** (NEW v3.21):
+- `POST /api/entries/:id/videos/upload` - Upload video file (multipart/form-data)
+  - Accepts: MP4, MOV, WebM, M4V (max 100MB, max 120 seconds)
+  - Auto-generates thumbnail at 1-second mark
+  - Extracts GPS coordinates and timestamp from video metadata
+  - Returns: Video object with URL, thumbnailUrl, duration
+- `PATCH /api/entries/:id/videos/:videoId` - Update video caption (admin)
+- `DELETE /api/entries/:id/videos/:videoId` - Delete video (admin)
 
 **Statistics**:
 - `GET /api/stats` - Overall trail statistics with pace analytics and projections

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardR
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { ActivityDataPoint, ActivityPhoto } from "@/lib/activity-data-parser";
+import type { ActivityVideo } from "./VideoReveal";
 import { getGradientColor } from "@/lib/activity-data-parser";
 
 // Set Mapbox token
@@ -31,8 +32,10 @@ interface ActivityMapProps {
   terrain3D: boolean;
   hasHeartRate: boolean;
   photos?: ActivityPhoto[];
+  videos?: ActivityVideo[];
   highlightedSegment?: { start: number; end: number } | null;
   onPhotoClick?: (photo: ActivityPhoto) => void;
+  onVideoClick?: (video: ActivityVideo) => void;
 }
 
 export interface ActivityMapRef {
@@ -50,8 +53,10 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
     terrain3D,
     hasHeartRate,
     photos = [],
+    videos = [],
     highlightedSegment,
     onPhotoClick,
+    onVideoClick,
   },
   ref
 ) {
@@ -59,6 +64,7 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const photoMarkers = useRef<mapboxgl.Marker[]>([]);
+  const videoMarkers = useRef<mapboxgl.Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [styleReady, setStyleReady] = useState(false); // Track when style is fully loaded
   const [terrainLoaded, setTerrainLoaded] = useState(false);
@@ -695,6 +701,101 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
       photoMarkers.current = [];
     };
   }, [photos, mapLoaded, onPhotoClick, currentIndex, dataPoints]);
+
+  // Add video markers with play icon overlay
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    console.log("[ActivityMap] Video markers effect:", {
+      videosCount: videos.length,
+      videos: videos.map(v => ({ id: v.id, lat: v.lat, lon: v.lon }))
+    });
+
+    // Remove existing video markers
+    videoMarkers.current.forEach((m) => m.remove());
+    videoMarkers.current = [];
+
+    // Add new video markers
+    videos.forEach((video) => {
+      if (video.lat === undefined || video.lon === undefined) {
+        console.log("[ActivityMap] Skipping video without GPS:", video.id);
+        return;
+      }
+
+      console.log("[ActivityMap] Adding video marker:", { id: video.id, lat: video.lat, lon: video.lon });
+
+      const el = document.createElement("div");
+      el.className = "video-marker";
+
+      // Check if this video should be visible based on playback position
+      const isVisible = video.timestamp === undefined ||
+        (dataPoints[currentIndex]?.timestamp ?? 0) >= video.timestamp;
+
+      el.style.cssText = `
+        width: 32px;
+        height: 32px;
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        cursor: pointer;
+        background-image: url(${video.thumbnailUrl});
+        background-size: cover;
+        background-position: center;
+        border: 2px solid white;
+        opacity: ${isVisible ? 1 : 0.3};
+        transition: opacity 0.3s, transform 0.3s;
+        transform: scale(${isVisible ? 1 : 0.8});
+        z-index: 100;
+        pointer-events: auto;
+        position: relative;
+      `;
+
+      // Add play icon overlay
+      const playIcon = document.createElement("div");
+      playIcon.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 16px;
+        height: 16px;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      `;
+
+      // Create play triangle
+      const playTriangle = document.createElement("div");
+      playTriangle.style.cssText = `
+        width: 0;
+        height: 0;
+        border-left: 6px solid white;
+        border-top: 4px solid transparent;
+        border-bottom: 4px solid transparent;
+        margin-left: 2px;
+      `;
+      playIcon.appendChild(playTriangle);
+      el.appendChild(playIcon);
+
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onVideoClick?.(video);
+      });
+
+      const videoMarker = new mapboxgl.Marker({ element: el })
+        .setLngLat([video.lon, video.lat])
+        .addTo(map.current!);
+
+      videoMarkers.current.push(videoMarker);
+    });
+
+    return () => {
+      videoMarkers.current.forEach((m) => m.remove());
+      videoMarkers.current = [];
+    };
+  }, [videos, mapLoaded, onVideoClick, currentIndex, dataPoints]);
 
   return (
     <div className="relative w-full h-full">

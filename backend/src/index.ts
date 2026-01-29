@@ -10,6 +10,7 @@ import "./env";
 import { sampleRouter } from "./routes/sample";
 import { entriesRouter } from "./routes/entries";
 import { photosRouter } from "./routes/photos";
+import { videosRouter } from "./routes/videos";
 import { statsRouter } from "./routes/stats";
 import { adminRouter } from "./routes/admin";
 import { replayStudioRoutes } from "./routes/replay-studio";
@@ -108,6 +109,7 @@ app.route("/api/sample", sampleRouter);
 app.route("/api/admin", adminRouter);
 app.route("/api/entries", entriesRouter);
 app.route("/api/entries", photosRouter);
+app.route("/api/entries", videosRouter);
 app.route("/api/stats", statsRouter);
 
 // Suunto Replay Studio sub-project routes

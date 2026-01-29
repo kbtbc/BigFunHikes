@@ -33,6 +33,12 @@ export interface JournalEntry {
     url: string;
     caption: string;
   }>;
+  videos: Array<{
+    url: string;
+    thumbnailUrl: string;
+    duration: number;
+    caption: string;
+  }>;
   gpxTrack?: Array<[number, number]>; // Array of [lat, lng] coordinates
   weather?: WeatherInfo; // Weather at time of entry
   locationName?: string; // Human-readable location name
@@ -90,6 +96,7 @@ Tomorrow: pushing on to Gooch Gap. One day down, many more to go. The adventure 
         caption: "The trail stretches north through Georgia's mountains",
       },
     ],
+    videos: [],
     gpxTrack: [
       [34.6266, -84.1934],
       [34.6280, -84.1920],

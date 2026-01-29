@@ -73,6 +73,23 @@ export const photoSchema = z.object({
 export type Photo = z.infer<typeof photoSchema>;
 
 /**
+ * Schema for a video within a journal entry (for response)
+ */
+export const videoResponseSchema = z.object({
+  id: z.string().uuid(),
+  journalEntryId: z.string().uuid(),
+  url: z.string(),
+  thumbnailUrl: z.string(),
+  duration: z.number().int().nonnegative(),
+  caption: z.string().nullable(),
+  order: z.number().int().nonnegative(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  takenAt: z.string().datetime().nullable().optional(),
+  createdAt: z.string().datetime(),
+});
+
+/**
  * Schema for a journal entry (response)
  */
 export const journalEntrySchema = z.object({
@@ -95,6 +112,7 @@ export const journalEntrySchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   photos: z.array(photoSchema).optional(),
+  videos: z.array(videoResponseSchema).optional(),
 });
 
 export type JournalEntry = z.infer<typeof journalEntrySchema>;
@@ -163,6 +181,48 @@ export const updatePhotoSchema = z.object({
 });
 
 export type UpdatePhotoInput = z.infer<typeof updatePhotoSchema>;
+
+// ============================================================
+// VIDEO SCHEMAS
+// ============================================================
+
+/**
+ * Schema for a video within a journal entry
+ */
+export const videoSchema = z.object({
+  id: z.string().uuid(),
+  journalEntryId: z.string().uuid(),
+  url: z.string(),
+  thumbnailUrl: z.string(),
+  duration: z.number().int().nonnegative(),
+  caption: z.string().nullable(),
+  order: z.number().int().nonnegative(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  takenAt: z.string().datetime().nullable().optional(),
+  createdAt: z.string().datetime(),
+});
+
+export type Video = z.infer<typeof videoSchema>;
+
+/**
+ * Schema for uploading a video file to a journal entry
+ */
+export const uploadVideoSchema = z.object({
+  caption: z.string().max(500).nullable().optional(),
+  order: z.coerce.number().int().nonnegative(),
+});
+
+export type UploadVideoInput = z.infer<typeof uploadVideoSchema>;
+
+/**
+ * Schema for updating a video's caption
+ */
+export const updateVideoSchema = z.object({
+  caption: z.string().max(500).nullable().optional(),
+});
+
+export type UpdateVideoInput = z.infer<typeof updateVideoSchema>;
 
 // ============================================================
 // STATS SCHEMAS
