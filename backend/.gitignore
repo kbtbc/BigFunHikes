@@ -10,6 +10,17 @@ dist
 coverage
 *.lcov
 
+# Database
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+backend/prisma/dev.db-shm
+backend/prisma/dev.db-wal
+backend/data/
+
 # logs
 logs
 _.log
