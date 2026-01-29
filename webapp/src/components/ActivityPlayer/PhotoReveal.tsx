@@ -76,10 +76,10 @@ export function PhotoReveal({
 
   return (
     <div
-      className={`absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-200 ${
+      className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
         isVisible && !isExiting ? "opacity-100" : "opacity-0"
       }`}
-      style={{ pointerEvents: isVisible ? "auto" : "none" }}
+      style={{ pointerEvents: isVisible ? "auto" : "none", zIndex: 200 }}
       onClick={manualDismiss ? handleDismiss : undefined}
     >
       {/* Backdrop blur */}
