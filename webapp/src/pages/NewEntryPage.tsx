@@ -392,10 +392,13 @@ export default function NewEntryPage() {
 
       return newEntry;
     },
-    onSuccess: (newEntry) => {
-      queryClient.invalidateQueries({ queryKey: ["entries"] });
-      queryClient.invalidateQueries({ queryKey: ["entries", newEntry.id] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
+    onSuccess: async (newEntry) => {
+      // Wait for cache invalidation to complete before navigating
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["entries"] }),
+        queryClient.invalidateQueries({ queryKey: ["entries", newEntry.id] }),
+        queryClient.invalidateQueries({ queryKey: ["stats"] }),
+      ]);
       toast({
         title: "Entry created!",
         description: "Your journal entry has been saved successfully.",
