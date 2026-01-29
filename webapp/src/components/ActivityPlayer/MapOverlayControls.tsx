@@ -3,7 +3,7 @@
  * Displays stats and playback controls directly on the map
  */
 
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Slider } from "@/components/ui/slider";
 import {
   Play,
@@ -75,6 +75,45 @@ const CAMERA_MODE_LABELS: Record<CameraMode, string> = {
   firstPerson: "First Person View",
 };
 
+// Tooltip component that shows on hover and briefly on tap
+function ControlTooltip({ text, show }: { text: string; show: boolean }) {
+  return (
+    <div
+      className={`absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none transition-opacity duration-150 ${
+        show ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      {text}
+    </div>
+  );
+}
+
+// Hook to manage tooltip visibility with brief show on click
+function useTooltip() {
+  const [isHovered, setIsHovered] = useState(false);
+  const [showBriefly, setShowBriefly] = useState(false);
+
+  const handleClick = useCallback(() => {
+    setShowBriefly(true);
+  }, []);
+
+  useEffect(() => {
+    if (showBriefly) {
+      const timer = setTimeout(() => setShowBriefly(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showBriefly]);
+
+  return {
+    show: isHovered || showBriefly,
+    handlers: {
+      onMouseEnter: () => setIsHovered(true),
+      onMouseLeave: () => setIsHovered(false),
+      onClick: handleClick,
+    },
+  };
+}
+
 export function MapOverlayControls({
   isPlaying,
   playbackSpeed,
@@ -137,6 +176,13 @@ export function MapOverlayControls({
       onToggleStats();
     }
   }, [onToggleStats]);
+
+  // Tooltip states for each control
+  const speedTooltip = useTooltip();
+  const colorTooltip = useTooltip();
+  const cameraTooltip = useTooltip();
+  const terrain3DTooltip = useTooltip();
+  const satelliteTooltip = useTooltip();
 
   return (
     <>
@@ -219,59 +265,99 @@ export function MapOverlayControls({
       {/* Settings Icons - Bottom Right */}
       <div className="absolute bottom-8 right-3 flex flex-col gap-1.5">
         {/* Speed */}
-        <button
-          onClick={cycleSpeed}
-          aria-label={`Playback speed: ${playbackSpeed}x. Click to change.`}
-          className="w-9 h-9 rounded-lg bg-black/70 backdrop-blur-sm text-white flex items-center justify-center shadow-lg transition-[background-color,transform] hover:bg-black/80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none"
-        >
-          <span className="text-xs font-bold tabular-nums">{playbackSpeed}x</span>
-        </button>
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              speedTooltip.handlers.onClick();
+              cycleSpeed();
+            }}
+            onMouseEnter={speedTooltip.handlers.onMouseEnter}
+            onMouseLeave={speedTooltip.handlers.onMouseLeave}
+            aria-label={`Playback speed: ${playbackSpeed}x. Click to change.`}
+            className="w-9 h-9 rounded-lg bg-black/70 backdrop-blur-sm text-white flex items-center justify-center shadow-lg transition-[background-color,transform] hover:bg-black/80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none"
+          >
+            <span className="text-xs font-bold tabular-nums">{playbackSpeed}x</span>
+          </button>
+          <ControlTooltip text={`Speed: ${playbackSpeed}x`} show={speedTooltip.show} />
+        </div>
 
         {/* Color Mode */}
-        <button
-          onClick={cycleColorMode}
-          aria-label={`Route color: ${COLOR_MODE_LABELS[colorMode]}. Click to change.`}
-          className="w-9 h-9 rounded-lg bg-black/70 backdrop-blur-sm text-white flex items-center justify-center shadow-lg transition-[background-color,transform] hover:bg-black/80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none"
-        >
-          {COLOR_MODE_ICONS[colorMode]}
-        </button>
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              colorTooltip.handlers.onClick();
+              cycleColorMode();
+            }}
+            onMouseEnter={colorTooltip.handlers.onMouseEnter}
+            onMouseLeave={colorTooltip.handlers.onMouseLeave}
+            aria-label={`Route color: ${COLOR_MODE_LABELS[colorMode]}. Click to change.`}
+            className="w-9 h-9 rounded-lg bg-black/70 backdrop-blur-sm text-white flex items-center justify-center shadow-lg transition-[background-color,transform] hover:bg-black/80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none"
+          >
+            {COLOR_MODE_ICONS[colorMode]}
+          </button>
+          <ControlTooltip text={`Color: ${COLOR_MODE_LABELS[colorMode]}`} show={colorTooltip.show} />
+        </div>
 
         {/* Camera Mode */}
-        <button
-          onClick={cycleCameraMode}
-          aria-label={`Camera mode: ${CAMERA_MODE_LABELS[cameraMode]}. Click to change.`}
-          className="w-9 h-9 rounded-lg bg-black/70 backdrop-blur-sm text-white flex items-center justify-center shadow-lg transition-[background-color,transform] hover:bg-black/80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none"
-        >
-          {CAMERA_MODE_ICONS[cameraMode]}
-        </button>
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              cameraTooltip.handlers.onClick();
+              cycleCameraMode();
+            }}
+            onMouseEnter={cameraTooltip.handlers.onMouseEnter}
+            onMouseLeave={cameraTooltip.handlers.onMouseLeave}
+            aria-label={`Camera mode: ${CAMERA_MODE_LABELS[cameraMode]}. Click to change.`}
+            className="w-9 h-9 rounded-lg bg-black/70 backdrop-blur-sm text-white flex items-center justify-center shadow-lg transition-[background-color,transform] hover:bg-black/80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none"
+          >
+            {CAMERA_MODE_ICONS[cameraMode]}
+          </button>
+          <ControlTooltip text={`Camera: ${CAMERA_MODE_LABELS[cameraMode]}`} show={cameraTooltip.show} />
+        </div>
 
         {/* 3D Toggle */}
-        <button
-          onClick={() => onTerrain3DChange(!terrain3D)}
-          aria-label={`3D terrain: ${terrain3D ? "On" : "Off"}. Click to toggle.`}
-          aria-pressed={terrain3D}
-          className={`w-9 h-9 rounded-lg backdrop-blur-sm text-white flex items-center justify-center shadow-lg transition-[background-color,transform] hover:bg-black/80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none ${
-            terrain3D ? "bg-primary/80" : "bg-black/70"
-          }`}
-        >
-          <Mountain className="h-4 w-4" aria-hidden="true" />
-        </button>
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              terrain3DTooltip.handlers.onClick();
+              onTerrain3DChange(!terrain3D);
+            }}
+            onMouseEnter={terrain3DTooltip.handlers.onMouseEnter}
+            onMouseLeave={terrain3DTooltip.handlers.onMouseLeave}
+            aria-label={`3D terrain: ${terrain3D ? "On" : "Off"}. Click to toggle.`}
+            aria-pressed={terrain3D}
+            className={`w-9 h-9 rounded-lg backdrop-blur-sm text-white flex items-center justify-center shadow-lg transition-[background-color,transform] hover:bg-black/80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none ${
+              terrain3D ? "bg-primary/80" : "bg-black/70"
+            }`}
+          >
+            <Mountain className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <ControlTooltip text={`3D: ${terrain3D ? "On" : "Off"}`} show={terrain3DTooltip.show} />
+        </div>
 
         {/* Satellite Toggle */}
-        <button
-          onClick={() => onMapStyleChange(mapStyle === "satellite" ? "outdoors" : "satellite")}
-          aria-label={`Map style: ${mapStyle === "satellite" ? "Satellite" : "Outdoors"}. Click to toggle.`}
-          aria-pressed={mapStyle === "satellite"}
-          className={`w-9 h-9 rounded-lg backdrop-blur-sm text-white flex items-center justify-center shadow-lg transition-[background-color,transform] hover:bg-black/80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none ${
-            mapStyle === "satellite" ? "bg-primary/80" : "bg-black/70"
-          }`}
-        >
-          {mapStyle === "satellite" ? (
-            <Satellite className="h-4 w-4" aria-hidden="true" />
-          ) : (
-            <Map className="h-4 w-4" aria-hidden="true" />
-          )}
-        </button>
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              satelliteTooltip.handlers.onClick();
+              onMapStyleChange(mapStyle === "satellite" ? "outdoors" : "satellite");
+            }}
+            onMouseEnter={satelliteTooltip.handlers.onMouseEnter}
+            onMouseLeave={satelliteTooltip.handlers.onMouseLeave}
+            aria-label={`Map style: ${mapStyle === "satellite" ? "Satellite" : "Outdoors"}. Click to toggle.`}
+            aria-pressed={mapStyle === "satellite"}
+            className={`w-9 h-9 rounded-lg backdrop-blur-sm text-white flex items-center justify-center shadow-lg transition-[background-color,transform] hover:bg-black/80 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none ${
+              mapStyle === "satellite" ? "bg-primary/80" : "bg-black/70"
+            }`}
+          >
+            {mapStyle === "satellite" ? (
+              <Satellite className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Map className="h-4 w-4" aria-hidden="true" />
+            )}
+          </button>
+          <ControlTooltip text={`Map: ${mapStyle === "satellite" ? "Satellite" : "Outdoors"}`} show={satelliteTooltip.show} />
+        </div>
       </div>
     </>
   );
