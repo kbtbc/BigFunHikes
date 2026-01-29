@@ -16,6 +16,27 @@ interface ExifData {
 }
 
 /**
+ * Convert DMS (degrees, minutes, seconds) array to decimal degrees
+ */
+function dmsToDecimal(dms: number[], ref: string): number | null {
+  if (!Array.isArray(dms) || dms.length < 3) return null;
+
+  const [degrees, minutes, seconds] = dms;
+  if (typeof degrees !== 'number' || typeof minutes !== 'number' || typeof seconds !== 'number') {
+    return null;
+  }
+
+  let decimal = degrees + minutes / 60 + seconds / 3600;
+
+  // South and West are negative
+  if (ref === 'S' || ref === 'W') {
+    decimal = -decimal;
+  }
+
+  return decimal;
+}
+
+/**
  * Extract GPS coordinates and date taken from image EXIF data
  */
 async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
@@ -35,10 +56,32 @@ async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
         && !isNaN(gps.latitude) && !isNaN(gps.longitude)) {
       exifData.latitude = gps.latitude;
       exifData.longitude = gps.longitude;
-      console.log("[photos] Extracted GPS:", { lat: exifData.latitude, lon: exifData.longitude });
+      console.log("[photos] Extracted GPS via exifr.gps():", { lat: exifData.latitude, lon: exifData.longitude });
     } else {
-      // Log what we got for debugging
-      console.log("[photos] No valid GPS data found in image. Raw GPS result:", gps);
+      // Fallback: try to parse raw GPS tags manually
+      console.log("[photos] exifr.gps() failed, trying manual parse. Raw result:", gps);
+
+      try {
+        const rawExif = await exifr.parse(buffer, {
+          pick: ["GPSLatitude", "GPSLongitude", "GPSLatitudeRef", "GPSLongitudeRef"],
+          translateValues: false, // Get raw values
+        });
+
+        console.log("[photos] Raw GPS tags:", rawExif);
+
+        if (rawExif?.GPSLatitude && rawExif?.GPSLongitude) {
+          const lat = dmsToDecimal(rawExif.GPSLatitude, rawExif.GPSLatitudeRef || 'N');
+          const lon = dmsToDecimal(rawExif.GPSLongitude, rawExif.GPSLongitudeRef || 'W');
+
+          if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
+            exifData.latitude = lat;
+            exifData.longitude = lon;
+            console.log("[photos] Extracted GPS via manual DMS parse:", { lat, lon });
+          }
+        }
+      } catch (fallbackError) {
+        console.log("[photos] Manual GPS parse also failed:", fallbackError);
+      }
     }
 
     // Extract date taken (try multiple EXIF date fields)
