@@ -382,11 +382,11 @@ export function SuuntoStatsDisplay({ suuntoData }: SuuntoStatsDisplayProps) {
             <div className="text-left min-w-0">
               <h3 className="text-lg font-semibold font-outfit">Fitness Watch Data</h3>
               <p className="text-sm text-muted-foreground truncate">
-                Recorded on {new Date(suuntoData.dateTime).toLocaleDateString("en-US", {
+                {new Date(suuntoData.dateTime).toLocaleDateString("en-US", {
                   weekday: "long",
-                  year: "numeric",
                   month: "long",
                   day: "numeric",
+                  year: "numeric",
                 })}
               </p>
             </div>
