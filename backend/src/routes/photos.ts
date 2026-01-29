@@ -7,8 +7,7 @@ import { requireAdminAuth } from "../middleware/adminAuth";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { randomUUID } from "crypto";
-import exifr from "exifr";
-import ExifParser from "exif-parser";
+import ExifReader from "exifreader";
 
 interface ExifData {
   latitude?: number;
@@ -17,101 +16,51 @@ interface ExifData {
 }
 
 /**
- * Extract GPS coordinates and date taken from image EXIF data
+ * Extract GPS coordinates and date taken from image EXIF data using ExifReader
  */
 async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
   const exifData: ExifData = {};
-  let latitude: number | undefined;
-  let longitude: number | undefined;
 
-  // Method 1: Try exif-parser first (handles Pixel phones well)
   try {
-    const nodeBuffer = Buffer.from(buffer);
-    const parser = ExifParser.create(nodeBuffer);
-    const result = parser.parse();
+    const tags = ExifReader.load(buffer, { expanded: true });
 
-    console.log("[photos] exif-parser tags:", result.tags ? Object.keys(result.tags) : "none");
+    console.log("[photos] ExifReader sections:", Object.keys(tags));
 
-    if (result.tags) {
-      // exif-parser returns GPS as decimal degrees directly
-      if (result.tags.GPSLatitude !== undefined && result.tags.GPSLongitude !== undefined) {
-        const lat = result.tags.GPSLatitude;
-        const lon = result.tags.GPSLongitude;
+    // Extract GPS from ExifReader
+    if (tags.gps) {
+      console.log("[photos] ExifReader gps keys:", Object.keys(tags.gps));
 
-        console.log("[photos] exif-parser GPS raw:", { lat, lon });
+      const lat = tags.gps.Latitude;
+      const lon = tags.gps.Longitude;
 
-        if (typeof lat === 'number' && typeof lon === 'number' && !isNaN(lat) && !isNaN(lon)) {
-          latitude = lat;
-          longitude = lon;
-          console.log("[photos] GPS from exif-parser:", { latitude, longitude });
-        }
+      console.log("[photos] ExifReader GPS values:", { lat, lon });
+
+      if (typeof lat === 'number' && typeof lon === 'number' && !isNaN(lat) && !isNaN(lon)) {
+        exifData.latitude = lat;
+        exifData.longitude = lon;
+        console.log("[photos] GPS from ExifReader:", { latitude: lat, longitude: lon });
       }
+    }
 
-      // Get date from exif-parser
-      if (result.tags.DateTimeOriginal || result.tags.CreateDate || result.tags.ModifyDate) {
-        const timestamp = result.tags.DateTimeOriginal || result.tags.CreateDate || result.tags.ModifyDate;
-        // exif-parser returns Unix timestamp in seconds
-        if (typeof timestamp === 'number') {
-          exifData.takenAt = new Date(timestamp * 1000);
-          console.log("[photos] Date from exif-parser:", exifData.takenAt);
+    // Extract date from ExifReader
+    if (tags.exif) {
+      const dateField = tags.exif.DateTimeOriginal || tags.exif.CreateDate || tags.exif.DateTime;
+      if (dateField) {
+        // ExifReader returns {description: "2026:01:27 12:20:52", value: [...]}
+        const dateStr = dateField.description || dateField.value;
+        if (dateStr && typeof dateStr === 'string') {
+          // Convert "2026:01:27 12:20:52" to valid ISO format
+          const isoDate = dateStr.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
+          exifData.takenAt = new Date(isoDate);
+          console.log("[photos] Date from ExifReader:", exifData.takenAt);
         }
       }
     }
-  } catch (exifParserErr) {
-    console.log("[photos] exif-parser failed:", exifParserErr);
+  } catch (err) {
+    console.log("[photos] ExifReader failed:", err);
   }
 
-  // Method 2: Fallback to exifr if exif-parser didn't get GPS
-  if (latitude === undefined) {
-    try {
-      const fullExif = await exifr.parse(buffer, {
-        gps: true,
-        tiff: true,
-        xmp: true,
-        icc: false,
-        iptc: false,
-        jfif: false,
-        ihdr: false,
-      });
-
-      // Log what exifr found for GPS specifically
-      if (fullExif?.GPSLatitude !== undefined || fullExif?.latitude !== undefined) {
-        console.log("[photos] exifr GPS data:", {
-          GPSLatitude: fullExif.GPSLatitude,
-          GPSLongitude: fullExif.GPSLongitude,
-          GPSLatitudeRef: fullExif.GPSLatitudeRef,
-          GPSLongitudeRef: fullExif.GPSLongitudeRef,
-          latitude: fullExif.latitude,
-          longitude: fullExif.longitude,
-        });
-      }
-
-      // Try direct latitude/longitude
-      if (fullExif?.latitude !== undefined && fullExif?.longitude !== undefined) {
-        if (!isNaN(fullExif.latitude) && !isNaN(fullExif.longitude)) {
-          latitude = fullExif.latitude;
-          longitude = fullExif.longitude;
-          console.log("[photos] GPS from exifr.latitude/longitude:", { latitude, longitude });
-        }
-      }
-
-      // Get date if not already set
-      if (!exifData.takenAt) {
-        const dateField = fullExif?.DateTimeOriginal || fullExif?.CreateDate || fullExif?.ModifyDate;
-        if (dateField) {
-          exifData.takenAt = dateField instanceof Date ? dateField : new Date(dateField);
-          console.log("[photos] Date from exifr:", exifData.takenAt);
-        }
-      }
-    } catch (exifrErr) {
-      console.log("[photos] exifr failed:", exifrErr);
-    }
-  }
-
-  if (latitude !== undefined && longitude !== undefined) {
-    exifData.latitude = latitude;
-    exifData.longitude = longitude;
-  } else {
+  if (!exifData.latitude || !exifData.longitude) {
     console.log("[photos] Could not extract GPS coordinates from image");
   }
 
