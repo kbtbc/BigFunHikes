@@ -39,8 +39,8 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
   const previewContent = entry.content.split("\n").slice(0, 3).join("\n");
   const isTraining = entry.entryType === "training";
 
-  // Video modal state
-  const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
+  // Video modal state - store both url and thumbnailUrl
+  const [playingVideo, setPlayingVideo] = useState<{ url: string; thumbnailUrl?: string } | null>(null);
 
   // Combine photos and videos into unified media array
   const mediaItems: MediaItem[] = [
@@ -179,7 +179,7 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
                         />
                       ) : (
                         <button
-                          onClick={() => setPlayingVideoUrl(media.url)}
+                          onClick={() => setPlayingVideo({ url: media.url, thumbnailUrl: media.thumbnailUrl })}
                           className="relative w-full h-full min-h-[200px] flex items-center justify-center"
                         >
                           <LazyImage
@@ -291,31 +291,41 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
         )}
 
         {/* Video player modal */}
-        {playingVideoUrl && (
+        {playingVideo && (
           <div
-            className="fixed inset-0 z-50 bg-black flex items-center justify-center"
-            onClick={() => setPlayingVideoUrl(null)}
+            className="fixed inset-0 z-50 bg-black flex items-center justify-center p-4"
+            onClick={() => setPlayingVideo(null)}
           >
             <button
-              onClick={() => setPlayingVideoUrl(null)}
+              onClick={() => setPlayingVideo(null)}
               className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
               aria-label="Close video"
             >
               <X className="h-8 w-8" />
             </button>
-            <video
-              key={playingVideoUrl}
-              controls
-              autoPlay
-              playsInline
-              muted={false}
-              preload="auto"
-              style={{ maxWidth: '100vw', maxHeight: '100vh', width: '100%', height: 'auto' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <source src={playingVideoUrl} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+            <div className="relative w-full h-full flex items-center justify-center">
+              <video
+                key={playingVideo.url}
+                controls
+                autoPlay
+                playsInline
+                webkit-playsinline="true"
+                preload="metadata"
+                poster={playingVideo.thumbnailUrl}
+                className="max-w-full max-h-full"
+                style={{
+                  width: 'auto',
+                  height: 'auto',
+                  minWidth: '50vw',
+                  minHeight: '30vh'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <source src={playingVideo.url} type="video/mp4" />
+                <source src={playingVideo.url} type="video/quicktime" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
           </div>
         )}
 
