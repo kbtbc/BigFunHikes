@@ -293,7 +293,7 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
         {/* Video player modal */}
         {playingVideoUrl && (
           <div
-            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black flex items-center justify-center"
             onClick={() => setPlayingVideoUrl(null)}
           >
             <button
@@ -304,13 +304,18 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
               <X className="h-8 w-8" />
             </button>
             <video
-              src={playingVideoUrl}
+              key={playingVideoUrl}
               controls
               autoPlay
               playsInline
-              className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
+              muted={false}
+              preload="auto"
+              style={{ maxWidth: '100vw', maxHeight: '100vh', width: '100%', height: 'auto' }}
               onClick={(e) => e.stopPropagation()}
-            />
+            >
+              <source src={playingVideoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           </div>
         )}
 
