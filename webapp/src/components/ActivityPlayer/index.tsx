@@ -67,7 +67,7 @@ export function ActivityPlayer({
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [playbackSpeed, setPlaybackSpeed] = useState(4);
   const [colorMode, setColorMode] = useState<ColorMode>("speed");
 
   // Phase 1 Enhancement states
@@ -80,6 +80,7 @@ export function ActivityPlayer({
   // Photo reveal state
   const [revealingPhoto, setRevealingPhoto] = useState<ActivityPhoto | null>(null);
   const shownPhotoIds = useRef<Set<string>>(new Set());
+  const lastSeekIndex = useRef<number>(0);
 
   const animationRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
@@ -177,6 +178,11 @@ export function ActivityPlayer({
   }, []);
 
   const handleSeek = useCallback((index: number) => {
+    // If seeking backwards, clear all shown photos so they can re-trigger
+    if (index < lastSeekIndex.current) {
+      shownPhotoIds.current.clear();
+    }
+    lastSeekIndex.current = index;
     setCurrentIndex(index);
     lastUpdateRef.current = 0;
   }, []);
