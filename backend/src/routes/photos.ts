@@ -30,13 +30,15 @@ async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
 
     const exifData: ExifData = {};
 
-    // Extract GPS coordinates
-    if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number") {
+    // Extract GPS coordinates - check for valid numbers (not NaN)
+    if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number"
+        && !isNaN(gps.latitude) && !isNaN(gps.longitude)) {
       exifData.latitude = gps.latitude;
       exifData.longitude = gps.longitude;
       console.log("[photos] Extracted GPS:", { lat: exifData.latitude, lon: exifData.longitude });
     } else {
-      console.log("[photos] No GPS data found in image");
+      // Log what we got for debugging
+      console.log("[photos] No valid GPS data found in image. Raw GPS result:", gps);
     }
 
     // Extract date taken (try multiple EXIF date fields)

@@ -394,6 +394,7 @@ export default function NewEntryPage() {
     },
     onSuccess: (newEntry) => {
       queryClient.invalidateQueries({ queryKey: ["entries"] });
+      queryClient.invalidateQueries({ queryKey: ["entries", newEntry.id] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
       toast({
         title: "Entry created!",
