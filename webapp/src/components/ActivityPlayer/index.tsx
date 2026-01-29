@@ -22,6 +22,7 @@ import {
   ChevronDown,
   ChevronUp,
   Activity,
+  Bug,
 } from "lucide-react";
 import { ActivityMap, type ColorMode, type CameraMode, type MapStyle, type ActivityMapRef } from "./ActivityMap";
 import { ActivityCharts } from "./ActivityCharts";
@@ -74,6 +75,7 @@ export function ActivityPlayer({
   const [cameraMode, setCameraMode] = useState<CameraMode>("follow");
   const [mapStyle, setMapStyle] = useState<MapStyle>("satellite");
   const [highlightedSegment, setHighlightedSegment] = useState<{ start: number; end: number } | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   const animationRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
@@ -428,6 +430,54 @@ export function ActivityPlayer({
                   onHighlightSegment={handleHighlightSegment}
                   duration={activityData.summary.duration}
                 />
+
+                {/* Debug Panel - Toggle with bug icon */}
+                <div className="border-t pt-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDebug(!showDebug)}
+                    className="text-xs text-muted-foreground"
+                  >
+                    <Bug className="h-3 w-3 mr-1" />
+                    {showDebug ? "Hide" : "Show"} Debug Info
+                  </Button>
+
+                  {showDebug && (
+                    <div className="mt-2 p-3 bg-muted/50 rounded text-xs font-mono space-y-2 overflow-auto max-h-64">
+                      <div className="font-bold text-foreground">Photo Debug Info:</div>
+                      <div>Input photos: {photos.length}</div>
+                      <div>Photos with GPS: {photos.filter(p => p.latitude != null && p.longitude != null).length}</div>
+                      <div>Mapped photos (with coords): {activityPhotos.filter(p => p.lat && p.lon).length}</div>
+                      <div>Route points: {activityData.dataPoints.length}</div>
+                      <div className="border-t pt-2 mt-2">
+                        <div className="font-bold">Input Photos:</div>
+                        {photos.map((p, i) => (
+                          <div key={p.id} className="ml-2 text-[10px]">
+                            #{i+1}: lat={p.latitude ?? "null"}, lon={p.longitude ?? "null"}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t pt-2 mt-2">
+                        <div className="font-bold">Mapped Photos:</div>
+                        {activityPhotos.map((p, i) => (
+                          <div key={p.id} className="ml-2 text-[10px]">
+                            #{i+1}: lat={p.lat ?? "null"}, lon={p.lon ?? "null"}, url={p.url?.slice(0,30)}...
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t pt-2 mt-2">
+                        <div className="font-bold">Route Bounds:</div>
+                        <div className="ml-2 text-[10px]">
+                          N: {activityData.bounds.north.toFixed(5)}, S: {activityData.bounds.south.toFixed(5)}
+                        </div>
+                        <div className="ml-2 text-[10px]">
+                          E: {activityData.bounds.east.toFixed(5)}, W: {activityData.bounds.west.toFixed(5)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
