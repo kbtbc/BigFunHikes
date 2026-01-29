@@ -9,6 +9,10 @@ import {
 } from "../types";
 import type { Context } from "hono";
 import { requireAdminAuth } from "../middleware/adminAuth";
+import * as fs from "fs/promises";
+import * as path from "path";
+
+const uploadsDir = path.join(process.cwd(), "public", "uploads");
 
 const entriesRouter = new Hono();
 
@@ -316,9 +320,10 @@ entriesRouter.delete("/:id", async (c) => {
   const entryId = c.req.param("id");
 
   try {
-    // Check if entry exists
+    // Check if entry exists and get its photos
     const existingEntry = await prisma.journalEntry.findUnique({
       where: { id: entryId },
+      include: { photos: true },
     });
 
     if (!existingEntry) {
@@ -333,9 +338,29 @@ entriesRouter.delete("/:id", async (c) => {
       );
     }
 
+    // Delete photo files from disk
+    for (const photo of existingEntry.photos) {
+      if (photo.url.includes("/public/uploads/")) {
+        try {
+          const filename = photo.url.split("/public/uploads/")[1];
+          if (filename) {
+            const filepath = path.join(uploadsDir, filename);
+            await fs.unlink(filepath).catch((err) => {
+              console.warn(`[entries] Could not delete file ${filepath}:`, err.message);
+            });
+          }
+        } catch (fileError) {
+          console.warn("[entries] Error deleting photo file:", fileError);
+        }
+      }
+    }
+
+    // Delete entry (photos cascade automatically in DB)
     await prisma.journalEntry.delete({
       where: { id: entryId },
     });
+
+    console.log(`[entries] Deleted entry ${entryId} and ${existingEntry.photos.length} photo files`);
 
     return c.body(null, 204);
   } catch (error) {
