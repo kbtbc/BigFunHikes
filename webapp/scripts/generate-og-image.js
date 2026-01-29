@@ -86,7 +86,7 @@ async function generateOGImage() {
             opacity="0.7"
             text-anchor="middle" 
             dominant-baseline="middle">
-        Follow my journey along the Appalachian Trail
+        Follow my Appalachian Trail Journey Starting Soon -- In Training Now!
       </text>
       
       <!-- Decorative trail icon (simplified) -->

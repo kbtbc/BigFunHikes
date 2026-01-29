@@ -46,7 +46,7 @@ export function HomePage() {
               BigFun Hikes!
             </h1>
             <p className="text-xl md:text-2xl text-white/90 mb-6 text-shadow-sm">
-              Follow my journey along the Appalachian Trail
+              Follow my Appalachian Trail Journey Starting Soon -- In Training Now!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/timeline">
