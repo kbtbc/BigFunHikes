@@ -379,9 +379,9 @@ export function SuuntoStatsDisplay({ suuntoData }: SuuntoStatsDisplayProps) {
             <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
               <Watch className="h-5 w-5 text-primary" />
             </div>
-            <div className="text-left">
+            <div className="text-left min-w-0 flex-1">
               <h3 className="text-lg font-semibold font-outfit">Fitness Watch Data</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground truncate">
                 Recorded on {new Date(suuntoData.dateTime).toLocaleDateString("en-US", {
                   weekday: "long",
                   year: "numeric",
