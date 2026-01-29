@@ -357,6 +357,12 @@ export function ActivityPlayer({
     // Playback will auto-resume since isPlaying is still true and revealingPhoto becomes null
   }, []);
 
+  // Handle photo marker click - show photo reveal popup
+  const handlePhotoMarkerClick = useCallback((photo: ActivityPhoto) => {
+    // Show the photo in the reveal popup
+    setRevealingPhoto(photo);
+  }, []);
+
   // Reset shown photos when playback restarts from beginning
   useEffect(() => {
     if (currentIndex === 0) {
@@ -434,7 +440,7 @@ export function ActivityPlayer({
                     hasHeartRate={activityData.hasHeartRate}
                     photos={activityPhotos}
                     highlightedSegment={highlightedSegment}
-                    onPhotoClick={(photo) => onPhotoClick?.(photo.id)}
+                    onPhotoClick={handlePhotoMarkerClick}
                   />
 
                   {/* Overlay Controls */}
