@@ -45,8 +45,11 @@ export function HomePage() {
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 text-shadow">
               BigFun Hikes!
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-6 text-shadow-sm">
-              Follow my Appalachian Trail Journey Starting Soon -- In Training Now!
+            <p className="text-xl md:text-2xl text-white/90 mb-2 text-shadow-sm">
+              Follow my Appalachian Trail Journey
+            </p>
+            <p className="text-base md:text-lg text-white/80 mb-6 text-shadow-sm italic">
+              Hike Starting Soon—Training Entries Below!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/timeline">
