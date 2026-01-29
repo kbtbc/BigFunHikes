@@ -45,7 +45,7 @@ export function HomePage() {
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 text-shadow">
               BigFun Hikes!
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-2 text-shadow-sm">
+            <p className="text-2xl md:text-3xl text-white/90 mb-2 text-shadow-sm">
               Follow my Appalachian Trail Journey
             </p>
             <p className="text-base md:text-lg text-white/80 mb-6 text-shadow-sm italic">
