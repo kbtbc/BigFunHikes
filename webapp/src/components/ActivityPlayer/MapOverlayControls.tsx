@@ -187,7 +187,7 @@ export function MapOverlayControls({
       </div>
 
       {/* Play Button & Scrubber - Bottom Left */}
-      <div className="absolute bottom-3 left-3 right-24 flex items-center gap-2">
+      <div className="absolute bottom-8 left-3 right-24 flex items-center gap-2">
         {/* Play/Pause Button */}
         <button
           onClick={onPlayPause}
@@ -213,7 +213,7 @@ export function MapOverlayControls({
       </div>
 
       {/* Settings Icons - Bottom Right */}
-      <div className="absolute bottom-3 right-3 flex flex-col gap-1.5">
+      <div className="absolute bottom-8 right-3 flex flex-col gap-1.5">
         {/* Speed */}
         <button
           onClick={cycleSpeed}
