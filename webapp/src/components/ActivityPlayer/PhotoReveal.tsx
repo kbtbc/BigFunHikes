@@ -1,22 +1,25 @@
 /**
  * PhotoReveal - Elegant photo reveal animation during activity playback
  * Shows a full-viewport photo with smooth CSS transitions
+ * Supports auto-dismiss (during playback) and manual dismiss (when paused)
  */
 
 import { useEffect, useState, useCallback } from "react";
-import { Camera } from "lucide-react";
+import { Camera, X } from "lucide-react";
 import type { ActivityPhoto } from "@/lib/activity-data-parser";
 
 interface PhotoRevealProps {
   photo: ActivityPhoto | null;
   onComplete: () => void;
   displayDuration?: number; // ms
+  manualDismiss?: boolean; // If true, stays open until clicked
 }
 
 export function PhotoReveal({
   photo,
   onComplete,
-  displayDuration = 3000
+  displayDuration = 3000,
+  manualDismiss = false
 }: PhotoRevealProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
@@ -24,6 +27,15 @@ export function PhotoReveal({
   const handleComplete = useCallback(() => {
     onComplete();
   }, [onComplete]);
+
+  const handleDismiss = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setIsVisible(false);
+      setIsExiting(false);
+      handleComplete();
+    }, 500);
+  }, [handleComplete]);
 
   useEffect(() => {
     if (!photo) {
@@ -36,6 +48,11 @@ export function PhotoReveal({
     requestAnimationFrame(() => {
       setIsVisible(true);
     });
+
+    // If manual dismiss, don't set up auto timers
+    if (manualDismiss) {
+      return;
+    }
 
     // Start exit animation (fade out takes 500ms)
     const exitTimer = setTimeout(() => {
@@ -53,7 +70,7 @@ export function PhotoReveal({
       clearTimeout(exitTimer);
       clearTimeout(completeTimer);
     };
-  }, [photo, displayDuration, handleComplete]);
+  }, [photo, displayDuration, handleComplete, manualDismiss]);
 
   if (!photo) return null;
 
@@ -63,6 +80,7 @@ export function PhotoReveal({
         isVisible && !isExiting ? "opacity-100" : "opacity-0"
       }`}
       style={{ pointerEvents: isVisible ? "auto" : "none" }}
+      onClick={manualDismiss ? handleDismiss : undefined}
     >
       {/* Backdrop blur */}
       <div
@@ -117,14 +135,30 @@ export function PhotoReveal({
           <Camera className="w-4 h-4 text-white" />
         </div>
 
-        {/* Progress indicator */}
-        <div
-          className="absolute bottom-0 left-0 h-1 bg-white/90"
-          style={{
-            width: isVisible && !isExiting ? "100%" : "0%",
-            transition: isVisible && !isExiting ? `width ${displayDuration}ms linear` : "none"
-          }}
-        />
+        {/* Close button for manual dismiss */}
+        {manualDismiss && (
+          <button
+            onClick={handleDismiss}
+            className={`absolute top-3 right-3 bg-white/20 backdrop-blur-md rounded-full p-2 transition-all duration-200 delay-75 hover:bg-white/30 ${
+              isVisible && !isExiting
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-0"
+            }`}
+          >
+            <X className="w-4 h-4 text-white" />
+          </button>
+        )}
+
+        {/* Progress indicator - only show for auto dismiss */}
+        {!manualDismiss && (
+          <div
+            className="absolute bottom-0 left-0 h-1 bg-white/90"
+            style={{
+              width: isVisible && !isExiting ? "100%" : "0%",
+              transition: isVisible && !isExiting ? `width ${displayDuration}ms linear` : "none"
+            }}
+          />
+        )}
       </div>
 
       {/* Decorative blur elements */}
@@ -138,6 +172,17 @@ export function PhotoReveal({
           isVisible && !isExiting ? "opacity-30 scale-100" : "opacity-0 scale-0"
         }`}
       />
+
+      {/* Tap to close hint for manual dismiss */}
+      {manualDismiss && (
+        <div
+          className={`absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs transition-opacity duration-300 delay-500 ${
+            isVisible && !isExiting ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          Tap anywhere to close
+        </div>
+      )}
     </div>
   );
 }

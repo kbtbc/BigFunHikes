@@ -79,6 +79,7 @@ export function ActivityPlayer({
 
   // Photo reveal state
   const [revealingPhoto, setRevealingPhoto] = useState<ActivityPhoto | null>(null);
+  const [isManualPhotoReveal, setIsManualPhotoReveal] = useState(false);
   const shownPhotoIds = useRef<Set<string>>(new Set());
   const lastSeekIndex = useRef<number>(0);
 
@@ -354,14 +355,16 @@ export function ActivityPlayer({
   // Handle photo reveal completion - resume playback
   const handlePhotoRevealComplete = useCallback(() => {
     setRevealingPhoto(null);
+    setIsManualPhotoReveal(false);
     // Playback will auto-resume since isPlaying is still true and revealingPhoto becomes null
   }, []);
 
   // Handle photo marker click - show photo reveal popup
   const handlePhotoMarkerClick = useCallback((photo: ActivityPhoto) => {
-    // Show the photo in the reveal popup
+    // If paused, use manual dismiss mode
+    setIsManualPhotoReveal(!isPlaying);
     setRevealingPhoto(photo);
-  }, []);
+  }, [isPlaying]);
 
   // Reset shown photos when playback restarts from beginning
   useEffect(() => {
@@ -472,6 +475,7 @@ export function ActivityPlayer({
                     photo={revealingPhoto}
                     onComplete={handlePhotoRevealComplete}
                     displayDuration={3000}
+                    manualDismiss={isManualPhotoReveal}
                   />
                 </div>
 
