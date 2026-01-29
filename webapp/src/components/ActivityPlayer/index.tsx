@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { ActivityMap, type ColorMode, type CameraMode, type MapStyle, type ActivityMapRef } from "./ActivityMap";
 import { ActivityCharts } from "./ActivityCharts";
-import { PlaybackControls } from "./PlaybackControls";
+import { MapOverlayControls } from "./MapOverlayControls";
 import {
   parseActivityData,
   hasActivityData,
@@ -74,6 +74,7 @@ export function ActivityPlayer({
   const [cameraMode, setCameraMode] = useState<CameraMode>("follow");
   const [mapStyle, setMapStyle] = useState<MapStyle>("satellite");
   const [highlightedSegment, setHighlightedSegment] = useState<{ start: number; end: number } | null>(null);
+  const [showStats, setShowStats] = useState(true);
 
   const animationRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
@@ -374,8 +375,8 @@ export function ActivityPlayer({
 
             {activityData && !isLoading && (
               <>
-                {/* Map */}
-                <div className="rounded-lg overflow-hidden border" style={{ height: "350px" }}>
+                {/* Map with Overlay Controls */}
+                <div className="relative rounded-lg overflow-hidden border" style={{ height: "450px" }}>
                   <ActivityMap
                     ref={mapRef}
                     dataPoints={activityData.dataPoints}
@@ -390,31 +391,31 @@ export function ActivityPlayer({
                     highlightedSegment={highlightedSegment}
                     onPhotoClick={(photo) => onPhotoClick?.(photo.id)}
                   />
-                </div>
 
-                {/* Playback Controls with integrated options */}
-                <PlaybackControls
-                  isPlaying={isPlaying}
-                  playbackSpeed={playbackSpeed}
-                  currentIndex={currentIndex}
-                  totalPoints={activityData.dataPoints.length}
-                  currentPoint={currentPoint}
-                  summary={activityData.summary}
-                  onPlayPause={handlePlayPause}
-                  onSpeedChange={handleSpeedChange}
-                  onSeek={handleSeek}
-                  onSkipBack={handleSkipBack}
-                  onSkipForward={handleSkipForward}
-                  colorMode={colorMode}
-                  onColorModeChange={setColorMode}
-                  cameraMode={cameraMode}
-                  onCameraModeChange={setCameraMode}
-                  terrain3D={terrain3D}
-                  onTerrain3DChange={setTerrain3D}
-                  mapStyle={mapStyle}
-                  onMapStyleChange={setMapStyle}
-                  hasHeartRate={activityData.hasHeartRate}
-                />
+                  {/* Overlay Controls */}
+                  <MapOverlayControls
+                    isPlaying={isPlaying}
+                    playbackSpeed={playbackSpeed}
+                    currentIndex={currentIndex}
+                    totalPoints={activityData.dataPoints.length}
+                    currentPoint={currentPoint}
+                    summary={activityData.summary}
+                    onPlayPause={handlePlayPause}
+                    onSpeedChange={handleSpeedChange}
+                    onSeek={handleSeek}
+                    colorMode={colorMode}
+                    onColorModeChange={setColorMode}
+                    cameraMode={cameraMode}
+                    onCameraModeChange={setCameraMode}
+                    terrain3D={terrain3D}
+                    onTerrain3DChange={setTerrain3D}
+                    mapStyle={mapStyle}
+                    onMapStyleChange={setMapStyle}
+                    hasHeartRate={activityData.hasHeartRate}
+                    showStats={showStats}
+                    onToggleStats={() => setShowStats(!showStats)}
+                  />
+                </div>
 
                 {/* Charts */}
                 <ActivityCharts

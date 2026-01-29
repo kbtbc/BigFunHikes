@@ -703,11 +703,6 @@ export const ActivityMap = forwardRef<ActivityMapRef, ActivityMapProps>(function
         className="w-full h-full rounded-lg overflow-hidden"
         style={{ minHeight: "300px" }}
       />
-
-      {/* Info overlay - upper left */}
-      <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 text-white shadow-lg">
-        <span className="font-semibold text-sm tracking-wide">BigFun Hikes!</span>
-      </div>
     </div>
   );
 });
