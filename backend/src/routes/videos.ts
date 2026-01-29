@@ -111,6 +111,44 @@ async function generateThumbnail(videoPath: string, thumbnailPath: string): Prom
   });
 }
 
+/**
+ * Transcode video to H.264/AAC MP4 for universal browser compatibility
+ * This ensures videos recorded with HEVC (H.265) codec will play in all browsers
+ */
+async function transcodeToH264(inputPath: string, outputPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    console.log("[videos] Starting H.264 transcode:", inputPath, "->", outputPath);
+
+    ffmpeg(inputPath)
+      .videoCodec('libx264')
+      .audioCodec('aac')
+      .outputOptions([
+        '-preset fast',      // Balance between speed and quality
+        '-crf 23',           // Quality level (18-28, lower = better)
+        '-movflags +faststart', // Enable streaming
+        '-pix_fmt yuv420p',  // Ensure compatibility
+      ])
+      .output(outputPath)
+      .on("start", (cmd) => {
+        console.log("[videos] FFmpeg command:", cmd);
+      })
+      .on("progress", (progress) => {
+        if (progress.percent) {
+          console.log("[videos] Transcode progress:", Math.round(progress.percent), "%");
+        }
+      })
+      .on("end", () => {
+        console.log("[videos] Transcode complete:", outputPath);
+        resolve();
+      })
+      .on("error", (err) => {
+        console.error("[videos] Transcode error:", err);
+        reject(err);
+      })
+      .run();
+  });
+}
+
 const videosRouter = new Hono();
 
 // Ensure uploads directory exists
@@ -213,23 +251,25 @@ videosRouter.post("/:id/videos/upload", async (c) => {
 
     // Generate unique filenames
     const uuid = randomUUID();
-    const fileExt = file.name.split(".").pop() || "mp4";
-    const videoFilename = `${uuid}.${fileExt}`;
+    const origExt = file.name.split(".").pop() || "mp4";
+    const originalFilename = `${uuid}_original.${origExt}`;
+    const videoFilename = `${uuid}.mp4`;  // Always output as MP4
     const thumbnailFilename = `${uuid}_thumb.jpg`;
+    const originalPath = path.join(uploadsDir, originalFilename);
     const videoPath = path.join(uploadsDir, videoFilename);
     const thumbnailPath = path.join(uploadsDir, thumbnailFilename);
 
-    // Convert file to buffer and write to disk
+    // Convert file to buffer and write to disk (original file)
     const buffer = await file.arrayBuffer();
-    await fs.writeFile(videoPath, new Uint8Array(buffer));
+    await fs.writeFile(originalPath, new Uint8Array(buffer));
 
-    // Extract video metadata
+    // Extract video metadata from original
     let metadata: VideoMetadata;
     try {
-      metadata = await extractVideoMetadata(videoPath);
+      metadata = await extractVideoMetadata(originalPath);
     } catch (metaErr) {
       // Clean up the video file if metadata extraction fails
-      await fs.unlink(videoPath).catch(() => {});
+      await fs.unlink(originalPath).catch(() => {});
       console.error("[videos] Metadata extraction failed:", metaErr);
       return c.json(
         {
@@ -245,7 +285,7 @@ videosRouter.post("/:id/videos/upload", async (c) => {
     // Validate duration
     if (metadata.duration > MAX_VIDEO_DURATION) {
       // Clean up the video file
-      await fs.unlink(videoPath).catch(() => {});
+      await fs.unlink(originalPath).catch(() => {});
       return c.json(
         {
           error: {
@@ -257,7 +297,23 @@ videosRouter.post("/:id/videos/upload", async (c) => {
       );
     }
 
-    // Generate thumbnail
+    // Transcode video to H.264 for universal browser compatibility
+    try {
+      await transcodeToH264(originalPath, videoPath);
+      // Delete original file after successful transcode
+      await fs.unlink(originalPath).catch(() => {});
+    } catch (transcodeErr) {
+      // If transcode fails, try using original file directly
+      console.warn("[videos] Transcode failed, using original file:", transcodeErr);
+      // Rename original to final path
+      await fs.rename(originalPath, videoPath).catch(async () => {
+        // If rename fails, copy instead
+        await fs.copyFile(originalPath, videoPath);
+        await fs.unlink(originalPath).catch(() => {});
+      });
+    }
+
+    // Generate thumbnail from the final video
     try {
       await generateThumbnail(videoPath, thumbnailPath);
     } catch (thumbErr) {
