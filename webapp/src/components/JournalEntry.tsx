@@ -169,7 +169,7 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
                     key={index}
                     className={showFullContent && hasMultipleMedia ? "flex-[0_0_100%] min-w-0" : ""}
                   >
-                    <div className={`relative w-full overflow-hidden flex items-center justify-center ${showFullContent && hasMultipleMedia ? "h-[400px] md:h-[500px] bg-black/5" : ""}`}>
+                    <div className={`relative w-full overflow-hidden flex items-center justify-center ${showFullContent && hasMultipleMedia ? "h-[400px] md:h-[500px] bg-black/5" : "min-h-[200px] bg-black/5"}`}>
                       {media.type === "photo" ? (
                         <LazyImage
                           src={media.url}
@@ -180,12 +180,12 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
                       ) : (
                         <button
                           onClick={() => setPlayingVideoUrl(media.url)}
-                          className="relative w-full h-full"
+                          className="relative w-full h-full min-h-[200px] flex items-center justify-center"
                         >
                           <LazyImage
                             src={media.thumbnailUrl || ""}
                             alt={media.caption}
-                            className={`${showFullContent && hasMultipleMedia ? "h-full w-auto max-w-full object-contain" : "w-full h-auto object-contain"}`}
+                            className={`${showFullContent && hasMultipleMedia ? "h-full w-auto max-w-full object-contain" : "max-w-full max-h-full object-contain"}`}
                             fallbackClassName={`${showFullContent && hasMultipleMedia ? "h-full w-full" : "w-full h-48"}`}
                           />
                           {/* Play button overlay */}
@@ -293,12 +293,12 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
         {/* Video player modal */}
         {playingVideoUrl && (
           <div
-            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
             onClick={() => setPlayingVideoUrl(null)}
           >
             <button
               onClick={() => setPlayingVideoUrl(null)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
               aria-label="Close video"
             >
               <X className="h-8 w-8" />
@@ -307,7 +307,8 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
               src={playingVideoUrl}
               controls
               autoPlay
-              className="max-w-full max-h-full"
+              playsInline
+              className="max-w-full max-h-[90vh] w-auto h-auto object-contain"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
