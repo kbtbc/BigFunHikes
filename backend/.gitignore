@@ -23,6 +23,11 @@ server.log
 .env.production.local
 .env.local
 
+# SQLite database files (can corrupt during git operations)
+prisma/dev.db
+prisma/dev.db-shm
+prisma/dev.db-wal
+
 # caches
 .eslintcache
 .cache
