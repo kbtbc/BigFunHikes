@@ -35,6 +35,13 @@ This workspace contains a web app and backend server.
 
   Frontend only skills:
   - frontend-app-design: Create distinctive, production-grade web interfaces using React, Tailwind, and shadcn/ui. Use when building pages, components, or styling any web UI.
+
+  <required_skills>
+    ALWAYS activate these skills when working on frontend code:
+    - frontend-design: For distinctive, production-grade UI
+    - web-design-guidelines: For accessibility and UX best practices
+    - vercel-react-best-practices: For React/Next.js performance optimization
+  </required_skills>
 </skills>
 
 <environment>
