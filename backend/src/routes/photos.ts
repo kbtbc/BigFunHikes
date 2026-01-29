@@ -7,7 +7,7 @@ import { requireAdminAuth } from "../middleware/adminAuth";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { randomUUID } from "crypto";
-import ExifReader from "exifreader";
+import exifr from "exifr";
 
 interface ExifData {
   latitude?: number;
@@ -16,55 +16,93 @@ interface ExifData {
 }
 
 /**
- * Extract GPS coordinates and date taken from image EXIF data using ExifReader
+ * Convert DMS (degrees, minutes, seconds) array to decimal degrees
+ */
+function dmsToDecimal(dms: number[], ref: string): number | null {
+  if (!Array.isArray(dms) || dms.length < 3) return null;
+
+  const [degrees, minutes, seconds] = dms;
+  if (typeof degrees !== 'number' || typeof minutes !== 'number' || typeof seconds !== 'number') {
+    return null;
+  }
+
+  let decimal = degrees + minutes / 60 + seconds / 3600;
+
+  // South and West are negative
+  if (ref === 'S' || ref === 'W') {
+    decimal = -decimal;
+  }
+
+  return decimal;
+}
+
+/**
+ * Extract GPS coordinates and date taken from image EXIF data
  */
 async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
-  const exifData: ExifData = {};
-
   try {
-    const tags = ExifReader.load(buffer, { expanded: true });
+    // Debug: Check buffer validity
+    const bytes = new Uint8Array(buffer);
+    const isJpeg = bytes[0] === 0xFF && bytes[1] === 0xD8;
+    console.log("[photos] Buffer size:", buffer.byteLength, "bytes, isJPEG:", isJpeg);
 
-    console.log("[photos] ExifReader sections:", Object.keys(tags));
+    // First try to get GPS coordinates using exifr.gps() which is optimized for this
+    const gps = await exifr.gps(buffer);
 
-    // Extract GPS from ExifReader
-    if (tags.gps) {
-      console.log("[photos] ExifReader gps keys:", Object.keys(tags.gps));
+    // Then get date fields with a separate parse
+    const dates = await exifr.parse(buffer, {
+      pick: ["DateTimeOriginal", "CreateDate", "ModifyDate"],
+    });
 
-      const lat = tags.gps.Latitude;
-      const lon = tags.gps.Longitude;
+    const exifData: ExifData = {};
 
-      console.log("[photos] ExifReader GPS values:", { lat, lon });
+    // Extract GPS coordinates - check for valid numbers (not NaN)
+    if (gps && typeof gps.latitude === "number" && typeof gps.longitude === "number"
+        && !isNaN(gps.latitude) && !isNaN(gps.longitude)) {
+      exifData.latitude = gps.latitude;
+      exifData.longitude = gps.longitude;
+      console.log("[photos] Extracted GPS via exifr.gps():", { lat: exifData.latitude, lon: exifData.longitude });
+    } else {
+      // Fallback: try to parse raw GPS tags manually
+      console.log("[photos] exifr.gps() failed, trying manual parse. Raw result:", gps);
 
-      if (typeof lat === 'number' && typeof lon === 'number' && !isNaN(lat) && !isNaN(lon)) {
-        exifData.latitude = lat;
-        exifData.longitude = lon;
-        console.log("[photos] GPS from ExifReader:", { latitude: lat, longitude: lon });
-      }
-    }
+      try {
+        const rawExif = await exifr.parse(buffer, {
+          pick: ["GPSLatitude", "GPSLongitude", "GPSLatitudeRef", "GPSLongitudeRef"],
+          translateValues: false, // Get raw values
+        });
 
-    // Extract date from ExifReader
-    if (tags.exif) {
-      const dateField = tags.exif.DateTimeOriginal || tags.exif.CreateDate || tags.exif.DateTime;
-      if (dateField) {
-        // ExifReader returns {description: "2026:01:27 12:20:52", value: [...]}
-        const dateStr = dateField.description || dateField.value;
-        if (dateStr && typeof dateStr === 'string') {
-          // Convert "2026:01:27 12:20:52" to valid ISO format
-          const isoDate = dateStr.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
-          exifData.takenAt = new Date(isoDate);
-          console.log("[photos] Date from ExifReader:", exifData.takenAt);
+        console.log("[photos] Raw GPS tags:", rawExif);
+
+        if (rawExif?.GPSLatitude && rawExif?.GPSLongitude) {
+          const lat = dmsToDecimal(rawExif.GPSLatitude, rawExif.GPSLatitudeRef || 'N');
+          const lon = dmsToDecimal(rawExif.GPSLongitude, rawExif.GPSLongitudeRef || 'W');
+
+          if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
+            exifData.latitude = lat;
+            exifData.longitude = lon;
+            console.log("[photos] Extracted GPS via manual DMS parse:", { lat, lon });
+          }
         }
+      } catch (fallbackError) {
+        console.log("[photos] Manual GPS parse also failed:", fallbackError);
       }
     }
-  } catch (err) {
-    console.log("[photos] ExifReader failed:", err);
-  }
 
-  if (!exifData.latitude || !exifData.longitude) {
-    console.log("[photos] Could not extract GPS coordinates from image");
-  }
+    // Extract date taken (try multiple EXIF date fields)
+    if (dates) {
+      const dateField = dates.DateTimeOriginal || dates.CreateDate || dates.ModifyDate;
+      if (dateField) {
+        exifData.takenAt = dateField instanceof Date ? dateField : new Date(dateField);
+        console.log("[photos] Extracted date taken:", exifData.takenAt);
+      }
+    }
 
-  return exifData;
+    return exifData;
+  } catch (error) {
+    console.error("[photos] Error extracting EXIF data:", error);
+    return {};
+  }
 }
 
 const photosRouter = new Hono();
