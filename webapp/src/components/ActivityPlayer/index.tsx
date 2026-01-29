@@ -26,6 +26,7 @@ import {
 import { ActivityMap, type ColorMode, type CameraMode, type MapStyle, type ActivityMapRef } from "./ActivityMap";
 import { ActivityCharts } from "./ActivityCharts";
 import { MapOverlayControls } from "./MapOverlayControls";
+import { PhotoReveal } from "./PhotoReveal";
 import {
   parseActivityData,
   hasActivityData,
@@ -76,6 +77,10 @@ export function ActivityPlayer({
   const [highlightedSegment, setHighlightedSegment] = useState<{ start: number; end: number } | null>(null);
   const [showStats, setShowStats] = useState(true);
 
+  // Photo reveal state
+  const [revealingPhoto, setRevealingPhoto] = useState<ActivityPhoto | null>(null);
+  const shownPhotoIds = useRef<Set<string>>(new Set());
+
   const animationRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
   const mapRef = useRef<ActivityMapRef>(null);
@@ -118,7 +123,7 @@ export function ActivityPlayer({
 
   // Animation loop
   useEffect(() => {
-    if (!isPlaying || !activityData) return;
+    if (!isPlaying || !activityData || revealingPhoto) return;
 
     const animate = (timestamp: number) => {
       if (!lastUpdateRef.current) {
@@ -153,7 +158,7 @@ export function ActivityPlayer({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isPlaying, playbackSpeed, activityData]);
+  }, [isPlaying, playbackSpeed, activityData, revealingPhoto]);
 
   // Handlers
   const handlePlayPause = useCallback(() => {
@@ -319,6 +324,40 @@ export function ActivityPlayer({
     return mapped;
   }, [activityData, photos, entryDate]);
 
+  // Detect photo crossings during playback
+  useEffect(() => {
+    if (!isPlaying || !activityData || revealingPhoto) return;
+
+    const currentTimestamp = activityData.dataPoints[currentIndex]?.timestamp ?? 0;
+
+    // Find photos that should be revealed at current timestamp
+    for (const photo of activityPhotos) {
+      if (
+        photo.timestamp !== undefined &&
+        photo.timestamp <= currentTimestamp &&
+        !shownPhotoIds.current.has(photo.id)
+      ) {
+        // Mark as shown and trigger reveal
+        shownPhotoIds.current.add(photo.id);
+        setRevealingPhoto(photo);
+        break; // Only show one photo at a time
+      }
+    }
+  }, [currentIndex, isPlaying, activityData, activityPhotos, revealingPhoto]);
+
+  // Handle photo reveal completion - resume playback
+  const handlePhotoRevealComplete = useCallback(() => {
+    setRevealingPhoto(null);
+    // Playback will auto-resume since isPlaying is still true and revealingPhoto becomes null
+  }, []);
+
+  // Reset shown photos when playback restarts from beginning
+  useEffect(() => {
+    if (currentIndex === 0) {
+      shownPhotoIds.current.clear();
+    }
+  }, [currentIndex]);
+
   if (!hasData) {
     return null;
   }
@@ -414,6 +453,13 @@ export function ActivityPlayer({
                     hasHeartRate={activityData.hasHeartRate}
                     showStats={showStats}
                     onToggleStats={() => setShowStats(!showStats)}
+                  />
+
+                  {/* Photo Reveal Animation */}
+                  <PhotoReveal
+                    photo={revealingPhoto}
+                    onComplete={handlePhotoRevealComplete}
+                    displayDuration={2500}
                   />
                 </div>
 

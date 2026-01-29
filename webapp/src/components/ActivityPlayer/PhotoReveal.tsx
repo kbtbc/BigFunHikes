@@ -1,0 +1,154 @@
+/**
+ * PhotoReveal - Elegant photo reveal animation during activity playback
+ * Shows a full-viewport photo with smooth CSS transitions
+ */
+
+import { useEffect, useState, useCallback } from "react";
+import { Camera } from "lucide-react";
+import type { ActivityPhoto } from "@/lib/activity-data-parser";
+
+interface PhotoRevealProps {
+  photo: ActivityPhoto | null;
+  onComplete: () => void;
+  displayDuration?: number; // ms
+}
+
+export function PhotoReveal({
+  photo,
+  onComplete,
+  displayDuration = 2500
+}: PhotoRevealProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+
+  const handleComplete = useCallback(() => {
+    onComplete();
+  }, [onComplete]);
+
+  useEffect(() => {
+    if (!photo) {
+      setIsVisible(false);
+      setIsExiting(false);
+      return;
+    }
+
+    // Start enter animation
+    requestAnimationFrame(() => {
+      setIsVisible(true);
+    });
+
+    // Start exit animation before completing
+    const exitTimer = setTimeout(() => {
+      setIsExiting(true);
+    }, displayDuration - 400);
+
+    // Complete after full duration
+    const completeTimer = setTimeout(() => {
+      setIsVisible(false);
+      setIsExiting(false);
+      handleComplete();
+    }, displayDuration);
+
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(completeTimer);
+    };
+  }, [photo, displayDuration, handleComplete]);
+
+  if (!photo) return null;
+
+  return (
+    <div
+      className={`absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${
+        isVisible && !isExiting ? "opacity-100" : "opacity-0"
+      }`}
+      style={{ pointerEvents: isVisible ? "auto" : "none" }}
+    >
+      {/* Backdrop blur */}
+      <div
+        className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${
+          isVisible && !isExiting ? "opacity-100" : "opacity-0"
+        }`}
+      />
+
+      {/* Photo container */}
+      <div
+        className={`relative z-10 w-[90%] h-[85%] max-w-2xl max-h-[500px] rounded-xl overflow-hidden shadow-2xl transition-all duration-500 ease-out ${
+          isVisible && !isExiting
+            ? "scale-100 opacity-100 translate-y-0"
+            : isExiting
+            ? "scale-95 opacity-0 -translate-y-8"
+            : "scale-75 opacity-0 translate-y-12"
+        }`}
+        style={{
+          transform: isVisible && !isExiting
+            ? "scale(1) translateY(0) perspective(1000px) rotateX(0deg)"
+            : isExiting
+            ? "scale(0.95) translateY(-32px)"
+            : "scale(0.75) translateY(48px) perspective(1000px) rotateX(10deg)"
+        }}
+      >
+        {/* Photo with Ken Burns effect */}
+        <img
+          src={photo.url}
+          alt={photo.caption || "Trail photo"}
+          className="w-full h-full object-cover transition-transform ease-out"
+          style={{
+            transitionDuration: `${displayDuration}ms`,
+            transform: isVisible ? "scale(1)" : "scale(1.1)"
+          }}
+        />
+
+        {/* Gradient overlay at bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
+
+        {/* Caption */}
+        {photo.caption && (
+          <div
+            className={`absolute bottom-4 left-4 right-4 transition-all duration-300 delay-200 ${
+              isVisible && !isExiting
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-2"
+            }`}
+          >
+            <p className="text-white text-sm font-medium drop-shadow-lg">
+              {photo.caption}
+            </p>
+          </div>
+        )}
+
+        {/* Camera icon badge */}
+        <div
+          className={`absolute top-3 left-3 bg-white/20 backdrop-blur-md rounded-full p-2 transition-all duration-300 delay-150 ${
+            isVisible && !isExiting
+              ? "opacity-100 scale-100"
+              : "opacity-0 scale-0"
+          }`}
+        >
+          <Camera className="w-4 h-4 text-white" />
+        </div>
+
+        {/* Progress indicator */}
+        <div
+          className="absolute bottom-0 left-0 h-1 bg-white/90"
+          style={{
+            width: isVisible && !isExiting ? "100%" : "0%",
+            transition: isVisible ? `width ${displayDuration}ms linear` : "none"
+          }}
+        />
+      </div>
+
+      {/* Decorative blur elements */}
+      <div
+        className={`absolute top-1/4 left-1/4 w-32 h-32 bg-primary/30 rounded-full blur-3xl transition-all duration-500 ${
+          isVisible && !isExiting ? "opacity-50 scale-100" : "opacity-0 scale-0"
+        }`}
+      />
+      <div
+        className={`absolute bottom-1/4 right-1/4 w-24 h-24 bg-white/20 rounded-full blur-2xl transition-all duration-500 delay-100 ${
+          isVisible && !isExiting ? "opacity-30 scale-100" : "opacity-0 scale-0"
+        }`}
+      />
+    </div>
+  );
+}
