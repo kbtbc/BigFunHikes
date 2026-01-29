@@ -37,6 +37,14 @@ export function PhotoReveal({
     }, 500);
   }, [handleComplete]);
 
+  // Keyboard handler for dismissing with Escape or Enter
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (manualDismiss && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      handleDismiss();
+    }
+  }, [manualDismiss, handleDismiss]);
+
   useEffect(() => {
     if (!photo) {
       setIsVisible(false);
@@ -76,22 +84,28 @@ export function PhotoReveal({
 
   return (
     <div
-      className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${
+      role={manualDismiss ? "dialog" : undefined}
+      aria-modal={manualDismiss ? "true" : undefined}
+      aria-label={manualDismiss ? "Photo viewer" : undefined}
+      className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 motion-reduce:transition-none ${
         isVisible && !isExiting ? "opacity-100" : "opacity-0"
       }`}
       style={{ pointerEvents: isVisible ? "auto" : "none", zIndex: 200 }}
       onClick={manualDismiss ? handleDismiss : undefined}
+      onKeyDown={handleKeyDown}
+      tabIndex={manualDismiss && isVisible ? 0 : -1}
     >
       {/* Backdrop blur */}
       <div
-        className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-200 ${
+        className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-200 motion-reduce:transition-none ${
           isVisible && !isExiting ? "opacity-100" : "opacity-0"
         }`}
+        aria-hidden="true"
       />
 
       {/* Photo container */}
       <div
-        className={`relative z-10 w-[90%] h-[85%] max-w-2xl max-h-[500px] rounded-xl overflow-hidden shadow-2xl transition-all ease-out flex items-center justify-center bg-black/50 ${
+        className={`relative z-10 w-[90%] h-[85%] max-w-2xl max-h-[500px] rounded-xl overflow-hidden shadow-2xl ease-out flex items-center justify-center bg-black/50 transition-[transform,opacity] motion-reduce:transition-none ${
           isVisible && !isExiting
             ? "scale-100 opacity-100 translate-y-0 duration-250"
             : isExiting
@@ -107,12 +121,12 @@ export function PhotoReveal({
         />
 
         {/* Gradient overlay at bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/80 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/80 to-transparent" aria-hidden="true" />
 
         {/* Caption */}
         {photo.caption && (
           <div
-            className={`absolute bottom-4 left-4 right-4 transition-all duration-200 delay-100 ${
+            className={`absolute bottom-4 left-4 right-4 transition-[transform,opacity] duration-200 delay-100 motion-reduce:transition-none ${
               isVisible && !isExiting
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-2"
@@ -126,11 +140,12 @@ export function PhotoReveal({
 
         {/* Camera icon badge */}
         <div
-          className={`absolute top-3 left-3 bg-white/20 backdrop-blur-md rounded-full p-2 transition-all duration-200 delay-75 ${
+          className={`absolute top-3 left-3 bg-white/20 backdrop-blur-md rounded-full p-2 transition-[transform,opacity] duration-200 delay-75 motion-reduce:transition-none ${
             isVisible && !isExiting
               ? "opacity-100 scale-100"
               : "opacity-0 scale-0"
           }`}
+          aria-hidden="true"
         >
           <Camera className="w-4 h-4 text-white" />
         </div>
@@ -138,47 +153,55 @@ export function PhotoReveal({
         {/* Close button for manual dismiss */}
         {manualDismiss && (
           <button
-            onClick={handleDismiss}
-            className={`absolute top-3 right-3 bg-white/20 backdrop-blur-md rounded-full p-2 transition-all duration-200 delay-75 hover:bg-white/30 ${
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDismiss();
+            }}
+            aria-label="Close photo"
+            className={`absolute top-3 right-3 bg-white/20 backdrop-blur-md rounded-full p-2 transition-[transform,opacity] duration-200 delay-75 hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none ${
               isVisible && !isExiting
                 ? "opacity-100 scale-100"
                 : "opacity-0 scale-0"
             }`}
           >
-            <X className="w-4 h-4 text-white" />
+            <X className="w-4 h-4 text-white" aria-hidden="true" />
           </button>
         )}
 
         {/* Progress indicator - only show for auto dismiss */}
         {!manualDismiss && (
           <div
-            className="absolute bottom-0 left-0 h-1 bg-white/90"
+            className="absolute bottom-0 left-0 h-1 bg-white/90 motion-reduce:hidden"
             style={{
               width: isVisible && !isExiting ? "100%" : "0%",
               transition: isVisible && !isExiting ? `width ${displayDuration}ms linear` : "none"
             }}
+            aria-hidden="true"
           />
         )}
       </div>
 
       {/* Decorative blur elements */}
       <div
-        className={`absolute top-1/4 left-1/4 w-32 h-32 bg-primary/30 rounded-full blur-3xl transition-all duration-300 ${
+        className={`absolute top-1/4 left-1/4 w-32 h-32 bg-primary/30 rounded-full blur-3xl transition-[transform,opacity] duration-300 motion-reduce:hidden ${
           isVisible && !isExiting ? "opacity-50 scale-100" : "opacity-0 scale-0"
         }`}
+        aria-hidden="true"
       />
       <div
-        className={`absolute bottom-1/4 right-1/4 w-24 h-24 bg-white/20 rounded-full blur-2xl transition-all duration-300 delay-50 ${
+        className={`absolute bottom-1/4 right-1/4 w-24 h-24 bg-white/20 rounded-full blur-2xl transition-[transform,opacity] duration-300 delay-50 motion-reduce:hidden ${
           isVisible && !isExiting ? "opacity-30 scale-100" : "opacity-0 scale-0"
         }`}
+        aria-hidden="true"
       />
 
       {/* Tap to close hint for manual dismiss */}
       {manualDismiss && (
         <div
-          className={`absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs transition-opacity duration-300 delay-500 ${
+          className={`absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs transition-opacity duration-300 delay-500 motion-reduce:transition-none ${
             isVisible && !isExiting ? "opacity-100" : "opacity-0"
           }`}
+          aria-hidden="true"
         >
           Tap anywhere to close
         </div>
