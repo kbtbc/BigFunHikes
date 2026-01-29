@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.18)
+## Current Features (v3.19)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -356,17 +356,65 @@ bun run dev  # Runs on http://localhost:8000
 
 ### Database Migrations
 
-When the Prisma schema changes:
+**IMPORTANT: Production Database Safety**
+
+When working with a live production database containing real entries, NEVER use commands that reset data:
+- ❌ `bunx prisma migrate reset` - This deletes ALL data
+- ❌ `bun run seed` - This deletes ALL entries and creates sample data
+- ❌ `bunx prisma db push --force-reset` - This drops and recreates tables
+
+**Safe migration workflow for production:**
 
 ```bash
 cd backend
 
-# Development: Quick schema push (recommended for dev)
-bunx prisma db push
+# 1. Create a migration file (does NOT modify the database yet)
+bunx prisma migrate dev --create-only --name <descriptive-name>
 
-# Production: Create migration file
-bunx prisma migrate dev --create-only --name <migration-name>
+# 2. Review the generated SQL in prisma/migrations/<timestamp>_<name>/migration.sql
+# Make sure it only adds columns/tables, not drops
+
+# 3. Apply the migration to the database
 bunx prisma migrate deploy
+
+# 4. Regenerate Prisma client
+bunx prisma generate
+```
+
+**For additive changes (new columns, new tables):**
+```bash
+# This is safe - it only adds, never removes
+bunx prisma db push
+bunx prisma generate
+```
+
+**Before any migration, always backup your database:**
+```bash
+# Create a timestamped backup
+cp backend/prisma/dev.db backend/prisma/dev.db.backup.$(date +%Y%m%d_%H%M%S)
+
+# Or use the export script (see Database Backup section)
+bun run backend/scripts/export-db.ts
+```
+
+### Database Backup & Restore
+
+**Export all data to JSON:**
+```bash
+cd backend
+bun run scripts/export-db.ts
+# Creates: exports/backup_<timestamp>.json
+```
+
+**Import from JSON backup:**
+```bash
+cd backend
+bun run scripts/import-db.ts exports/backup_<timestamp>.json
+```
+
+**Quick SQLite file backup:**
+```bash
+cp backend/prisma/dev.db backend/prisma/dev.db.backup
 ```
 
 ### Trail Data Regeneration

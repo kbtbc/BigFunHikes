@@ -1,10 +1,13 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.18 COMPLETE)
+## Current Project State (Updated: January 2026 - v3.19 LIVE)
 
 ### Overview
 
-Trail Tales (BigFun Hikes!) is a full-featured web application for documenting Appalachian Trail thru-hikes. The app has reached production-ready status with all core features implemented and working.
+Trail Tales (BigFun Hikes!) is a full-featured web application for documenting Appalachian Trail thru-hikes. The app is now LIVE and recording real trail data.
+
+**Production URL**: https://bigfunhikes.com
+**Dev Environment**: https://dev.bigfunhikes.com (or local IP)
 
 ---
 
@@ -445,12 +448,50 @@ DATABASE_URL="file:./dev.db"
 ADMIN_PASSWORD=<your-password>
 BETTER_AUTH_SECRET=<random-string>
 DISABLE_VIBECODE=true
+ALLOWED_ORIGINS="https://bigfunhikes.com,https://dev.bigfunhikes.com"
 ```
 
 **Frontend (.env)**
 ```env
-VITE_BACKEND_URL=http://localhost:3000
+VITE_BACKEND_URL=https://bigfunhikes.com:3000
 VITE_DISABLE_VIBECODE=true
+VITE_MAPBOX_TOKEN=<your-mapbox-token>
+```
+
+### Database Safety (IMPORTANT for Production)
+
+**Never use these commands on production:**
+- `bunx prisma migrate reset` - Deletes ALL data
+- `bun run seed` - Deletes ALL entries
+- `bunx prisma db push --force-reset` - Drops tables
+
+**Safe migration workflow:**
+```bash
+# 1. Always backup first
+bun run scripts/export-db.ts
+
+# 2. Create migration (does not modify DB)
+bunx prisma migrate dev --create-only --name <name>
+
+# 3. Review SQL in prisma/migrations/<timestamp>/migration.sql
+
+# 4. Apply migration
+bunx prisma migrate deploy
+bunx prisma generate
+```
+
+### Database Backup & Restore
+
+```bash
+# Export all data to JSON
+bun run scripts/export-db.ts
+# Output: exports/backup_<timestamp>.json
+
+# Restore from backup
+bun run scripts/import-db.ts exports/backup_<timestamp>.json
+
+# Quick SQLite backup
+cp prisma/dev.db prisma/dev.db.backup
 ```
 
 ### Sample Data
