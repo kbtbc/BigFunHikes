@@ -6,7 +6,7 @@ A beautiful web application for documenting your Appalachian Trail journey with 
 
 BigFun Hikes! is a mobile-first web app designed specifically for hikers documenting their Appalachian Trail thru-hike. Record your daily adventures with markdown journals, upload photos from the trail, track daily and cumulative miles, and maintain a beautiful personal record of your 2,190-mile journey.
 
-## Current Features (v3.19)
+## Current Features (v3.20)
 
 ### Core Functionality
 - **Journal Entries**: Markdown-supported daily entries with date, title, and detailed reflections
@@ -55,7 +55,7 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
   - **Auto-Detection**: Works with both Suunto JSON and GPX data sources
   - **Photo Markers**: Photos displayed on map at GPS locations along the route
   - Expandable section on entry detail pages (only shows when GPS data available)
-- **Activity Player Enhancements (v3.9-3.11, v3.16)**:
+- **Activity Player Enhancements (v3.9-3.11, v3.16, v3.20)**:
   - **3D Terrain Mode**: Toggle Mapbox GL terrain extrusion (2.5x) for immersive flyover views with sky atmosphere
   - **Camera Modes**: Follow (tracks marker), Overview (user-controlled), First-Person (looks ahead in direction of travel)
   - **Photo Timestamps**: Photos matched to GPS coordinates, appear during playback with fade-in effect
@@ -73,6 +73,16 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
     - Supports DateTimeOriginal, CreateDate, and ModifyDate EXIF fields
     - HEIC/HEIF support for iPhone photos (v3.17)
     - Improved photo marker clickability during playback (v3.17)
+  - **Map Overlay Controls (v3.20)**: All playback controls moved to elegant overlay on the map
+    - Play/pause button with progress scrubber at bottom-left
+    - Cycling icon buttons for speed, color mode, camera mode, 3D, satellite at bottom-right
+    - Stats overlay (Time/Distance/Elevation/HR) replaces logo at top-left, tap to toggle
+  - **Photo Auto-Reveal (v3.20)**: Photos automatically pop up during playback when timeline crosses markers
+    - 3 second display with elegant enter/exit animations and progress indicator
+    - Tap photo markers when paused to view enlarged photos (stays open until dismissed)
+  - **Accessibility (v3.20)**: Full WCAG compliance with aria-labels, keyboard navigation, focus-visible rings
+  - **Default 4x Speed (v3.20)**: Activity Player now starts at 4x playback speed
+  - **File Picker Fix (v3.20)**: Photo uploads use file picker to preserve EXIF GPS data on Android
 - **BigFun's Suunto Replay Studio (v3.12-3.15)**: Standalone sub-application for viewing Suunto data
   - **Drag-and-Drop Upload**: Upload Suunto JSON files directly to get shareable replay URLs
   - **15 Visual Styles**: Diverse Activity Player themes to choose from
@@ -211,7 +221,8 @@ BigFun Hikes! is a mobile-first web app designed specifically for hikers documen
 │   │   │       ├── index.tsx          # Main component with playback state
 │   │   │       ├── ActivityMap.tsx    # Mapbox GL map with animated marker
 │   │   │       ├── ActivityCharts.tsx # Synchronized HR/elevation/speed charts
-│   │   │       └── PlaybackControls.tsx # Play/pause, speed, scrub controls
+│   │   │       ├── MapOverlayControls.tsx # Map overlay controls (v3.20)
+│   │   │       └── PhotoReveal.tsx    # Photo auto-reveal animation (v3.20)
 │   │   ├── pages/
 │   │   │   ├── HomePage.tsx           # Map + stats overview
 │   │   │   ├── TimelinePage.tsx       # All entries timeline

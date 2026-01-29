@@ -1,6 +1,6 @@
 # Trail Tales - Project Analysis & Plan
 
-## Current Project State (Updated: January 2026 - v3.19 LIVE)
+## Current Project State (Updated: January 2026 - v3.20 LIVE)
 
 ### Overview
 
@@ -555,19 +555,53 @@ bun run seed  # Creates 11 sample entries including training hike with Suunto da
 - [x] **HEIC/HEIF Photo Support** (NEW v3.17) - iPhone photo format now supported for uploads
 - [x] **Photo Marker Clickability** (NEW v3.17) - Fixed z-index and click handling during playback
 
+### Activity Player UI Overhaul (NEW v3.20)
+- [x] **Map Overlay Controls** - All playback controls moved to elegant overlay on the map
+  - Play/pause button with progress scrubber at bottom-left
+  - Cycling icon buttons for speed, color mode, camera mode, 3D, satellite at bottom-right
+  - Stats overlay (Time/Distance/Elevation/HR) replaces "BigFun Hikes!" logo at top-left
+  - Tappable to toggle between stats view and logo
+- [x] **Photo Auto-Reveal During Playback** - Photos pop up automatically when timeline crosses markers
+  - 3 second display with progress indicator
+  - Elegant enter/exit animations with backdrop blur
+  - Decorative blur elements for depth
+- [x] **Manual Photo Reveal** - Tap photo markers when paused to view enlarged photos
+  - Stays open until dismissed (tap anywhere or X button)
+  - "Tap anywhere to close" hint text
+- [x] **Expanded Map Height** - Increased from 350px to 450px for better visibility
+- [x] **Accessibility Improvements** - Full WCAG compliance for Activity Player
+  - aria-labels on all icon-only buttons
+  - Keyboard navigation (Escape/Enter/Space to dismiss photos)
+  - focus-visible rings for keyboard users
+  - aria-hidden on decorative elements
+  - role="dialog" for photo reveal modal
+- [x] **Animation Best Practices** - Explicit transition properties instead of transition-all
+  - prefers-reduced-motion support (motion-reduce:transition-none)
+  - Decorative animations hidden for users who prefer reduced motion
+- [x] **Performance Optimization** - Icon getter functions converted to static lookup objects
+- [x] **Typography Enhancement** - tabular-nums for numeric stats (prevents layout shift)
+- [x] **Default 4x Playback Speed** - Activity Player now starts at 4x speed
+- [x] **Seek Backwards Photo Reset** - Rewinding clears shown photos so they re-display
+- [x] **File Picker for Photos** - Changed from image/* to */* to preserve EXIF GPS data on Android
+
 ---
 
 ## NEXT STEPS (Suggested Priorities)
 
 ### Phase 1: Activity Player Polish (High Priority)
-- [ ] **Playback Speed Indicator**: Visual feedback showing current playback speed on map
 - [ ] **Photo Popup on Hover**: Show photo preview when hovering over photo markers
 - [ ] **Elevation-Aware Camera**: Adjust camera altitude based on terrain height in first-person mode
+- [ ] **Activity Summary Card**: Show total stats at end of playback (distance, time, elevation, avg HR)
 
 ### Phase 2: UX Improvements (Medium Priority)
 - [ ] **Bulk Photo Upload**: Drag-and-drop multiple photos at once with progress indicator
 - [ ] **Entry Templates**: Pre-fill common fields based on previous entries
 - [ ] **Quick Entry Mode**: Simplified form for rapid trail logging (just miles + notes)
+
+### Phase 3: Social & Sharing (Future)
+- [ ] **Video Export**: Render Activity Player to MP4 for social media sharing
+- [ ] **Share Entry as Image**: Generate shareable image cards from entries
+- [ ] **Public Trail Page**: Shareable link for friends/family to follow progress
 
 ---
 
