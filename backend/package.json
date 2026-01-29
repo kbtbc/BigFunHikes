@@ -24,6 +24,7 @@
     "@vibecodeapp/cloud-studio": "^0.2.4",
     "@vibecodeapp/proxy": "^2.0.3",
     "better-auth": "^1.4.15",
+    "exif-reader": "^2.0.3",
     "exifr": "^7.1.3",
     "hono": "4.6.0",
     "zod": "4.1.11"
