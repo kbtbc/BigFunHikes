@@ -963,14 +963,14 @@ export default function NewEntryPage() {
                   <Input
                     id="photoUpload"
                     type="file"
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.heic,.heif,.webp"
                     multiple
                     onChange={handlePhotoAdd}
                     disabled={isPending}
                     className="h-10"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Select one or more images to add to this entry
+                    Use your file browser (not photo picker) to preserve GPS data
                   </p>
                 </div>
 
