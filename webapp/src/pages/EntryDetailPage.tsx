@@ -283,6 +283,16 @@ export function EntryDetailPage() {
                 longitude: p.longitude,
                 timestamp: p.takenAt,
               }))}
+              videos={apiEntry?.videos?.map(v => ({
+                id: v.id,
+                url: v.url,
+                thumbnailUrl: v.thumbnailUrl,
+                duration: v.duration,
+                caption: v.caption,
+                latitude: v.latitude,
+                longitude: v.longitude,
+                timestamp: v.takenAt,
+              }))}
               entryDate={entry.date}
               onPhotoClick={handleActivityPhotoClick}
             />
