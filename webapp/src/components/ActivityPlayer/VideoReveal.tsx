@@ -22,12 +22,16 @@ export interface ActivityVideo {
 interface VideoRevealProps {
   video: ActivityVideo | null;
   onComplete: () => void;
+  onThumbnailDismiss?: () => void; // Called when thumbnail auto-dismisses (before video plays)
+  displayDuration?: number; // ms - how long to show thumbnail before auto-dismiss
   manualDismiss?: boolean; // If true, stays open until dismissed
 }
 
 export function VideoReveal({
   video,
   onComplete,
+  onThumbnailDismiss,
+  displayDuration = 3000,
   manualDismiss = false
 }: VideoRevealProps) {
   const [isVisible, setIsVisible] = useState(false);
@@ -36,9 +40,11 @@ export function VideoReveal({
   const [isMuted, setIsMuted] = useState(false);
   const [showThumbnail, setShowThumbnail] = useState(true);
   const [videoProgress, setVideoProgress] = useState(0);
+  const [userInteracted, setUserInteracted] = useState(false); // Track if user tapped to play
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressIntervalRef = useRef<number | null>(null);
+  const thumbnailTimerRef = useRef<number | null>(null);
 
   const handleComplete = useCallback(() => {
     onComplete();
@@ -53,6 +59,10 @@ export function VideoReveal({
       clearInterval(progressIntervalRef.current);
       progressIntervalRef.current = null;
     }
+    if (thumbnailTimerRef.current) {
+      clearTimeout(thumbnailTimerRef.current);
+      thumbnailTimerRef.current = null;
+    }
 
     setIsExiting(true);
     setTimeout(() => {
@@ -61,6 +71,7 @@ export function VideoReveal({
       setShowThumbnail(true);
       setIsVideoPlaying(false);
       setVideoProgress(0);
+      setUserInteracted(false);
       handleComplete();
     }, 500);
   }, [handleComplete]);
@@ -68,6 +79,12 @@ export function VideoReveal({
   // Start video playback when thumbnail is clicked
   const handleThumbnailClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    // Clear thumbnail auto-dismiss timer
+    if (thumbnailTimerRef.current) {
+      clearTimeout(thumbnailTimerRef.current);
+      thumbnailTimerRef.current = null;
+    }
+    setUserInteracted(true);
     setShowThumbnail(false);
     setIsVideoPlaying(true);
 
@@ -100,17 +117,12 @@ export function VideoReveal({
     }
   }, [isMuted]);
 
-  // Handle video end
+  // Handle video end - always wait for user tap to dismiss after video ends
   const handleVideoEnded = useCallback(() => {
     setIsVideoPlaying(false);
-
-    // Auto-dismiss when video ends (unless manual dismiss mode)
-    if (!manualDismiss) {
-      setTimeout(() => {
-        handleDismiss();
-      }, 500);
-    }
-  }, [manualDismiss, handleDismiss]);
+    // Always wait for user to tap to dismiss after video ends
+    // This keeps the Activity Player paused until user is ready
+  }, []);
 
   // Update progress
   const handleTimeUpdate = useCallback(() => {
@@ -139,12 +151,13 @@ export function VideoReveal({
     }
   }, [handleDismiss, showThumbnail, isVideoPlaying]);
 
-  // Handle container click for manual dismiss
+  // Handle container click - dismiss when user taps outside video controls
   const handleContainerClick = useCallback(() => {
-    if (manualDismiss && !showThumbnail) {
+    // If video is playing or has ended and user tapped, dismiss
+    if (!showThumbnail) {
       handleDismiss();
     }
-  }, [manualDismiss, showThumbnail, handleDismiss]);
+  }, [showThumbnail, handleDismiss]);
 
   useEffect(() => {
     if (!video) {
@@ -153,14 +166,52 @@ export function VideoReveal({
       setShowThumbnail(true);
       setIsVideoPlaying(false);
       setVideoProgress(0);
+      setUserInteracted(false);
       return;
     }
 
-    // Start enter animation immediately - thumbnail stays visible until user taps
+    // Start enter animation immediately - thumbnail stays visible until user taps or auto-dismiss
     requestAnimationFrame(() => {
       setIsVisible(true);
     });
-  }, [video]);
+
+    // If not manual dismiss mode, set up auto-dismiss timer for thumbnail
+    // This mirrors PhotoReveal behavior - thumbnail shows for displayDuration, then dismisses
+    if (!manualDismiss) {
+      // Start exit animation after displayDuration (fade out takes 500ms)
+      const exitTimer = setTimeout(() => {
+        // Only auto-dismiss if user hasn't interacted (started playing video)
+        if (!userInteracted) {
+          setIsExiting(true);
+        }
+      }, displayDuration);
+
+      // Complete after fade out finishes
+      const completeTimer = setTimeout(() => {
+        // Only complete if user hasn't interacted
+        if (!userInteracted) {
+          setIsVisible(false);
+          setIsExiting(false);
+          setShowThumbnail(true);
+          setIsVideoPlaying(false);
+          setVideoProgress(0);
+          // Call thumbnail dismiss callback (keeps playback paused, waiting for tap)
+          onThumbnailDismiss?.();
+        }
+      }, displayDuration + 500);
+
+      thumbnailTimerRef.current = exitTimer as unknown as number;
+
+      return () => {
+        clearTimeout(exitTimer);
+        clearTimeout(completeTimer);
+        if (thumbnailTimerRef.current) {
+          clearTimeout(thumbnailTimerRef.current);
+          thumbnailTimerRef.current = null;
+        }
+      };
+    }
+  }, [video, displayDuration, manualDismiss, userInteracted, onThumbnailDismiss]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -223,6 +274,18 @@ export function VideoReveal({
                 <Play className="w-8 h-8 text-black ml-1" fill="currentColor" />
               </div>
             </div>
+
+            {/* Progress indicator for auto-dismiss - only show when not manual dismiss */}
+            {!manualDismiss && (
+              <div
+                className="absolute bottom-0 left-0 h-1 bg-white/90 motion-reduce:hidden"
+                style={{
+                  width: isVisible && !isExiting ? "100%" : "0%",
+                  transition: isVisible && !isExiting ? `width ${displayDuration}ms linear` : "none"
+                }}
+                aria-hidden="true"
+              />
+            )}
           </div>
         ) : (
           /* Video player view */
@@ -358,8 +421,8 @@ export function VideoReveal({
         aria-hidden="true"
       />
 
-      {/* Tap to close hint for manual dismiss */}
-      {manualDismiss && !showThumbnail && (
+      {/* Tap to close hint - show when video player is visible (not thumbnail) */}
+      {!showThumbnail && (
         <div
           className={`absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs transition-opacity duration-300 delay-500 motion-reduce:transition-none ${
             isVisible && !isExiting ? "opacity-100" : "opacity-0"

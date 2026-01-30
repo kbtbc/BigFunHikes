@@ -115,6 +115,7 @@ export function ActivityPlayer({
   // Video reveal state
   const [revealingVideo, setRevealingVideo] = useState<ActivityVideo | null>(null);
   const [isManualVideoReveal, setIsManualVideoReveal] = useState(false);
+  const [waitingForVideoTap, setWaitingForVideoTap] = useState(false); // Waiting for user tap after video thumbnail
   const shownVideoIds = useRef<Set<string>>(new Set());
 
   // Refs to store mapped media for seek handler access
@@ -163,7 +164,7 @@ export function ActivityPlayer({
 
   // Animation loop
   useEffect(() => {
-    if (!isPlaying || !activityData || revealingPhoto || revealingVideo) return;
+    if (!isPlaying || !activityData || revealingPhoto || revealingVideo || waitingForVideoTap) return;
 
     const animate = (timestamp: number) => {
       if (!lastUpdateRef.current) {
@@ -198,7 +199,7 @@ export function ActivityPlayer({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isPlaying, playbackSpeed, activityData, revealingPhoto]);
+  }, [isPlaying, playbackSpeed, activityData, revealingPhoto, revealingVideo, waitingForVideoTap]);
 
   // Handlers
   const handlePlayPause = useCallback(() => {
@@ -569,7 +570,15 @@ export function ActivityPlayer({
   const handleVideoRevealComplete = useCallback(() => {
     setRevealingVideo(null);
     setIsManualVideoReveal(false);
-    // Playback will auto-resume since isPlaying is still true and revealingVideo becomes null
+    setWaitingForVideoTap(false);
+    // Playback will auto-resume since isPlaying is still true and revealingVideo/waitingForVideoTap become false
+  }, []);
+
+  // Handle video thumbnail auto-dismiss - pause playback and wait for user tap
+  const handleVideoThumbnailDismiss = useCallback(() => {
+    setRevealingVideo(null);
+    setWaitingForVideoTap(true);
+    // Playback stays paused until user taps anywhere on map
   }, []);
 
   // Handle video marker click - show video reveal popup
@@ -577,6 +586,7 @@ export function ActivityPlayer({
     // If paused, use manual dismiss mode
     setIsManualVideoReveal(!isPlaying);
     setRevealingVideo(video);
+    setWaitingForVideoTap(false); // Cancel waiting state if user clicks a video marker
   }, [isPlaying]);
 
   // Reset shown photos and videos when playback restarts from beginning
@@ -698,8 +708,23 @@ export function ActivityPlayer({
                   <VideoReveal
                     video={revealingVideo}
                     onComplete={handleVideoRevealComplete}
+                    onThumbnailDismiss={handleVideoThumbnailDismiss}
+                    displayDuration={3000}
                     manualDismiss={isManualVideoReveal}
                   />
+
+                  {/* Tap to resume overlay - shown after video thumbnail auto-dismisses */}
+                  {waitingForVideoTap && !revealingVideo && (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer z-50"
+                      onClick={() => setWaitingForVideoTap(false)}
+                    >
+                      <div className="text-white text-center">
+                        <div className="text-lg font-medium">Tap to resume</div>
+                        <div className="text-sm text-white/70 mt-1">Playback paused</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Charts */}
