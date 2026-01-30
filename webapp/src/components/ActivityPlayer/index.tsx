@@ -235,6 +235,9 @@ export function ActivityPlayer({
           shownVideoIds.current.delete(video.id);
         }
       }
+
+      // Clear waiting state if we rewound past a video
+      setWaitingForVideoTap(false);
     }
     lastSeekIndex.current = index;
     setCurrentIndex(index);

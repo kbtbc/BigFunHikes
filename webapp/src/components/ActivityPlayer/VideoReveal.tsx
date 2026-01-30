@@ -45,6 +45,7 @@ export function VideoReveal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressIntervalRef = useRef<number | null>(null);
   const thumbnailTimerRef = useRef<number | null>(null);
+  const userInteractedRef = useRef(false); // Ref to track interaction in timers
 
   const handleComplete = useCallback(() => {
     onComplete();
@@ -72,6 +73,7 @@ export function VideoReveal({
       setIsVideoPlaying(false);
       setVideoProgress(0);
       setUserInteracted(false);
+      userInteractedRef.current = false;
       handleComplete();
     }, 500);
   }, [handleComplete]);
@@ -85,6 +87,7 @@ export function VideoReveal({
       thumbnailTimerRef.current = null;
     }
     setUserInteracted(true);
+    userInteractedRef.current = true;
     setShowThumbnail(false);
     setIsVideoPlaying(true);
 
@@ -167,6 +170,7 @@ export function VideoReveal({
       setIsVideoPlaying(false);
       setVideoProgress(0);
       setUserInteracted(false);
+      userInteractedRef.current = false;
       return;
     }
 
@@ -181,7 +185,8 @@ export function VideoReveal({
       // Start exit animation after displayDuration (fade out takes 500ms)
       const exitTimer = setTimeout(() => {
         // Only auto-dismiss if user hasn't interacted (started playing video)
-        if (!userInteracted) {
+        // Use ref to get current value, not stale closure value
+        if (!userInteractedRef.current) {
           setIsExiting(true);
         }
       }, displayDuration);
@@ -189,7 +194,8 @@ export function VideoReveal({
       // Complete after fade out finishes
       const completeTimer = setTimeout(() => {
         // Only complete if user hasn't interacted
-        if (!userInteracted) {
+        // Use ref to get current value, not stale closure value
+        if (!userInteractedRef.current) {
           setIsVisible(false);
           setIsExiting(false);
           setShowThumbnail(true);
@@ -211,7 +217,7 @@ export function VideoReveal({
         }
       };
     }
-  }, [video, displayDuration, manualDismiss, userInteracted, onThumbnailDismiss]);
+  }, [video, displayDuration, manualDismiss, onThumbnailDismiss]);
 
   // Cleanup on unmount
   useEffect(() => {
