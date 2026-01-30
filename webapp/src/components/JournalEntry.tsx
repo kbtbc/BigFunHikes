@@ -6,10 +6,10 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LazyImage } from "@/components/ui/lazy-image";
-import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight, Dumbbell, Play, X } from "lucide-react";
+import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight, Dumbbell, Play } from "lucide-react";
 import { type JournalEntry as JournalEntryType } from "@/data/journalEntries";
 import useEmblaCarousel from "embla-carousel-react";
-import { useCallback, useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useCallback, useEffect, useState, forwardRef, useImperativeHandle, useRef } from "react";
 
 // Media item type for unified carousel
 interface MediaItem {
@@ -39,8 +39,9 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
   const previewContent = entry.content.split("\n").slice(0, 3).join("\n");
   const isTraining = entry.entryType === "training";
 
-  // Video modal state - store both url and thumbnailUrl
-  const [playingVideo, setPlayingVideo] = useState<{ url: string; thumbnailUrl?: string } | null>(null);
+  // Track which video is currently playing (by index in mediaItems array)
+  const [playingVideoIndex, setPlayingVideoIndex] = useState<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Combine photos and videos into unified media array
   const mediaItems: MediaItem[] = [
@@ -49,16 +50,13 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
       url: photo.url,
       caption: photo.caption,
     })),
-    ...(entry.videos || []).map((video) => {
-      console.log("[JournalEntry] Video data:", { url: video.url, thumbnailUrl: video.thumbnailUrl });
-      return {
-        type: "video" as const,
-        url: video.url,
-        thumbnailUrl: video.thumbnailUrl,
-        caption: video.caption,
-        duration: video.duration,
-      };
-    }),
+    ...(entry.videos || []).map((video) => ({
+      type: "video" as const,
+      url: video.url,
+      thumbnailUrl: video.thumbnailUrl,
+      caption: video.caption,
+      duration: video.duration,
+    })),
   ];
 
   // Carousel setup for multiple media items
@@ -89,6 +87,8 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
 
     const onSelect = () => {
       setSelectedIndex(emblaApi.selectedScrollSnap());
+      // Stop video when scrolling away
+      setPlayingVideoIndex(null);
     };
 
     emblaApi.on("select", onSelect);
@@ -116,6 +116,17 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
     if (photoCount > 0) parts.push(`${photoCount} photo${photoCount > 1 ? "s" : ""}`);
     if (videoCount > 0) parts.push(`${videoCount} video${videoCount > 1 ? "s" : ""}`);
     return parts.join(", ");
+  };
+
+  // Handle video play/pause toggle
+  const handleVideoClick = (index: number) => {
+    if (playingVideoIndex === index) {
+      // Already playing, pause it
+      setPlayingVideoIndex(null);
+    } else {
+      // Start playing
+      setPlayingVideoIndex(index);
+    }
   };
 
   return (
@@ -172,7 +183,7 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
                     key={index}
                     className={showFullContent && hasMultipleMedia ? "flex-[0_0_100%] min-w-0" : ""}
                   >
-                    <div className={`relative w-full overflow-hidden flex items-center justify-center ${showFullContent && hasMultipleMedia ? "h-[400px] md:h-[500px] bg-black/5" : "min-h-[200px] bg-black/5"}`}>
+                    <div className={`relative w-full overflow-hidden flex items-center justify-center bg-black ${showFullContent && hasMultipleMedia ? "h-[400px] md:h-[500px]" : "min-h-[200px]"}`}>
                       {media.type === "photo" ? (
                         <LazyImage
                           src={media.url}
@@ -180,18 +191,30 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
                           className={`${showFullContent && hasMultipleMedia ? "h-full w-auto max-w-full object-contain" : "w-full h-auto object-contain"}`}
                           fallbackClassName={`${showFullContent && hasMultipleMedia ? "h-full w-full" : "w-full h-48"}`}
                         />
+                      ) : playingVideoIndex === index ? (
+                        // Video is playing - show the video player inline
+                        <video
+                          ref={videoRef}
+                          controls
+                          autoPlay
+                          playsInline
+                          className="w-full h-full object-contain"
+                          onEnded={() => setPlayingVideoIndex(null)}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <source src={media.url} type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
                       ) : (
+                        // Video thumbnail with play button
                         <button
-                          onClick={() => setPlayingVideo({ url: media.url, thumbnailUrl: media.thumbnailUrl })}
+                          onClick={() => handleVideoClick(index)}
                           className="relative w-full h-full min-h-[200px] flex items-center justify-center"
                         >
-                          {/* Debug: using img tag directly instead of LazyImage */}
                           <img
                             src={media.thumbnailUrl}
                             alt={media.caption}
                             className={`${showFullContent && hasMultipleMedia ? "h-full w-auto max-w-full object-contain" : "max-w-full max-h-full object-contain"}`}
-                            onLoad={() => console.log("[JournalEntry] Thumbnail loaded:", media.thumbnailUrl)}
-                            onError={(e) => console.log("[JournalEntry] Thumbnail error:", media.thumbnailUrl, e)}
                           />
                           {/* Play button overlay */}
                           <div className="absolute inset-0 flex items-center justify-center">
@@ -207,7 +230,7 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
                           )}
                         </button>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 pointer-events-none">
                         <p className="text-white text-sm text-shadow text-center">
                           {media.caption}
                         </p>
@@ -223,21 +246,21 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
               <>
                 <button
                   onClick={scrollPrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
                   aria-label="Previous media"
                 >
                   <ChevronLeft className="h-6 w-6" />
                 </button>
                 <button
                   onClick={scrollNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
                   aria-label="Next media"
                 >
                   <ChevronRight className="h-6 w-6" />
                 </button>
 
                 {/* Dot indicators */}
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-2">
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                   {scrollSnaps.map((_, index) => (
                     <button
                       key={index}
@@ -256,7 +279,7 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
 
             {/* Media count indicator for preview mode */}
             {!showFullContent && hasMultipleMedia && (
-              <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+              <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">
                 {getMediaCountText()}
               </div>
             )}
@@ -292,42 +315,6 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
                 )}
               </button>
             ))}
-          </div>
-        )}
-
-        {/* Video player modal */}
-        {playingVideo && (
-          <div
-            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 md:p-8"
-            onClick={() => setPlayingVideo(null)}
-          >
-            <button
-              onClick={() => setPlayingVideo(null)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10 bg-black/50 rounded-full p-2"
-              aria-label="Close video"
-            >
-              <X className="h-6 w-6" />
-            </button>
-            <div
-              className="relative bg-black rounded-lg overflow-hidden shadow-2xl"
-              style={{ maxWidth: '90vw', maxHeight: '80vh' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <video
-                key={playingVideo.url}
-                controls
-                autoPlay
-                playsInline
-                preload="metadata"
-                poster={playingVideo.thumbnailUrl}
-                className="block w-full h-auto"
-                style={{ maxHeight: '80vh' }}
-              >
-                <source src={playingVideo.url} type="video/mp4" />
-                <source src={playingVideo.url} type="video/quicktime" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
           </div>
         )}
 
