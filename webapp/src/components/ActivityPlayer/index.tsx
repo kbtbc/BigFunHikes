@@ -117,6 +117,10 @@ export function ActivityPlayer({
   const [isManualVideoReveal, setIsManualVideoReveal] = useState(false);
   const shownVideoIds = useRef<Set<string>>(new Set());
 
+  // Refs to store mapped media for seek handler access
+  const activityPhotosRef = useRef<ActivityPhoto[]>([]);
+  const activityVideosRef = useRef<ActivityVideo[]>([]);
+
   const animationRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
   const mapRef = useRef<ActivityMapRef>(null);
@@ -213,15 +217,28 @@ export function ActivityPlayer({
   }, []);
 
   const handleSeek = useCallback((index: number) => {
-    // If seeking backwards, clear all shown photos and videos so they can re-trigger
-    if (index < lastSeekIndex.current) {
-      shownPhotoIds.current.clear();
-      shownVideoIds.current.clear();
+    // If seeking backwards, only reset media that's ahead of the new position
+    if (index < lastSeekIndex.current && activityData) {
+      const newTimestamp = activityData.dataPoints[index]?.timestamp ?? 0;
+
+      // Remove photos that are ahead of the new position so they can re-trigger
+      for (const photo of activityPhotosRef.current) {
+        if (photo.timestamp !== undefined && photo.timestamp > newTimestamp) {
+          shownPhotoIds.current.delete(photo.id);
+        }
+      }
+
+      // Remove videos that are ahead of the new position so they can re-trigger
+      for (const video of activityVideosRef.current) {
+        if (video.timestamp !== undefined && video.timestamp > newTimestamp) {
+          shownVideoIds.current.delete(video.id);
+        }
+      }
     }
     lastSeekIndex.current = index;
     setCurrentIndex(index);
     lastUpdateRef.current = 0;
-  }, []);
+  }, [activityData]);
 
   const handleSkipBack = useCallback(() => {
     if (!activityData) return;
@@ -482,6 +499,15 @@ export function ActivityPlayer({
     console.log("[ActivityPlayer] Mapped activity videos:", mapped.filter(v => v.lat && v.lon));
     return mapped;
   }, [activityData, videos, entryDate]);
+
+  // Keep refs in sync with memoized values for seek handler
+  useEffect(() => {
+    activityPhotosRef.current = activityPhotos;
+  }, [activityPhotos]);
+
+  useEffect(() => {
+    activityVideosRef.current = activityVideos;
+  }, [activityVideos]);
 
   // Detect photo crossings during playback
   useEffect(() => {

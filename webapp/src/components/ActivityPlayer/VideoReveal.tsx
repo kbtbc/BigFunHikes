@@ -156,26 +156,11 @@ export function VideoReveal({
       return;
     }
 
-    // Start enter animation immediately
+    // Start enter animation immediately - thumbnail stays visible until user taps
     requestAnimationFrame(() => {
       setIsVisible(true);
     });
-
-    // Auto-play after a brief delay to show the thumbnail first
-    if (!manualDismiss) {
-      const autoPlayTimer = setTimeout(() => {
-        setShowThumbnail(false);
-        setIsVideoPlaying(true);
-        if (videoRef.current) {
-          videoRef.current.play().catch(console.error);
-        }
-      }, 800);
-
-      return () => {
-        clearTimeout(autoPlayTimer);
-      };
-    }
-  }, [video, manualDismiss]);
+  }, [video]);
 
   // Cleanup on unmount
   useEffect(() => {
