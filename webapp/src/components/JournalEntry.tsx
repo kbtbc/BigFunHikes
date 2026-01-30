@@ -185,11 +185,13 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
                           onClick={() => setPlayingVideo({ url: media.url, thumbnailUrl: media.thumbnailUrl })}
                           className="relative w-full h-full min-h-[200px] flex items-center justify-center"
                         >
-                          <LazyImage
-                            src={media.thumbnailUrl || ""}
+                          {/* Debug: using img tag directly instead of LazyImage */}
+                          <img
+                            src={media.thumbnailUrl}
                             alt={media.caption}
                             className={`${showFullContent && hasMultipleMedia ? "h-full w-auto max-w-full object-contain" : "max-w-full max-h-full object-contain"}`}
-                            fallbackClassName={`${showFullContent && hasMultipleMedia ? "h-full w-full" : "w-full h-48"}`}
+                            onLoad={() => console.log("[JournalEntry] Thumbnail loaded:", media.thumbnailUrl)}
+                            onError={(e) => console.log("[JournalEntry] Thumbnail error:", media.thumbnailUrl, e)}
                           />
                           {/* Play button overlay */}
                           <div className="absolute inset-0 flex items-center justify-center">
