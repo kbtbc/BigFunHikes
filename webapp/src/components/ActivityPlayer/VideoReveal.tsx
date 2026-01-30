@@ -90,11 +90,7 @@ export function VideoReveal({
     userInteractedRef.current = true;
     setShowThumbnail(false);
     setIsVideoPlaying(true);
-
-    // Start video playback
-    if (videoRef.current) {
-      videoRef.current.play().catch(console.error);
-    }
+    // Video will auto-play via the useEffect that watches showThumbnail
   }, []);
 
   // Toggle play/pause
@@ -218,6 +214,28 @@ export function VideoReveal({
       };
     }
   }, [video, displayDuration, manualDismiss, onThumbnailDismiss]);
+
+  // Start video playback when thumbnail is hidden and video should play
+  useEffect(() => {
+    if (!showThumbnail && isVideoPlaying && videoRef.current) {
+      // Wait for video element to be ready, then play
+      const videoEl = videoRef.current;
+
+      const playVideo = () => {
+        videoEl.play().catch(console.error);
+      };
+
+      // If video is ready, play immediately; otherwise wait for canplay
+      if (videoEl.readyState >= 3) {
+        playVideo();
+      } else {
+        videoEl.addEventListener('canplay', playVideo, { once: true });
+        return () => {
+          videoEl.removeEventListener('canplay', playVideo);
+        };
+      }
+    }
+  }, [showThumbnail, isVideoPlaying]);
 
   // Cleanup on unmount
   useEffect(() => {

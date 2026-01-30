@@ -111,6 +111,7 @@ export function ActivityPlayer({
   const [isManualPhotoReveal, setIsManualPhotoReveal] = useState(false);
   const shownPhotoIds = useRef<Set<string>>(new Set());
   const lastSeekIndex = useRef<number>(0);
+  const lastPlaybackIndex = useRef<number>(0); // Track previous index during natural playback
 
   // Video reveal state
   const [revealingVideo, setRevealingVideo] = useState<ActivityVideo | null>(null);
@@ -218,10 +219,13 @@ export function ActivityPlayer({
   }, []);
 
   const handleSeek = useCallback((index: number) => {
-    // If seeking backwards, only reset media that's ahead of the new position
-    if (index < lastSeekIndex.current && activityData) {
-      const newTimestamp = activityData.dataPoints[index]?.timestamp ?? 0;
+    if (!activityData) return;
 
+    const oldTimestamp = activityData.dataPoints[lastSeekIndex.current]?.timestamp ?? 0;
+    const newTimestamp = activityData.dataPoints[index]?.timestamp ?? 0;
+
+    // If seeking backwards, only reset media that's ahead of the new position
+    if (index < lastSeekIndex.current) {
       // Remove photos that are ahead of the new position so they can re-trigger
       for (const photo of activityPhotosRef.current) {
         if (photo.timestamp !== undefined && photo.timestamp > newTimestamp) {
@@ -238,8 +242,32 @@ export function ActivityPlayer({
 
       // Clear waiting state if we rewound past a video
       setWaitingForVideoTap(false);
+    } else if (index > lastSeekIndex.current) {
+      // If seeking forwards, mark all media in the skipped range as shown
+      // so they don't trigger when we resume playback
+      for (const photo of activityPhotosRef.current) {
+        if (
+          photo.timestamp !== undefined &&
+          photo.timestamp > oldTimestamp &&
+          photo.timestamp <= newTimestamp
+        ) {
+          shownPhotoIds.current.add(photo.id);
+        }
+      }
+
+      for (const video of activityVideosRef.current) {
+        if (
+          video.timestamp !== undefined &&
+          video.timestamp > oldTimestamp &&
+          video.timestamp <= newTimestamp
+        ) {
+          shownVideoIds.current.add(video.id);
+        }
+      }
     }
+
     lastSeekIndex.current = index;
+    lastPlaybackIndex.current = index; // Reset playback tracking on seek
     setCurrentIndex(index);
     lastUpdateRef.current = 0;
   }, [activityData]);
@@ -517,12 +545,22 @@ export function ActivityPlayer({
   useEffect(() => {
     if (!isPlaying || !activityData || revealingPhoto || revealingVideo) return;
 
+    const prevTimestamp = activityData.dataPoints[lastPlaybackIndex.current]?.timestamp ?? 0;
     const currentTimestamp = activityData.dataPoints[currentIndex]?.timestamp ?? 0;
 
-    // Find photos that should be revealed at current timestamp
+    // Only trigger photos during natural forward playback (small index increments)
+    // Skip if we jumped more than a few indices (indicates a seek)
+    const indexDiff = currentIndex - lastPlaybackIndex.current;
+    if (indexDiff <= 0 || indexDiff > 3) {
+      lastPlaybackIndex.current = currentIndex;
+      return;
+    }
+
+    // Find photos that we just crossed (between previous and current timestamp)
     for (const photo of activityPhotos) {
       if (
         photo.timestamp !== undefined &&
+        photo.timestamp > prevTimestamp &&
         photo.timestamp <= currentTimestamp &&
         !shownPhotoIds.current.has(photo.id)
       ) {
@@ -532,18 +570,29 @@ export function ActivityPlayer({
         break; // Only show one photo at a time
       }
     }
+
+    lastPlaybackIndex.current = currentIndex;
   }, [currentIndex, isPlaying, activityData, activityPhotos, revealingPhoto, revealingVideo]);
 
   // Detect video crossings during playback
   useEffect(() => {
     if (!isPlaying || !activityData || revealingPhoto || revealingVideo) return;
 
+    const prevTimestamp = activityData.dataPoints[lastPlaybackIndex.current]?.timestamp ?? 0;
     const currentTimestamp = activityData.dataPoints[currentIndex]?.timestamp ?? 0;
 
-    // Find videos that should be revealed at current timestamp
+    // Only trigger videos during natural forward playback (small index increments)
+    // Skip if we jumped more than a few indices (indicates a seek)
+    const indexDiff = currentIndex - lastPlaybackIndex.current;
+    if (indexDiff <= 0 || indexDiff > 3) {
+      return; // Don't update lastPlaybackIndex here, photo effect handles it
+    }
+
+    // Find videos that we just crossed (between previous and current timestamp)
     for (const video of activityVideos) {
       if (
         video.timestamp !== undefined &&
+        video.timestamp > prevTimestamp &&
         video.timestamp <= currentTimestamp &&
         !shownVideoIds.current.has(video.id)
       ) {
