@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LazyImage } from "@/components/ui/lazy-image";
-import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight, Dumbbell, Play } from "lucide-react";
+import { MapPin, TrendingUp, Calendar, ChevronLeft, ChevronRight, Dumbbell, Play, Loader2 } from "lucide-react";
 import { type JournalEntry as JournalEntryType } from "@/data/journalEntries";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useState, forwardRef, useImperativeHandle, useRef } from "react";
@@ -191,6 +191,14 @@ export const JournalEntry = forwardRef<JournalEntryRef, JournalEntryProps>(funct
                           className={`${showFullContent && hasMultipleMedia ? "h-full w-auto max-w-full object-contain" : "w-full h-auto object-contain"}`}
                           fallbackClassName={`${showFullContent && hasMultipleMedia ? "h-full w-full" : "w-full h-48"}`}
                         />
+                      ) : media.type === "video" && media.duration === 0 ? (
+                        // Processing state
+                        <div className="relative w-full h-full min-h-[200px] flex items-center justify-center bg-gray-900">
+                          <div className="flex flex-col items-center gap-2">
+                             <Loader2 className="h-8 w-8 text-white animate-spin" />
+                             <span className="text-white text-sm font-medium">Processing video...</span>
+                          </div>
+                        </div>
                       ) : playingVideoIndex === index ? (
                         // Video is playing - show the video player inline
                         <video
