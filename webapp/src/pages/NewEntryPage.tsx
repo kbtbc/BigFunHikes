@@ -433,12 +433,11 @@ export default function NewEntryPage() {
       if (photos.length > 0) {
         setUploadingPhotos(true);
 
-        for (let i = 0; i < photos.length; i++) {
-          const photo = photos[i];
+        const uploadPhoto = async (photo: PhotoUpload, index: number) => {
           const formDataPhoto = new FormData();
           formDataPhoto.append("file", photo.file);
           formDataPhoto.append("caption", photo.caption);
-          formDataPhoto.append("order", i.toString());
+          formDataPhoto.append("order", index.toString());
 
           try {
             // Use api.raw() to include auth token in headers
@@ -452,12 +451,29 @@ export default function NewEntryPage() {
 
             if (!response.ok) {
               const errorText = await response.text();
-              console.error(`Failed to upload photo ${i + 1}:`, errorText);
+              console.error(`Failed to upload photo ${index + 1}:`, errorText);
             }
           } catch (error) {
-            console.error(`Error uploading photo ${i + 1}:`, error);
+            console.error(`Error uploading photo ${index + 1}:`, error);
+          }
+        };
+
+        // Parallel upload with concurrency limit
+        const limit = 3;
+        const items = photos.map((p, i) => ({ photo: p, index: i }));
+        const activePromises: Promise<void>[] = [];
+
+        for (const item of items) {
+          const p = uploadPhoto(item.photo, item.index).then(() => {
+            activePromises.splice(activePromises.indexOf(p), 1);
+          });
+          activePromises.push(p);
+          if (activePromises.length >= limit) {
+            await Promise.race(activePromises);
           }
         }
+        await Promise.all(activePromises);
+
         setUploadingPhotos(false);
       }
 

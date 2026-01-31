@@ -6,6 +6,7 @@ import type { Context } from "hono";
 import { requireAdminAuth } from "../middleware/adminAuth";
 import * as fs from "fs/promises";
 import * as path from "path";
+import { Buffer } from "buffer";
 import { randomUUID } from "crypto";
 import exifr from "exifr";
 
@@ -39,18 +40,22 @@ function dmsToDecimal(dms: number[], ref: string): number | null {
 /**
  * Extract GPS coordinates and date taken from image EXIF data
  */
-async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
+async function extractExifData(input: string | ArrayBuffer): Promise<ExifData> {
   try {
-    // Debug: Check buffer validity
-    const bytes = new Uint8Array(buffer);
-    const isJpeg = bytes[0] === 0xFF && bytes[1] === 0xD8;
-    console.log("[photos] Buffer size:", buffer.byteLength, "bytes, isJPEG:", isJpeg);
+    if (input instanceof ArrayBuffer) {
+      // Debug: Check buffer validity
+      const bytes = new Uint8Array(input);
+      const isJpeg = bytes[0] === 0xFF && bytes[1] === 0xD8;
+      console.log("[photos] Buffer size:", input.byteLength, "bytes, isJPEG:", isJpeg);
+    } else {
+      console.log("[photos] Extracting EXIF from file:", input);
+    }
 
     // First try to get GPS coordinates using exifr.gps() which is optimized for this
-    const gps = await exifr.gps(buffer);
+    const gps = await exifr.gps(input);
 
     // Then get date fields with a separate parse
-    const dates = await exifr.parse(buffer, {
+    const dates = await exifr.parse(input, {
       pick: ["DateTimeOriginal", "CreateDate", "ModifyDate"],
     });
 
@@ -67,7 +72,7 @@ async function extractExifData(buffer: ArrayBuffer): Promise<ExifData> {
       console.log("[photos] exifr.gps() failed, trying manual parse. Raw result:", gps);
 
       try {
-        const rawExif = await exifr.parse(buffer, {
+        const rawExif = await exifr.parse(input, {
           pick: ["GPSLatitude", "GPSLongitude", "GPSLatitudeRef", "GPSLongitudeRef"],
           translateValues: false, // Get raw values
         });
@@ -316,12 +321,12 @@ photosRouter.post("/:id/photos/upload", async (c) => {
     const filename = `${randomUUID()}.${fileExt}`;
     const filepath = path.join(uploadsDir, filename);
 
-    // Convert file to buffer and write to disk
-    const buffer = await file.arrayBuffer();
-    await fs.writeFile(filepath, new Uint8Array(buffer));
+    // Optimize: Write file directly
+    await fs.writeFile(filepath, Buffer.from(await file.arrayBuffer()));
 
     // Extract EXIF data (GPS coordinates and date taken)
-    const exifData = await extractExifData(buffer);
+    // Pass the filepath directly to avoid loading the whole file into memory again
+    const exifData = await extractExifData(filepath);
 
     // Construct relative URL for the photo (will be served by backend)
     // Using relative URL so it works with proxy
@@ -335,6 +340,8 @@ photosRouter.post("/:id/photos/upload", async (c) => {
         throw new Error();
       }
     } catch {
+      // Clean up file if validation fails
+      await fs.unlink(filepath).catch(() => {});
       return c.json(
         {
           error: {

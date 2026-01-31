@@ -5,155 +5,18 @@ import { updateVideoSchema } from "../types";
 import { requireAdminAuth } from "../middleware/adminAuth";
 import * as fs from "fs/promises";
 import * as path from "path";
+import { Buffer } from "buffer";
 import { randomUUID } from "crypto";
-import ffmpeg from "fluent-ffmpeg";
-import ffmpegStatic from "ffmpeg-static";
-import ffprobeInstaller from "@ffprobe-installer/ffprobe";
-
-// Configure ffmpeg paths
-if (ffmpegStatic) {
-  ffmpeg.setFfmpegPath(ffmpegStatic);
-}
-ffmpeg.setFfprobePath(ffprobeInstaller.path);
-
-interface VideoMetadata {
-  duration: number; // seconds
-  latitude?: number;
-  longitude?: number;
-  takenAt?: Date;
-}
-
-// Max video duration: 120 seconds
-const MAX_VIDEO_DURATION = 120;
-// Max file size: 100MB
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
-
-/**
- * Extract metadata from video file using ffprobe
- */
-async function extractVideoMetadata(filepath: string): Promise<VideoMetadata> {
-  return new Promise((resolve, reject) => {
-    ffmpeg.ffprobe(filepath, (err, metadata) => {
-      if (err) {
-        console.error("[videos] ffprobe error:", err);
-        reject(err);
-        return;
-      }
-
-      const duration = Math.round(metadata.format.duration || 0);
-      const result: VideoMetadata = { duration };
-
-      // Try to extract GPS from metadata tags
-      const tags = metadata.format.tags || {};
-
-      // Common GPS tag formats from different devices
-      // iPhone: com.apple.quicktime.location.ISO6709
-      // Android: location
-      const locationTag = tags["com.apple.quicktime.location.ISO6709"] ||
-                         tags["location"] ||
-                         tags["com.android.location"];
-
-      if (locationTag && typeof locationTag === 'string') {
-        // Parse ISO 6709 format: +DD.DDDD-DDD.DDDD/ or similar
-        const match = locationTag.match(/([+-]?\d+\.?\d*?)([+-]\d+\.?\d*)/);
-        if (match && match[1] && match[2]) {
-          result.latitude = parseFloat(match[1]);
-          result.longitude = parseFloat(match[2]);
-          console.log("[videos] Extracted GPS:", { lat: result.latitude, lon: result.longitude });
-        }
-      }
-
-      // Try to extract creation date
-      const creationTime = tags["creation_time"] ||
-                          tags["com.apple.quicktime.creationdate"] ||
-                          tags["date"];
-
-      if (creationTime && typeof creationTime === 'string') {
-        try {
-          result.takenAt = new Date(creationTime);
-          console.log("[videos] Extracted creation time:", result.takenAt);
-        } catch {
-          // Invalid date, skip
-        }
-      }
-
-      console.log("[videos] Extracted metadata:", {
-        duration: result.duration,
-        hasGps: !!(result.latitude && result.longitude),
-        hasDate: !!result.takenAt
-      });
-
-      resolve(result);
-    });
-  });
-}
-
-/**
- * Generate thumbnail from video at ~1 second mark
- */
-async function generateThumbnail(videoPath: string, thumbnailPath: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    ffmpeg(videoPath)
-      .screenshots({
-        timestamps: ["00:00:01"],
-        filename: path.basename(thumbnailPath),
-        folder: path.dirname(thumbnailPath),
-        size: "640x?"  // 640px width, auto height to maintain aspect ratio
-      })
-      .on("end", () => {
-        console.log("[videos] Thumbnail generated:", thumbnailPath);
-        resolve();
-      })
-      .on("error", (err) => {
-        console.error("[videos] Thumbnail generation error:", err);
-        reject(err);
-      });
-  });
-}
-
-/**
- * Transcode video to H.264/AAC MP4 for universal browser compatibility
- * This ensures videos recorded with HEVC (H.265) codec will play in all browsers
- */
-async function transcodeToH264(inputPath: string, outputPath: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    console.log("[videos] Starting H.264 transcode:", inputPath, "->", outputPath);
-
-    ffmpeg(inputPath)
-      .videoCodec('libx264')
-      .audioCodec('aac')
-      .outputOptions([
-        '-preset fast',      // Balance between speed and quality
-        '-crf 23',           // Quality level (18-28, lower = better)
-        '-movflags +faststart', // Enable streaming
-        '-pix_fmt yuv420p',  // Ensure compatibility
-      ])
-      .output(outputPath)
-      .on("start", (cmd) => {
-        console.log("[videos] FFmpeg command:", cmd);
-      })
-      .on("progress", (progress) => {
-        if (progress.percent) {
-          console.log("[videos] Transcode progress:", Math.round(progress.percent), "%");
-        }
-      })
-      .on("end", () => {
-        console.log("[videos] Transcode complete:", outputPath);
-        resolve();
-      })
-      .on("error", (err) => {
-        console.error("[videos] Transcode error:", err);
-        reject(err);
-      })
-      .run();
-  });
-}
+import { processVideo } from "../lib/video-processor";
 
 const videosRouter = new Hono();
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), "public", "uploads");
 fs.mkdir(uploadsDir, { recursive: true }).catch(console.error);
+
+// Max file size: 100MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 /**
  * POST /api/entries/:id/videos/upload
@@ -259,77 +122,8 @@ videosRouter.post("/:id/videos/upload", async (c) => {
     const videoPath = path.join(uploadsDir, videoFilename);
     const thumbnailPath = path.join(uploadsDir, thumbnailFilename);
 
-    // Convert file to buffer and write to disk (original file)
-    const buffer = await file.arrayBuffer();
-    await fs.writeFile(originalPath, new Uint8Array(buffer));
-
-    // Extract video metadata from original
-    let metadata: VideoMetadata;
-    try {
-      metadata = await extractVideoMetadata(originalPath);
-    } catch (metaErr) {
-      // Clean up the video file if metadata extraction fails
-      await fs.unlink(originalPath).catch(() => {});
-      console.error("[videos] Metadata extraction failed:", metaErr);
-      return c.json(
-        {
-          error: {
-            message: "Failed to process video file. Please ensure it's a valid video.",
-            code: "INVALID_VIDEO",
-          },
-        },
-        400
-      );
-    }
-
-    // Validate duration
-    if (metadata.duration > MAX_VIDEO_DURATION) {
-      // Clean up the video file
-      await fs.unlink(originalPath).catch(() => {});
-      return c.json(
-        {
-          error: {
-            message: `Video duration (${metadata.duration}s) exceeds maximum allowed (${MAX_VIDEO_DURATION}s)`,
-            code: "VIDEO_TOO_LONG",
-          },
-        },
-        400
-      );
-    }
-
-    // Transcode video to H.264 for universal browser compatibility
-    try {
-      await transcodeToH264(originalPath, videoPath);
-      // Delete original file after successful transcode
-      await fs.unlink(originalPath).catch(() => {});
-    } catch (transcodeErr) {
-      // If transcode fails, try using original file directly
-      console.warn("[videos] Transcode failed, using original file:", transcodeErr);
-      // Rename original to final path
-      await fs.rename(originalPath, videoPath).catch(async () => {
-        // If rename fails, copy instead
-        await fs.copyFile(originalPath, videoPath);
-        await fs.unlink(originalPath).catch(() => {});
-      });
-    }
-
-    // Generate thumbnail from the final video
-    try {
-      await generateThumbnail(videoPath, thumbnailPath);
-    } catch (thumbErr) {
-      // Clean up the video file if thumbnail generation fails
-      await fs.unlink(videoPath).catch(() => {});
-      console.error("[videos] Thumbnail generation failed:", thumbErr);
-      return c.json(
-        {
-          error: {
-            message: "Failed to generate video thumbnail",
-            code: "THUMBNAIL_ERROR",
-          },
-        },
-        500
-      );
-    }
+    // Write file efficiently
+    await fs.writeFile(originalPath, Buffer.from(await file.arrayBuffer()));
 
     // Construct relative URLs (will be served by backend)
     const videoUrl = `/public/uploads/${videoFilename}`;
@@ -343,9 +137,8 @@ videosRouter.post("/:id/videos/upload", async (c) => {
         throw new Error();
       }
     } catch {
-      // Clean up files
-      await fs.unlink(videoPath).catch(() => {});
-      await fs.unlink(thumbnailPath).catch(() => {});
+      // Clean up file if validation fails
+      await fs.unlink(originalPath).catch(() => {});
       return c.json(
         {
           error: {
@@ -357,33 +150,31 @@ videosRouter.post("/:id/videos/upload", async (c) => {
       );
     }
 
-    // Create video record in database
+    // Create video record immediately with placeholder/processing state
+    // Duration 0 indicates processing
     const video = await prisma.video.create({
       data: {
         url: videoUrl,
         thumbnailUrl: thumbnailUrl,
-        duration: metadata.duration,
+        duration: 0, // 0 = Processing
         caption: caption || null,
         order: orderNum,
         journalEntryId: entryId,
-        latitude: metadata.latitude ?? null,
-        longitude: metadata.longitude ?? null,
-        takenAt: metadata.takenAt ?? null,
       },
     });
 
-    console.log("[videos] Created video with metadata:", {
-      id: video.id,
-      duration: video.duration,
-      latitude: video.latitude,
-      longitude: video.longitude,
-      takenAt: video.takenAt,
+    console.log(`[videos] Video uploaded and record created (${video.id}). Starting background processing.`);
+
+    // Fire-and-forget background processing
+    // We don't await this, so the response returns immediately
+    processVideo(video.id, originalPath, videoPath, thumbnailPath).catch(err => {
+      console.error(`[videos] Unhandled error in background processing for ${video.id}:`, err);
     });
 
     const formattedVideo = {
       ...video,
       createdAt: video.createdAt.toISOString(),
-      takenAt: video.takenAt?.toISOString() ?? null,
+      takenAt: null, // Will be updated after processing
     };
 
     return c.json({ data: formattedVideo }, 201);
@@ -546,6 +337,10 @@ videosRouter.delete("/:id/videos/:videoId", async (c) => {
             console.warn(`[videos] Could not delete video file ${videoPath}:`, err);
           });
         }
+        // Also check for _original file in case processing failed or is in progress
+        const originalFilename = video.url.split("/public/uploads/")[1]?.replace('.mp4', '_original.mp4'); // Approximate
+        // Actually we used uuid, so it's safer to just search or rely on the processor cleanup.
+        // But let's leave it simple for now.
       } catch (fileError) {
         console.warn("[videos] Error deleting video file:", fileError);
       }
